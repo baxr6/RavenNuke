@@ -82,8 +82,8 @@ if (!defined('NUKE_FORUMS_DIR')) define('NUKE_FORUMS_DIR', (defined('IN_ADMIN') 
 * 30719   E_ALL (integer)                   All errors and warnings, as supported, except of level E_STRICT in PHP < 6.  (32767 in
 *                                             PHP 6, 30719 in PHP 5.3.x, 6143 in PHP 5.2.x, 2047 previously.)
 *********************************************************************************/
-$error_reporting = E_ALL^E_NOTICE; // This is the default and means: All errors except Notices
-if (defined('E_DEPRECATED')) $error_reporting = $error_reporting^E_DEPRECATED; // If want to see these warnings when running PHP5.3, comment out this IF statement
+$error_reporting = E_ALL; // This is the default and means: All errors except Notices
+//if (defined('E_DEPRECATED')) $error_reporting = $error_reporting^E_DEPRECATED; // If want to see these warnings when running PHP5.3, comment out this IF statement
 
 /*********************************************************************************
 * SQL Logging to Text Log File:
@@ -205,8 +205,8 @@ $CensorList = array('fuck','cunt','fucker','fucking','pussy','cock','c0ck','cum'
 *                                    setup/runtime check when set to "true".  Leave
 *                                    this "false" for production sites.
 **********************************************************************************/
-$bypassNukeSentinelInvalidIPCheck = false;  // This should only be used (set to "true") when testing locally and not in a production environment
-$bypassInstallationFolderCheck    = false;  // This should only be used (set to "true") when testing locally and not in a production environment
+$bypassNukeSentinelInvalidIPCheck = true;  // This should only be used (set to "true") when testing locally and not in a production environment
+$bypassInstallationFolderCheck    = true;  // This should only be used (set to "true") when testing locally and not in a production environment
 
 /*********************************************************************************
 * TegoNuke(tm) ShortLinks Configuration Options:
@@ -249,7 +249,7 @@ $cfgPaginatorControl = array( // Do NOT remove any of these options, just change
 /*********************************************************************************
 * nukePIE(tm)
 * http://www.nukeSEO.com
-* Copyright © 2007 by Kevin Guske
+* Copyright ï¿½ 2007 by Kevin Guske
 **********************************************************************************
 * BoxOver with nukePIE:
 * true  = Display full HTML description of feed item as Boxover tooltip /popup
@@ -274,7 +274,7 @@ $showAdminMenu = true; // Use "false" to hide the Super User (upper) portion of 
 * Miscellaneous System Switches:
 **********************************************************************************/
 $statisticsExcludeList = array('admin'); // Use to exclude gathering statistics: 'admin' implies any admin, add normal usernames to exclude as additional array elements
-$disableCSRFChecking = false; // Set to "true" in order to disable Cross-Site Request Forgery (CSRF) attack protection - should ONLY use as a last resort if your environment does not allow for output buffering
+$disableCSRFChecking = true; // Set to "true" in order to disable Cross-Site Request Forgery (CSRF) attack protection - should ONLY use as a last resort if your environment does not allow for output buffering
 
 //This will not remove depricated warning, but will make it PHP 6 compatable.
 //We do not like suppressing errors, but there is no other way as PHP 5.3+ will produce warnings.

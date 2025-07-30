@@ -56,14 +56,14 @@ if (realpath(__FILE__) == realpath($_SERVER['SCRIPT_FILENAME'])) {
 //                        within rnconfig.php)
 //#####################################################################
 $dbhost = 'localhost';
-$dbuname = 'rnuser';
-$dbpass = 'rnuser';
+$dbuname = 'deano';
+$dbpass = 'D3@n2277';
 $dbname = 'ravennuke';
 $prefix = 'nuke';
 $user_prefix = 'nuke';
 $dbtype = 'MySQLI';
 $sitekey = 'SdFk*fa2rnv21076~v28367-dm52?6w69.3a2fDS+e9';
-$gfx_chk = 7;
+$gfx_chk = 0;
 $subscription_url = '';
 $admin_file = 'admin';
 $tipath = 'images/topics/';

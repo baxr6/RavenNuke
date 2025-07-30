@@ -451,6 +451,8 @@ MysQL dump comment types
 				if ($cont) continue;
 				if (empty($line) || strlen($line) == 0) continue;
 			}
+			echo "<pre>Running SQL:\n" . htmlspecialchars($line) . "\n</pre>";
+flush();
 			$cnt++;
 			$rc = @mysqli_query($conn, $line);
 			if (!$rc && !in_array(mysqli_errno($conn), $byPassSqlErrors)) {

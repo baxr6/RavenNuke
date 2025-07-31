@@ -112,68 +112,15 @@ if (@ini_get('register_globals') == '1' || strtolower(@ini_get('register_globals
 // this is a security precaution to prevent someone
 // trying to break out of a SQL statement.
 //
-if( !@get_magic_quotes_gpc() )
-{
-	if( is_array($HTTP_GET_VARS) )
-	{
-		while( list($k, $v) = each($HTTP_GET_VARS) )
-		{
-			if( is_array($HTTP_GET_VARS[$k]) )
-			{
-				while( list($k2, $v2) = each($HTTP_GET_VARS[$k]) )
-				{
-					$HTTP_GET_VARS[$k][$k2] = addslashes($v2);
-				}
-				@reset($HTTP_GET_VARS[$k]);
-			}
-			else
-			{
-				$HTTP_GET_VARS[$k] = addslashes($v);
-			}
-		}
-		@reset($HTTP_GET_VARS);
-	}
 
-	if( is_array($HTTP_POST_VARS) )
-	{
-		while( list($k, $v) = each($HTTP_POST_VARS) )
-		{
-			if( is_array($HTTP_POST_VARS[$k]) )
-			{
-				while( list($k2, $v2) = each($HTTP_POST_VARS[$k]) )
-				{
-					$HTTP_POST_VARS[$k][$k2] = addslashes($v2);
-				}
-				@reset($HTTP_POST_VARS[$k]);
-			}
-			else
-			{
-				$HTTP_POST_VARS[$k] = addslashes($v);
-			}
-		}
-		@reset($HTTP_POST_VARS);
-	}
-
-	if( is_array($HTTP_COOKIE_VARS) )
-	{
-		while( list($k, $v) = each($HTTP_COOKIE_VARS) )
-		{
-			if( is_array($HTTP_COOKIE_VARS[$k]) )
-			{
-				while( list($k2, $v2) = each($HTTP_COOKIE_VARS[$k]) )
-				{
-					$HTTP_COOKIE_VARS[$k][$k2] = addslashes($v2);
-				}
-				@reset($HTTP_COOKIE_VARS[$k]);
-			}
-			else
-			{
-				$HTTP_COOKIE_VARS[$k] = addslashes($v);
-			}
-		}
-		@reset($HTTP_COOKIE_VARS);
-	}
+// Strip slashes from GET/POST/COOKIE manually (since magic_quotes_gpc is gone in PHP 8+)
+function stripslashes_deep($value) {
+    return is_array($value) ? array_map('stripslashes_deep', $value) : stripslashes($value);
 }
+
+$HTTP_GET_VARS = isset($HTTP_GET_VARS) ? stripslashes_deep($HTTP_GET_VARS) : array();
+$HTTP_POST_VARS = isset($HTTP_POST_VARS) ? stripslashes_deep($HTTP_POST_VARS) : array();
+$HTTP_COOKIE_VARS = isset($HTTP_COOKIE_VARS) ? stripslashes_deep($HTTP_COOKIE_VARS) : array();
 
 //
 // Define some basic configuration arrays this also prevents

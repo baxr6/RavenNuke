@@ -507,9 +507,7 @@ END_FORM;
 	function post($id) { // processes a POSTing of the form
 		$this->eventId = $id == 'new' ? $id : intval($id);
 
-		if (@get_magic_quotes_gpc()) {
-			$_POST = stripslashesDeep($_POST);
-		}
+			$_POST = stripslashesDeep($_POST) ? addslashes($_POST) : '';
 
 		// construct filter object; admins don't get their text filtered, everyone else does:
 

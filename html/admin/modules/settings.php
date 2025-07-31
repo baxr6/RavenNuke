@@ -414,12 +414,10 @@ function ConfigSave($xsitename,$xnukeurl,$xsite_logo,$xslogan,$xstartdate,$xadmi
 	$xslogan = htmlspecialchars($xslogan, ENT_QUOTES, _CHARSET);
 	$xbackend_title = htmlspecialchars($xbackend_title, ENT_QUOTES, _CHARSET);
 	$xnotify_subject = htmlspecialchars($xnotify_subject, ENT_QUOTES, _CHARSET);
-	if (@get_magic_quotes_gpc() == 0) { //Magic quotes are not on, so need to escape these text entry fields:
-		$xfoot1 = addslashes($xfoot1);
-		$xfoot2 = addslashes($xfoot2);
-		$xfoot3 = addslashes($xfoot3);
-		$xnotify_message = addslashes($xnotify_message);
-	}
+	$xfoot1 = isset($xfoot1) ? addslashes($xfoot1) : '';
+	$xfoot2 = isset($xfoot2) ? addslashes($xfoot2) : '';
+	$xfoot3 = isset($xfoot3) ? addslashes($xfoot3) : '';
+	$xnotify_message = isset($xnotify_message) ? addslashes($xnotify_message) : '';
 
 	$sql = 'UPDATE '.$prefix.'_config SET sitename=\''.$xsitename.'\', nukeurl=\''.$xnukeurl.'\', site_logo=\''
 		.$xsite_logo.'\', slogan=\''.$xslogan.'\', startdate=\''.$xstartdate.'\', adminmail=\''.$xadminmail.'\', anonpost=\''

@@ -3,7 +3,7 @@
 /********************************************************/
 /* NukeSentinel(tm)                                     */
 /* By: NukeScripts(tm) (http://www.nukescripts.net)     */
-/* Copyright © 2000-2008 by NukeScripts(tm)             */
+/* Copyright ï¿½ 2000-2008 by NukeScripts(tm)             */
 /* See CREDITS.txt for ALL contributors                 */
 /********************************************************/
 
@@ -184,9 +184,7 @@ if($testnum1 > 0 OR $testnum2 >0 OR $testnum3 >0 OR $testnum4 >0) {
   $xnotes = str_replace("<br>", "\r\n", $xnotes);
   $xnotes = str_replace("<br />", "\r\n", $xnotes);
   $xnotes = htmlentities($xnotes, ENT_QUOTES);
-  if(!@get_magic_quotes_gpc()) {
-    $xnotes = addslashes($xnotes);
-  }
+    $xnotes = addslashes($xnotes) ? addslashes($xnotes) : '';
   if($xexpires>0) { $xexpires = $bantime + ($xexpires * 86400); }
   $xtime = time();
   $old_masscidr = ABGetCIDRs($old_ip_lo, $old_ip_hi);

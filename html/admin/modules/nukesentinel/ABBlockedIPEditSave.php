@@ -3,7 +3,7 @@
 /********************************************************/
 /* NukeSentinel(tm)                                     */
 /* By: NukeScripts(tm) (http://www.nukescripts.net)     */
-/* Copyright © 2000-2008 by NukeScripts(tm)             */
+/* Copyright ï¿½ 2000-2008 by NukeScripts(tm)             */
 /* See CREDITS.txt for ALL contributors                 */
 /********************************************************/
 
@@ -31,10 +31,8 @@ $xuser_agent = htmlentities($xuser_agent, ENT_QUOTES);
 $xnotes = str_replace("<br>", "\r\n", $xnotes);
 $xnotes = str_replace("<br />", "\r\n", $xnotes);
 $xnotes = htmlentities($xnotes, ENT_QUOTES);
-if(!get_magic_quotes_gpc()) {
-  $xnotes = addslashes($xnotes);
-  $xusername = addslashes($xusername);
-}
+  $xnotes = addslashes($xnotes) ? addslashes($xnotes) : '';
+  $xusername = addslashes($xusername) ? addslashes($xusername) : '';
 $result = $db->sql_query("UPDATE `".$prefix."_nsnst_blocked_ips` SET `ip_addr`='$xIPs', `ip_long`='$xIPl', `user_id`='$xuser_id', `username`='$xusername', `user_agent`='$xuser_agent', `date`='$xdate', `notes`='$xnotes', `reason`='$xreason', `expires`='$xexpires', `c2c`='$xc2c' WHERE `ip_addr`='$old_xIPs'");
 if(!$result) { die("DB Error"); }
 $i = 1;

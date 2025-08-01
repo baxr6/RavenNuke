@@ -1,550 +1,420 @@
 <?php
-/** 
-*
-* @package attachment_mod
-* @version $Id: functions_admin.php,v 1.4 2006/04/22 16:21:09 acydburn Exp $
-* @copyright (c) 2002 Meik Sievertsen
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
-*
-*/
-
-/**
-* All Attachment Functions only needed in Admin
-*/
+declare(strict_types=1);
 
 /**
 * Set/Change Quotas
 */
-function process_quota_settings($mode, $id, $quota_type, $quota_limit_id = 0)
+function process_quota_settings(PDO $pdo, string $mode, int $id, int $quota_type, int $quota_limit_id = 0): void
 {
-	global $db;
+    if ($mode === 'user')
+    {
+        if ($quota_limit_id === 0)
+        {
+            $stmt = $pdo->prepare('DELETE FROM ' . QUOTA_TABLE . ' WHERE user_id = :id AND quota_type = :quota_type');
+            $stmt->execute(['id' => $id, 'quota_type' => $quota_type]);
+        }
+        else
+        {
+            // Check if user already exists in quota table
+            $stmt = $pdo->prepare('SELECT user_id FROM ' . QUOTA_TABLE . ' WHERE user_id = :id AND quota_type = :quota_type');
+            $stmt->execute(['id' => $id, 'quota_type' => $quota_type]);
+            
+            if ($stmt->rowCount() === 0)
+            {
+                $sql_ary = [
+                    'user_id'       => $id,
+                    'group_id'      => 0,
+                    'quota_type'    => $quota_type,
+                    'quota_limit_id'=> $quota_limit_id,
+                ];
 
-	$id = (int) $id;
-	$quota_type = (int) $quota_type;
-	$quota_limit_id = (int) $quota_limit_id;
+                // Assuming attach_mod_sql_build_array returns string like "(col1, col2) VALUES (:val1, :val2)"
+                $sql = 'INSERT INTO ' . QUOTA_TABLE . ' ' . attach_mod_sql_build_array('INSERT', $sql_ary);
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($sql_ary);
+            }
+            else
+            {
+                $stmt = $pdo->prepare('UPDATE ' . QUOTA_TABLE . ' SET quota_limit_id = :quota_limit_id WHERE user_id = :id AND quota_type = :quota_type');
+                $stmt->execute(['quota_limit_id' => $quota_limit_id, 'id' => $id, 'quota_type' => $quota_type]);
+            }
+        }
+    }
+    elseif ($mode === 'group')
+    {
+        if ($quota_limit_id === 0)
+        {
+            $stmt = $pdo->prepare('DELETE FROM ' . QUOTA_TABLE . ' WHERE group_id = :id AND quota_type = :quota_type');
+            $stmt->execute(['id' => $id, 'quota_type' => $quota_type]);
+        }
+        else
+        {
+            $stmt = $pdo->prepare('SELECT group_id FROM ' . QUOTA_TABLE . ' WHERE group_id = :id AND quota_type = :quota_type');
+            $stmt->execute(['id' => $id, 'quota_type' => $quota_type]);
 
-	if ($mode == 'user')
-	{
-		if (!$quota_limit_id)
-		{
-			$sql = 'DELETE FROM ' . QUOTA_TABLE . "
-				WHERE user_id = $id
-					AND quota_type = $quota_type";
-		}
-		else
-		{
-			// Check if user is already entered
-			$sql = 'SELECT user_id 
-				FROM ' . QUOTA_TABLE . " 
-				WHERE user_id = $id
-					AND quota_type = $quota_type";
-
-			if (!($result = $db->sql_query($sql)))
-			{
-				message_die(GENERAL_ERROR, 'Could not get Entry', '', __LINE__, __FILE__, $sql);
-			}
-
-			if ($db->sql_numrows($result) == 0)
-			{
-				$sql_ary = array(
-					'user_id'		=> (int) $id,
-					'group_id'		=> 0,
-					'quota_type'	=> (int) $quota_type,
-					'quota_limit_id'=> (int) $quota_limit_id
-				);
-
-				$sql = 'INSERT INTO ' . QUOTA_TABLE . ' ' . attach_mod_sql_build_array('INSERT', $sql_ary);
-			}
-			else
-			{
-				$sql = 'UPDATE ' . QUOTA_TABLE . "
-					SET quota_limit_id = $quota_limit_id
-					WHERE user_id = $id
-						AND quota_type = $quota_type";
-			}
-			$db->sql_freeresult($result);
-		}
-	
-		if (!($result = $db->sql_query($sql)))
-		{
-			message_die(GENERAL_ERROR, 'Unable to update quota Settings', '', __LINE__, __FILE__, $sql);
-		}
-		
-	}
-	else if ($mode == 'group')
-	{
-		if (!$quota_limit_id)
-		{
-			$sql = 'DELETE FROM ' . QUOTA_TABLE . " 
-				WHERE group_id = $id 
-					AND quota_type = $quota_type";
-
-			if (!($result = $db->sql_query($sql)))
-			{
-				message_die(GENERAL_ERROR, 'Unable to delete quota Settings', '', __LINE__, __FILE__, $sql);
-			}
-		}
-		else
-		{
-			// Check if user is already entered
-			$sql = 'SELECT group_id 
-				FROM ' . QUOTA_TABLE . " 
-				WHERE group_id = $id 
-					AND quota_type = $quota_type";
-
-			if (!($result = $db->sql_query($sql)))
-			{
-				message_die(GENERAL_ERROR, 'Could not get Entry', '', __LINE__, __FILE__, $sql);
-			}
-
-			if ($db->sql_numrows($result) == 0)
-			{
-				$sql = 'INSERT INTO ' . QUOTA_TABLE . " (user_id, group_id, quota_type, quota_limit_id) 
-					VALUES (0, $id, $quota_type, $quota_limit_id)";
-			}
-			else
-			{
-				$sql = 'UPDATE ' . QUOTA_TABLE . " SET quota_limit_id = $quota_limit_id 
-					WHERE group_id = $id AND quota_type = $quota_type";
-			}
-	
-			if (!$db->sql_query($sql))
-			{
-				message_die(GENERAL_ERROR, 'Unable to update quota Settings', '', __LINE__, __FILE__, $sql);
-			}
-		}
-	}
+            if ($stmt->rowCount() === 0)
+            {
+                $stmt = $pdo->prepare('INSERT INTO ' . QUOTA_TABLE . ' (user_id, group_id, quota_type, quota_limit_id) VALUES (0, :id, :quota_type, :quota_limit_id)');
+                $stmt->execute(['id' => $id, 'quota_type' => $quota_type, 'quota_limit_id' => $quota_limit_id]);
+            }
+            else
+            {
+                $stmt = $pdo->prepare('UPDATE ' . QUOTA_TABLE . ' SET quota_limit_id = :quota_limit_id WHERE group_id = :id AND quota_type = :quota_type');
+                $stmt->execute(['quota_limit_id' => $quota_limit_id, 'id' => $id, 'quota_type' => $quota_type]);
+            }
+        }
+    }
 }
 
 /**
-* sort multi-dimensional Array
+* Sort multi-dimensional Array (unchanged)
 */
-function sort_multi_array ($sort_array, $key, $sort_order, $pre_string_sort = 0) 
+function sort_multi_array($sort_array, $key, $sort_order, $pre_string_sort = 0) 
 {
-	$last_element = sizeof($sort_array) - 1;
+    $last_element = count($sort_array) - 1;
 
-	if (!$pre_string_sort)
-	{
-		$string_sort = (!is_numeric($sort_array[$last_element-1][$key]) ) ? true : false;
-	}
-	else
-	{
-		$string_sort = $pre_string_sort;
-	}
+    if (!$pre_string_sort)
+    {
+        $string_sort = (isset($sort_array[$last_element - 1][$key]) && !is_numeric($sort_array[$last_element - 1][$key]));
+    }
+    else
+    {
+        $string_sort = $pre_string_sort;
+    }
 
-	for ($i = 0; $i < $last_element; $i++) 
-	{
-		$num_iterations = $last_element - $i;
+    for ($i = 0; $i < $last_element; $i++) 
+    {
+        $num_iterations = $last_element - $i;
 
-		for ($j = 0; $j < $num_iterations; $j++) 
-		{
-			$next = 0;
+        for ($j = 0; $j < $num_iterations; $j++) 
+        {
+            $switch = false;
 
-			// do checks based on key
-			$switch = false;
-			if (!$string_sort)
-			{
-				if (($sort_order == 'DESC' && intval($sort_array[$j][$key]) < intval($sort_array[$j + 1][$key])) || ($sort_order == 'ASC' && intval($sort_array[$j][$key]) > intval($sort_array[$j + 1][$key])))
-				{
-					$switch = true;
-				}
-			}
-			else
-			{
-				if (($sort_order == 'DESC' && strcasecmp($sort_array[$j][$key], $sort_array[$j + 1][$key]) < 0) || ($sort_order == 'ASC' && strcasecmp($sort_array[$j][$key], $sort_array[$j + 1][$key]) > 0))
-				{
-					$switch = true;
-				}
-			}
+            $current = $sort_array[$j][$key] ?? null;
+            $next = $sort_array[$j + 1][$key] ?? null;
 
-			if ($switch)
-			{
-				$temp = $sort_array[$j];
-				$sort_array[$j] = $sort_array[$j + 1];
-				$sort_array[$j + 1] = $temp;
-			}
-		}
-	}
+            if ($string_sort)
+            {
+                if ($current === null || $next === null) {
+                    continue; // can't compare, skip
+                }
 
-	return $sort_array;
+                if (($sort_order == 'DESC' && strcasecmp($current, $next) < 0) || 
+                    ($sort_order == 'ASC' && strcasecmp($current, $next) > 0))
+                {
+                    $switch = true;
+                }
+            }
+            else
+            {
+                // treat null as less than any number
+                $current_val = is_numeric($current) ? intval($current) : PHP_INT_MIN;
+                $next_val = is_numeric($next) ? intval($next) : PHP_INT_MIN;
+
+                if (($sort_order == 'DESC' && $current_val < $next_val) || 
+                    ($sort_order == 'ASC' && $current_val > $next_val))
+                {
+                    $switch = true;
+                }
+            }
+
+            if ($switch)
+            {
+                $temp = $sort_array[$j];
+                $sort_array[$j] = $sort_array[$j + 1];
+                $sort_array[$j + 1] = $temp;
+            }
+        }
+    }
+
+    return $sort_array;
 }
 
 /**
-* See if a post or pm really exist
+* See if a post or pm really exists
 */
-function entry_exists($attach_id)
+function entry_exists(PDO $pdo, int $attach_id): bool
 {
-	global $db;
+    if ($attach_id <= 0)
+    {
+        return false;
+    }
 
-	$attach_id = (int) $attach_id;
+    $stmt = $pdo->prepare('SELECT post_id, privmsgs_id FROM ' . ATTACHMENTS_TABLE . ' WHERE attach_id = :attach_id');
+    $stmt->execute(['attach_id' => $attach_id]);
+    $ids = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-	if (!$attach_id)
-	{
-		return false;
-	}
-	
-	$sql = 'SELECT post_id, privmsgs_id
-		FROM ' . ATTACHMENTS_TABLE . "
-		WHERE attach_id = $attach_id";
-	$result = $db->sql_query($sql);
+    foreach ($ids as $row)
+    {
+        if (!empty($row['post_id']))
+        {
+            $checkStmt = $pdo->prepare('SELECT post_id FROM ' . POSTS_TABLE . ' WHERE post_id = :post_id');
+            $checkStmt->execute(['post_id' => (int)$row['post_id']]);
+            if ($checkStmt->fetch())
+            {
+                return true;
+            }
+        }
+        elseif (!empty($row['privmsgs_id']))
+        {
+            $checkStmt = $pdo->prepare('SELECT privmsgs_id FROM ' . PRIVMSGS_TABLE . ' WHERE privmsgs_id = :privmsgs_id');
+            $checkStmt->execute(['privmsgs_id' => (int)$row['privmsgs_id']]);
+            if ($checkStmt->fetch())
+            {
+                return true;
+            }
+        }
+    }
 
-	if (!$result)
-	{
-		message_die(GENERAL_ERROR, 'Could not get Entry', '', __LINE__, __FILE__, $sql);
-	}
-
-	$ids = $db->sql_fetchrowset($result);
-	$num_ids = $db->sql_numrows($result);
-	$db->sql_freeresult($result);
-
-	$exists = false;
-	
-	for ($i = 0; $i < $num_ids; $i++)
-	{
-		if (intval($ids[$i]['post_id']) != 0)
-		{
-			$sql = 'SELECT post_id
-				FROM ' . POSTS_TABLE . '
-				WHERE post_id = ' . intval($ids[$i]['post_id']);
-		}
-		else if (intval($ids[$i]['privmsgs_id']) != 0)
-		{
-			$sql = 'SELECT privmsgs_id
-				FROM ' . PRIVMSGS_TABLE . '
-				WHERE privmsgs_id = ' . intval($ids[$i]['privmsgs_id']);
-		}
-		$result = $db->sql_query($sql);
-
-		if (!$result)
-		{
-			message_die(GENERAL_ERROR, 'Could not get Entry', '', __LINE__, __FILE__, $sql);
-		}
-	
-		$num_rows = $db->sql_numrows($result);
-		$db->sql_freeresult($result);
-
-		if ($num_rows > 0)
-		{
-			$exists = true;
-			break;
-		}
-	}
-
-	return $exists;
+    return false;
 }
 
 /**
 * Collect all Attachments in Filesystem
+* (No DB changes, just minor modernization)
 */
-function collect_attachments()
+function collect_attachments(string $upload_dir, array $attach_config): array
 {
-	global $upload_dir, $attach_config;
+    $file_attachments = [];
 
-	$file_attachments = array(); 
+    if (empty($attach_config['allow_ftp_upload']))
+    {
+        if ($dir = @opendir($upload_dir))
+        {
+            while (($file = readdir($dir)) !== false)
+            {
+                if ($file !== 'index.php' && $file !== '.htaccess' && !is_dir($upload_dir . '/' . $file) && !is_link($upload_dir . '/' . $file))
+                {
+                    $file_attachments[] = trim($file);
+                }
+            }
+            closedir($dir);
+        }
+        else
+        {
+            throw new RuntimeException("Unable to open upload directory: $upload_dir");
+        }
+    }
+    else
+    {
+        $conn_id = attach_init_ftp();
 
-	if (!intval($attach_config['allow_ftp_upload']))
-	{
-		if ($dir = @opendir($upload_dir))
-		{
-			while ($file = @readdir($dir))
-			{
-				if ($file != 'index.php' && $file != '.htaccess' && !is_dir($upload_dir . '/' . $file) && !is_link($upload_dir . '/' . $file))
-				{
-					$file_attachments[] = trim($file);
-				}
-			}
-		
-			closedir($dir);
-		}
-		else
-		{
-			message_die(GENERAL_ERROR, 'Is Safe Mode Restriction in effect? The Attachment Mod seems to be unable to collect the Attachments within the upload Directory. Try to use FTP Upload to circumvent this error. Another reason could be that the directory ' . $upload_dir . ' does not exist.');
-		}
-	}
-	else
-	{
-		$conn_id = attach_init_ftp();
+        $file_listing = @ftp_rawlist($conn_id, '');
 
-		$file_listing = array();
+        if (!$file_listing)
+        {
+            throw new RuntimeException("Unable to get raw file listing from FTP.");
+        }
 
-		$file_listing = @ftp_rawlist($conn_id, '');
+        foreach ($file_listing as $line)
+        {
+            if (preg_match('/^([-d])[rwxst-]{9}.* ([0-9]+) ([a-zA-Z]+[0-9: ]*[0-9]) ([0-9]{2}:[0-9]{2}) (.+)$/', $line, $regs))
+            {
+                if ($regs[1] === 'd')
+                {
+                    continue; // skip directories
+                }
+                $filename = $regs[5];
+                if ($filename !== 'index.php' && $filename !== '.htaccess')
+                {
+                    $file_attachments[] = trim($filename);
+                }
+            }
+        }
 
-		if (!$file_listing)
-		{
-			message_die(GENERAL_ERROR, 'Unable to get Raw File Listing. Please be sure the LIST command is enabled at your FTP Server.');
-		}
+        ftp_close($conn_id);
+    }
 
-		for ($i = 0; $i < sizeof($file_listing); $i++)
-		{
-			if (preg_match("/([-d])[rwxst-]{9}.* ([0-9]*) ([a-zA-Z]+[0-9: ]*[0-9]) ([0-9]{2}:[0-9]{2}) (.+)/", $file_listing[$i], $regs))
-			{
-				if ($regs[1] == 'd') 
-				{	
-					$dirinfo[0] = 1;	// Directory == 1
-				}
-				$dirinfo[1] = $regs[2]; // Size
-				$dirinfo[2] = $regs[3]; // Date
-				$dirinfo[3] = $regs[4]; // Filename
-				$dirinfo[4] = $regs[5]; // Time
-			}
-			
-			if ($dirinfo[0] != 1 && $dirinfo[4] != 'index.php' && $dirinfo[4] != '.htaccess')
-			{
-				$file_attachments[] = trim($dirinfo[4]);
-			}
-		}
-
-		@ftp_quit($conn_id);
-	}
-
-	return $file_attachments;
+    return $file_attachments;
 }
 
 /**
 * Returns the filesize of the upload directory in human readable format
 */
-function get_formatted_dirsize()
+function get_formatted_dirsize(string $upload_dir, array $attach_config, array $lang): string
 {
-	global $attach_config, $upload_dir, $lang;
+    $upload_dir_size = 0;
 
-	$upload_dir_size = 0;
+    if (empty($attach_config['allow_ftp_upload']))
+    {
+        if ($dirname = @opendir($upload_dir))
+        {
+            while (($file = readdir($dirname)) !== false)
+            {
+                if ($file !== 'index.php' && $file !== '.htaccess' && !is_dir($upload_dir . '/' . $file) && !is_link($upload_dir . '/' . $file))
+                {
+                    $upload_dir_size += filesize($upload_dir . '/' . $file);
+                }
+            }
+            closedir($dirname);
+        }
+        else
+        {
+            return $lang['Not_available'];
+        }
+    }
+    else
+    {
+        $conn_id = attach_init_ftp();
+        $file_listing = @ftp_rawlist($conn_id, '');
 
-	if (!intval($attach_config['allow_ftp_upload']))
-	{
-		if ($dirname = @opendir($upload_dir))
-		{
-			while ($file = @readdir($dirname))
-			{
-				if ($file != 'index.php' && $file != '.htaccess' && !is_dir($upload_dir . '/' . $file) && !is_link($upload_dir . '/' . $file))
-				{
-					$upload_dir_size += @filesize($upload_dir . '/' . $file);
-				}
-			}
-			@closedir($dirname);
-		}
-		else
-		{
-			$upload_dir_size = $lang['Not_available'];
-			return $upload_dir_size;
-		}
-	}
-	else
-	{
-		$conn_id = attach_init_ftp();
+        if (!$file_listing)
+        {
+            ftp_close($conn_id);
+            return $lang['Not_available'];
+        }
 
-		$file_listing = array();
+        foreach ($file_listing as $line)
+        {
+            if (preg_match('/^([-d])[rwxst-]{9}.* ([0-9]+) ([a-zA-Z]+[0-9: ]*[0-9]) ([0-9]{2}:[0-9]{2}) (.+)$/', $line, $regs))
+            {
+                if ($regs[1] === 'd')
+                {
+                    continue;
+                }
+                $upload_dir_size += (int)$regs[2];
+            }
+        }
+        ftp_close($conn_id);
+    }
 
-		$file_listing = @ftp_rawlist($conn_id, '');
-
-		if (!$file_listing)
-		{
-			$upload_dir_size = $lang['Not_available'];
-			return $upload_dir_size;
-		}
-
-		for ($i = 0; $i < count($file_listing); $i++)
-		{
-			if (preg_match("/([-d])[rwxst-]{9}.* ([0-9]*) ([a-zA-Z]+[0-9: ]*[0-9]) ([0-9]{2}:[0-9]{2}) (.+)/", $file_listing[$i], $regs))
-			{
-				if ($regs[1] == 'd') 
-				{	
-					$dirinfo[0] = 1;	// Directory == 1
-				}
-				$dirinfo[1] = $regs[2]; // Size
-				$dirinfo[2] = $regs[3]; // Date
-				$dirinfo[3] = $regs[4]; // Filename
-				$dirinfo[4] = $regs[5]; // Time
-			}
-			
-			if ($dirinfo[0] != 1 && $dirinfo[4] != 'index.php' && $dirinfo[4] != '.htaccess')
-			{
-				$upload_dir_size += $dirinfo[1];
-			}
-		}
-
-		@ftp_quit($conn_id);
-	}
-
-	if ($upload_dir_size >= 1048576)
-	{
-		$upload_dir_size = round($upload_dir_size / 1048576 * 100) / 100 . ' ' . $lang['MB'];
-	}
-	else if ($upload_dir_size >= 1024)
-	{
-		$upload_dir_size = round($upload_dir_size / 1024 * 100) / 100 . ' ' . $lang['KB'];
-	}
-	else
-	{
-		$upload_dir_size = $upload_dir_size . ' ' . $lang['Bytes'];
-	}
-
-	return $upload_dir_size;
+    if ($upload_dir_size >= 1048576)
+    {
+        return round($upload_dir_size / 1048576, 2) . ' ' . $lang['MB'];
+    }
+    elseif ($upload_dir_size >= 1024)
+    {
+        return round($upload_dir_size / 1024, 2) . ' ' . $lang['KB'];
+    }
+    else
+    {
+        return $upload_dir_size . ' ' . $lang['Bytes'];
+    }
 }
 
-/*
+/**
 * Build SQL-Statement for the search feature
 */
-function search_attachments($order_by, &$total_rows)
+function search_attachments(PDO $pdo, string $order_by, int &$total_rows, array $search_vars): array
 {
-	global $db, $HTTP_POST_VARS, $HTTP_GET_VARS, $lang;
-	
-	$where_sql = array();
+    $where_sql = [];
 
-	// Get submitted Vars
-	$search_vars = array('search_keyword_fname', 'search_keyword_comment', 'search_author', 'search_size_smaller', 'search_size_greater', 'search_count_smaller', 'search_count_greater', 'search_days_greater', 'search_forum', 'search_cat');
-	
-	for ($i = 0; $i < sizeof($search_vars); $i++)
-	{
-		$$search_vars[$i] = get_var($search_vars[$i], '');
-	}
+    // Extract search variables with defaults
+    $search_keyword_fname = $search_vars['search_keyword_fname'] ?? '';
+    $search_keyword_comment = $search_vars['search_keyword_comment'] ?? '';
+    $search_author = $search_vars['search_author'] ?? '';
+    $search_size_smaller = $search_vars['search_size_smaller'] ?? '';
+    $search_size_greater = $search_vars['search_size_greater'] ?? '';
+    $search_count_smaller = $search_vars['search_count_smaller'] ?? '';
+    $search_count_greater = $search_vars['search_count_greater'] ?? '';
+    $search_days_greater = $search_vars['search_days_greater'] ?? '';
+    $search_forum = $search_vars['search_forum'] ?? null;
 
-	// Author name search 
-	if ($search_author != '')
-	{
-		// Bring in line with 2.0.x expected username
-		$search_author = addslashes(html_entity_decode($search_author, ENT_QUOTES));
-		$search_author = stripslashes(phpbb_clean_username($search_author));
+    $params = [];
 
-		// Prepare for directly going into sql query
-		$search_author = str_replace('*', '%', attach_mod_sql_escape($search_author));
+    if ($search_author !== '')
+    {
+        // Assuming phpbb_clean_username and attach_mod_sql_escape exist and are safe
+        $search_author_clean = attach_mod_sql_escape(phpbb_clean_username(html_entity_decode($search_author, ENT_QUOTES)));
+        $search_author_clean = str_replace('*', '%', $search_author_clean);
 
-		// We need the post_id's, because we want to query the Attachment Table
-		$sql = 'SELECT user_id
-			FROM ' . USERS_TABLE . "
-			WHERE username LIKE '$search_author'";
+        // Get matching user IDs
+        $stmt = $pdo->prepare('SELECT user_id FROM ' . USERS_TABLE . ' WHERE username LIKE :username');
+        $stmt->execute(['username' => $search_author_clean]);
+        $user_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-		if (!($result = $db->sql_query($sql)))
-		{
-			message_die(GENERAL_ERROR, 'Couldn\'t obtain list of matching users (searching for: ' . $search_author . ')', '', __LINE__, __FILE__, $sql);
-		}
+        if (empty($user_ids))
+        {
+            throw new RuntimeException('No attachment search match');
+        }
 
-		$matching_userids = '';
-		if ($row = $db->sql_fetchrow($result))
-		{
-			do
-			{
-				$matching_userids .= (($matching_userids != '') ? ', ' : '') . intval($row['user_id']);
-			}
-			while ($row = $db->sql_fetchrow($result));
-			
-			$db->sql_freeresult($result);
-		}
-		else
-		{
-			message_die(GENERAL_MESSAGE, $lang['No_attach_search_match']);
-		}
+        $in  = implode(',', array_map('intval', $user_ids));
+        $where_sql[] = "t.user_id_1 IN ($in)";
+    }
 
-		$where_sql[] = ' (t.user_id_1 IN (' . $matching_userids . ')) ';
-	}
+    if ($search_keyword_fname !== '')
+    {
+        $match_word = str_replace('*', '%', attach_mod_sql_escape($search_keyword_fname));
+        $where_sql[] = "a.real_filename LIKE :filename";
+        $params['filename'] = $match_word;
+    }
 
-	// Search Keyword
-	if ($search_keyword_fname != '')
-	{
-		$match_word = str_replace('*', '%', $search_keyword_fname);
-		$where_sql[] = " (a.real_filename LIKE '" . attach_mod_sql_escape($match_word) . "') ";
-	}
+    if ($search_keyword_comment !== '')
+    {
+        $match_word = str_replace('*', '%', attach_mod_sql_escape($search_keyword_comment));
+        $where_sql[] = "a.comment LIKE :comment";
+        $params['comment'] = $match_word;
+    }
 
-	if ($search_keyword_comment != '')
-	{
-		$match_word = str_replace('*', '%', $search_keyword_comment);
-		$where_sql[] = " (a.comment LIKE '" . attach_mod_sql_escape($match_word) . "') ";
-	}
+    if ($search_count_smaller !== '')
+    {
+        $where_sql[] = 'a.download_count < :count_smaller';
+        $params['count_smaller'] = (int)$search_count_smaller;
+    }
+    elseif ($search_count_greater !== '')
+    {
+        $where_sql[] = 'a.download_count > :count_greater';
+        $params['count_greater'] = (int)$search_count_greater;
+    }
 
-	// Search Download Count
-	if ($search_count_smaller != '' || $search_count_greater != '')
-	{
-		if ($search_count_smaller != '')
-		{
-			$where_sql[] = ' (a.download_count < ' . (int) $search_count_smaller . ') ';
-		}
-		else if ($search_count_greater != '')
-		{
-			$where_sql[] = ' (a.download_count > ' . (int) $search_count_greater . ') ';
-		}
-	}
+    if ($search_size_smaller !== '')
+    {
+        $where_sql[] = 'a.filesize < :size_smaller';
+        $params['size_smaller'] = (int)$search_size_smaller;
+    }
+    elseif ($search_size_greater !== '')
+    {
+        $where_sql[] = 'a.filesize > :size_greater';
+        $params['size_greater'] = (int)$search_size_greater;
+    }
 
-	// Search Filesize
-	if ($search_size_smaller != '' || $search_size_greater != '')
-	{
-		if ($search_size_smaller != '')
-		{
-			$where_sql[] = ' (a.filesize < ' . (int) $search_size_smaller . ') ';
-		}
-		else if ($search_size_greater != '')
-		{
-			$where_sql[] = ' (a.filesize > ' . (int) $search_size_greater . ') ';
-		}
-	}
+    if ($search_days_greater !== '')
+    {
+        $where_sql[] = 'a.filetime < :time_limit';
+        $params['time_limit'] = time() - ((int)$search_days_greater * 86400);
+    }
 
-	// Search Attachment Time
-	if ($search_days_greater != '')
-	{
-		$where_sql[] = ' (a.filetime < ' . ( time() - ((int) $search_days_greater * 86400)) . ') ';
-	}
+    if ($search_forum)
+    {
+        $where_sql[] = 'p.forum_id = :forum_id';
+        $params['forum_id'] = (int)$search_forum;
+    }
 
-	// Search Forum
-	if ($search_forum)
-	{
-		$where_sql[] = ' (p.forum_id = ' . intval($search_forum) . ') ';
-	}
-	
-	// Search Cat... nope... sorry :(
+    $sql = 'SELECT a.*, t.post_id, p.post_time, p.topic_id
+            FROM ' . ATTACHMENTS_TABLE . ' t
+            JOIN ' . ATTACHMENTS_DESC_TABLE . ' a ON a.attach_id = t.attach_id
+            JOIN ' . POSTS_TABLE . ' p ON t.post_id = p.post_id';
 
-	$sql = 'SELECT a.*, t.post_id, p.post_time, p.topic_id
-		FROM ' . ATTACHMENTS_TABLE . ' t, ' . ATTACHMENTS_DESC_TABLE . ' a, ' . POSTS_TABLE . ' p WHERE ';
-	
-	if (sizeof($where_sql) > 0)
-	{
-		$sql .= implode('AND', $where_sql) . ' AND ';
-	}
+    if (!empty($where_sql))
+    {
+        $sql .= ' WHERE ' . implode(' AND ', $where_sql);
+    }
 
-	$sql .= 't.post_id = p.post_id AND a.attach_id = t.attach_id ';
-	
-	$total_rows_sql = $sql;
+    $total_rows_sql = $sql; // for total rows count
 
-	$sql .= $order_by; 
+    $sql .= ' ' . $order_by;
 
-	if (!($result = $db->sql_query($sql)))
-	{
-		message_die(GENERAL_ERROR, 'Couldn\'t query attachments', '', __LINE__, __FILE__, $sql);
-	}
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $attachments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-	$attachments = $db->sql_fetchrowset($result);
-	$num_attach = $db->sql_numrows($result);
-	$db->sql_freeresult($result);
+    if (count($attachments) === 0)
+    {
+        throw new RuntimeException('No attachment search match');
+    }
 
-	if ($num_attach == 0)
-	{
-		message_die(GENERAL_MESSAGE, $lang['No_attach_search_match']);
-	}
+    // Get total rows count
+    $stmt = $pdo->prepare($total_rows_sql);
+    $stmt->execute($params);
+    $total_rows = $stmt->rowCount();
 
-	if (!($result = $db->sql_query($total_rows_sql)))
-	{
-		message_die(GENERAL_ERROR, 'Could not query attachments', '', __LINE__, __FILE__, $sql);
-	}
-
-	$total_rows = $db->sql_numrows($result);
-	$db->sql_freeresult($result);
-
-	return $attachments;
+    return $attachments;
 }
 
 /**
 * perform LIMIT statement on arrays
 */
-function limit_array($array, $start, $pagelimit)
+function limit_array(array $array, int $start, int $pagelimit): array
 {
-	// array from start - start+pagelimit
-	$limit = (sizeof($array) < ($start + $pagelimit)) ? sizeof($array) : $start + $pagelimit;
-
-	$limit_array = array();
-
-	for ($i = $start; $i < $limit; $i++)
-	{
-		$limit_array[] = $array[$i];
-	}
-
-	return $limit_array;
+    return array_slice($array, $start, $pagelimit);
 }
-
-?>

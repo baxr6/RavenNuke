@@ -207,7 +207,7 @@ $submit_change = (isset($HTTP_POST_VARS['submit_change'])) ? TRUE : FALSE;
 $delete = (isset($HTTP_POST_VARS['delete'])) ? TRUE : FALSE;
 $delete_id_list = get_var('delete_id_list', array(0));
 
-$confirm = ($HTTP_POST_VARS['confirm']) ? TRUE : FALSE;
+$confirm = !empty($_POST['confirm']);
 
 if ($confirm && sizeof($delete_id_list) > 0)
 {
@@ -313,7 +313,8 @@ if ($view == 'stats')
 		'body' => 'admin/attach_cp_body.tpl')
 	);
 
-	$upload_dir_size = get_formatted_dirsize();
+	// Fixed: Added the required 3 parameters to get_formatted_dirsize()
+	$upload_dir_size = get_formatted_dirsize($attach_config['upload_path'], $attach_config, $lang);
 
 	if ($attach_config['attachment_quota'] >= 1048576)
 	{
@@ -414,7 +415,6 @@ if ($view == 'stats')
 	);
 
 }
-
 // Search
 if ($view == 'search')
 {

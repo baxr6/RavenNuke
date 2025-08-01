@@ -136,58 +136,46 @@ while ($row = $db->sql_fetchrow($result))
 			$new_attach[$config_name] = ( $pm_size == 'kb' ) ? round($new_attach[$config_name] * 1024) : ( ($pm_size == 'mb') ? round($new_attach[$config_name] * 1048576) : $new_attach[$config_name] );
 		}
 
-		if ($config_name == 'ftp_server' || $config_name == 'ftp_path' || $config_name == 'download_path')
-		{
-			$value = trim($new_attach[$config_name]);
+if (in_array($config_name, ['ftp_server', 'ftp_path', 'download_path'], true)) {
+    $value = trim($new_attach[$config_name] ?? '');
 
-			if ($value[strlen($value)-1] == '/')
-			{
-				$value[strlen($value)-1] = ' ';
-			}
+    if (substr($value, -1) === '/') {
+        $value = rtrim($value, '/') . ' '; // replace trailing slash with space
+    }
 
-			$new_attach[$config_name] = trim($value);
-		}
-
-		if ($config_name == 'max_filesize')
-		{
-			$old_size = $attach_config[$config_name];
-			$new_size = $new_attach[$config_name];
-
-			if ($old_size != $new_size)
-			{
-				// See, if we have a similar value of old_size in Mime Groups. If so, update these values.
-				$sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . '
-					SET max_filesize = ' . (int) $new_size . '
-					WHERE max_filesize = ' . (int) $old_size;
-
-				if (!($result_2 = $db->sql_query($sql)))
-				{
-					message_die(GENERAL_ERROR, 'Could not update Extension Group informations', '', __LINE__, __FILE__, $sql);
-				}
-			}
-
-			$sql = "UPDATE " . ATTACH_CONFIG_TABLE . "
-				SET	config_value = '" . attach_mod_sql_escape($new_attach[$config_name]) . "'
-				WHERE config_name = '" . attach_mod_sql_escape($config_name) . "'";
-		}
-		else
-		{
-			$sql = "UPDATE " . ATTACH_CONFIG_TABLE . "
-				SET	config_value = '" . attach_mod_sql_escape($new_attach[$config_name]) . "'
-				WHERE config_name = '" . attach_mod_sql_escape($config_name) . "'";
-		}
-
-		if (!$db->sql_query($sql))
-		{
-			message_die(GENERAL_ERROR, 'Failed to update attachment configuration for ' . $config_name, '', __LINE__, __FILE__, $sql);
-		}
-
-		if ($config_name == 'max_filesize' || $config_name == 'attachment_quota' || $config_name == 'max_filesize_pm')
-		{
-			$new_attach[$config_name] = $old;
-		}
-	}
+    $new_attach[$config_name] = trim($value);
 }
+
+if ($config_name === 'max_filesize') {
+    $old_size = (int) ($attach_config[$config_name] ?? 0);
+    $new_size = (int) ($new_attach[$config_name] ?? 0);
+
+    if ($old_size !== $new_size) {
+        // Update Extension Groups using old size
+        $sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . '
+                SET max_filesize = ' . $new_size . '
+                WHERE max_filesize = ' . $old_size;
+
+        if (!$db->sql_query($sql)) {
+            message_die(GENERAL_ERROR, 'Could not update Extension Group information', '', __LINE__, __FILE__, $sql);
+        }
+    }
+}
+
+// Common config update for all cases
+$sql = "UPDATE " . ATTACH_CONFIG_TABLE . "
+        SET config_value = '" . attach_mod_sql_escape($new_attach[$config_name] ?? '') . "'
+        WHERE config_name = '" . attach_mod_sql_escape($config_name) . "'";
+
+if (!$db->sql_query($sql)) {
+    message_die(GENERAL_ERROR, 'Failed to update attachment configuration for ' . $config_name, '', __LINE__, __FILE__, $sql);
+}
+
+// Restore old values for specific configs
+if (in_array($config_name, ['max_filesize', 'attachment_quota', 'max_filesize_pm'], true)) {
+    $new_attach[$config_name] = $old;
+}
+	}}
 $db->sql_freeresult($result);
 
 $cache_dir = $phpbb_root_path . '/cache';
@@ -401,7 +389,7 @@ if ($check_upload)
 // Management
 if ($submit && $mode == 'manage')
 {
-	if (!$error)
+	if (!empty($error))
 	{
 		message_die(GENERAL_MESSAGE, $lang['Attach_config_updated'] . '<br /><br />' . sprintf($lang['Click_return_attach_config'], '<a href="' . append_sid("admin_attachments.$phpEx?mode=manage") . '">', '</a>') . '<br /><br />' . sprintf($lang['Click_return_admin_index'], '<a href="' . append_sid("index.$phpEx?pane=right") . '">', '</a>'));
 	}
@@ -578,28 +566,29 @@ if ($mode == 'shadow')
 		'body' => 'admin/attach_shadow.tpl')
 	);
 
-	$shadow_attachments = array();
-	$shadow_row = array();
+// Initialize required arrays
+$shadow_attachments = [];
+$shadow_row = [];
+$table_attachments = [];
+$assign_attachments = [];
+$file_attachments = [];
 
-	$template->assign_vars(array(
-		'L_SHADOW_TITLE'	=> $lang['Shadow_attachments'],
-		'L_SHADOW_EXPLAIN'	=> $lang['Shadow_attachments_explain'],
-		'L_EXPLAIN_FILE'	=> $lang['Shadow_attachments_file_explain'],
-		'L_EXPLAIN_ROW'		=> $lang['Shadow_attachments_row_explain'],
-		'L_ATTACHMENT'		=> $lang['Attachment'],
-		'L_COMMENT'			=> $lang['File_comment'],
-		'L_DELETE'			=> $lang['Delete'],
-		'L_DELETE_MARKED'	=> $lang['Delete_marked'],
-		'L_MARK_ALL'		=> $lang['Mark_all'],
-		'L_UNMARK_ALL'		=> $lang['Unmark_all'],
+// Assign language variables and form action to the template
+$template->assign_vars([
+    'L_SHADOW_TITLE'       => $lang['Shadow_attachments'],
+    'L_SHADOW_EXPLAIN'     => $lang['Shadow_attachments_explain'],
+    'L_EXPLAIN_FILE'       => $lang['Shadow_attachments_file_explain'],
+    'L_EXPLAIN_ROW'        => $lang['Shadow_attachments_row_explain'],
+    'L_ATTACHMENT'         => $lang['Attachment'],
+    'L_COMMENT'            => $lang['File_comment'],
+    'L_DELETE'             => $lang['Delete'],
+    'L_DELETE_MARKED'      => $lang['Delete_marked'],
+    'L_MARK_ALL'           => $lang['Mark_all'],
+    'L_UNMARK_ALL'         => $lang['Unmark_all'],
 
-		'S_HIDDEN'			=> $hidden,
-		'S_ATTACH_ACTION'	=> append_sid('admin_attachments.' . $phpEx . '?mode=shadow'))
-	);
-
-	$table_attachments = array();
-	$assign_attachments = array();
-	$file_attachments = array();
+    'S_HIDDEN'             => $hidden ?? '',
+    'S_ATTACH_ACTION'      => append_sid('admin_attachments.' . $phpEx . '?mode=shadow')
+]);
 
 	// collect all attachments in attach-table
 	$sql = 'SELECT attach_id, physical_filename, comment
@@ -681,65 +670,67 @@ if ($mode == 'shadow')
 		}
 	}
 
-	if (!is_array($table_attachments['attach_id'])) {
-		$table_attachments['attach_id'] = array();
-	}
+	// Ensure 'attach_id' is initialized
+if (!isset($table_attachments['attach_id']) || !is_array($table_attachments['attach_id'])) {
+    $table_attachments['attach_id'] = [];
+}
 
-	// Go through the Database and get those Files not stored at the Filespace
-	for ($i = 0; $i < $count_attach_ids; $i++)
-	{
-		if ($table_attachments['physical_filename'][$i] != '')
-		{
-			if ( !in_array(trim($table_attachments['physical_filename'][$i]), $file_attachments))
-			{
-				$shadow_row['attach_id'][] = $table_attachments['attach_id'][$i];
-				$shadow_row['physical_filename'][] = trim($table_attachments['physical_filename'][$i]);
-				$shadow_row['comment'][] = $table_attachments['comment'][$i];
+// Find files not present in the physical file space
+$count_attach_ids = isset($table_attachments['attach_id']) && is_array($table_attachments['attach_id'])
+    ? count($table_attachments['attach_id'])
+    : 0;
 
-				// Delete this entry from the table_attachments, to not interfere with the next step
-				$table_attachments['attach_id'][$i] = 0;
-				$table_attachments['physical_filename'][$i] = '';
-				$table_attachments['comment'][$i] = '';
-			}
-		}
-	}
+for ($i = 0; $i < $count_attach_ids; $i++) {
+    $filename = trim($table_attachments['physical_filename'][$i] ?? '');
 
-	// Now look at the missing posts and PM's
-	for ($i = 0; $i < count($table_attachments['attach_id']); $i++)
-	{
-		if ($table_attachments['attach_id'][$i])
-		{
-			if (!entry_exists($table_attachments['attach_id'][$i]))
-			{
-				$shadow_row['attach_id'][] = $table_attachments['attach_id'][$i];
-				$shadow_row['physical_filename'][] = trim($table_attachments['physical_filename'][$i]);
-				$shadow_row['comment'][] = $table_attachments['comment'][$i];
-			}
-		}
-	}
+    if ($filename !== '') {
+        if (!in_array($filename, $file_attachments, true)) {
+            $shadow_row['attach_id'][]          = $table_attachments['attach_id'][$i] ?? 0;
+            $shadow_row['physical_filename'][]  = $filename;
+            $shadow_row['comment'][]            = $table_attachments['comment'][$i] ?? '';
 
-	for ($i = 0; $i < count($shadow_attachments); $i++)
-	{
-		$template->assign_block_vars('file_shadow_row', array(
-			'ATTACH_ID'			=> $shadow_attachments[$i],
-			'ATTACH_FILENAME'	=> $shadow_attachments[$i],
-			'ATTACH_COMMENT'	=> $lang['No_file_comment_available'],
-			'U_ATTACHMENT'		=> $upload_dir . '/' . basename($shadow_attachments[$i]))
-		);
-	}
+            // Clear entry to avoid conflicts in the next step
+            $table_attachments['attach_id'][$i]          = 0;
+            $table_attachments['physical_filename'][$i]  = '';
+            $table_attachments['comment'][$i]            = '';
+        }
+    }
+}
 
-	if (!is_array($shadow_row['attach_id'])) {
-		$shadow_row['attach_id'] = array();
-	}
+// Find missing DB entries for attachments
+foreach ($table_attachments['attach_id'] as $i => $attach_id) {
+    if ($attach_id && !entry_exists($attach_id)) {
+        $shadow_row['attach_id'][]          = $attach_id;
+        $shadow_row['physical_filename'][]  = trim($table_attachments['physical_filename'][$i] ?? '');
+        $shadow_row['comment'][]            = $table_attachments['comment'][$i] ?? '';
+    }
+}
 
-	for ($i = 0; $i < count($shadow_row['attach_id']); $i++)
-	{
-		$template->assign_block_vars('table_shadow_row', array(
-			'ATTACH_ID'			=> $shadow_row['attach_id'][$i],
-			'ATTACH_FILENAME'	=> basename($shadow_row['physical_filename'][$i]),
-			'ATTACH_COMMENT'	=> (trim($shadow_row['comment'][$i]) == '') ? $lang['No_file_comment_available'] : trim($shadow_row['comment'][$i]))
-		);
-	}
+// Show any orphaned files found on disk (not in DB)
+foreach ($shadow_attachments as $attachment) {
+    $template->assign_block_vars('file_shadow_row', [
+        'ATTACH_ID'        => $attachment,
+        'ATTACH_FILENAME'  => basename($attachment),
+        'ATTACH_COMMENT'   => $lang['No_file_comment_available'],
+        'U_ATTACHMENT'     => $upload_dir . '/' . basename($attachment)
+    ]);
+}
+
+// Ensure 'attach_id' is defined in shadow row
+if (!isset($shadow_row['attach_id']) || !is_array($shadow_row['attach_id'])) {
+    $shadow_row['attach_id'] = [];
+}
+
+// Show DB references that have no corresponding post/PM
+foreach ($shadow_row['attach_id'] as $i => $attach_id) {
+    $comment = trim($shadow_row['comment'][$i] ?? '');
+    $template->assign_block_vars('table_shadow_row', [
+        'ATTACH_ID'        => $attach_id,
+        'ATTACH_FILENAME'  => basename($shadow_row['physical_filename'][$i] ?? ''),
+        'ATTACH_COMMENT'   => ($comment === '') ? $lang['No_file_comment_available'] : $comment
+    ]);
+}
+
 }
 
 if ($submit && $mode == 'cats')
@@ -1444,7 +1435,8 @@ if ($mode == 'quota' && $e_mode == 'view_quota')
 }
 
 
-if ($error)
+if (!empty($error))
+
 {
 	$template->set_filenames(array(
 		'reg_header' => 'error_body.tpl')

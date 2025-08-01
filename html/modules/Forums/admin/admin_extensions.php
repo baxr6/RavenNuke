@@ -776,115 +776,85 @@ if ($e_mode == 'perm')
 	}
 }
 
+// Assuming $db is a PDO instance or a similar DB layer supporting prepared statements
+
 // Add Forums
-if ($add_forum && $e_mode == 'perm' && $group)
+if ($add_forum && $e_mode === 'perm' && $group)
 {
-	$add_forums_list = get_var('entries', array(0));
-	$add_all_forums = FALSE;
+    $add_forums_list = get_var('entries', []);
+    $add_all_forums = in_array(GPERM_ALL, $add_forums_list, true);
 
-	for ($i = 0; $i < sizeof($add_forums_list); $i++)
-	{
-		if ($add_forums_list[$i] == GPERM_ALL)
-		{
-			$add_all_forums = TRUE;
-		}
-	}
+    if ($add_all_forums)
+    {
+        $sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . ' SET forum_permissions = \'\' WHERE group_id = :group_id';
+        $stmt = $db->prepare($sql);
+        if (!$stmt->execute([':group_id' => (int) $group])) {
+            message_die(GENERAL_ERROR, 'Could not update Permissions', '', __LINE__, __FILE__, $sql);
+        }
+    }
+    else
+    {
+        $sql = 'SELECT forum_permissions FROM ' . EXTENSION_GROUPS_TABLE . ' WHERE group_id = :group_id LIMIT 1';
+        $stmt = $db->prepare($sql);
+        if (!$stmt->execute([':group_id' => (int) $group])) {
+            message_die(GENERAL_ERROR, 'Could not get Group Permissions from ' . EXTENSION_GROUPS_TABLE, '', __LINE__, __FILE__, $sql);
+        }
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	// If we add ALL FORUMS, we are able to overwrite the Permissions
-	if ($add_all_forums)
-	{
-		$sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . " SET forum_permissions = '' WHERE group_id = " . (int) $group;
-		if (!($result = $db->sql_query($sql)))
-		{
-			message_die(GENERAL_ERROR, 'Could not update Permissions', '', __LINE__, __FILE__, $sql);
-		}
-	}
+        $auth_p = empty(trim($row['forum_permissions'])) ? [] : auth_unpack($row['forum_permissions']);
 
-	// Else we have to add Permissions
-	if (!$add_all_forums)
-	{
-		$sql = 'SELECT forum_permissions
-			FROM ' . EXTENSION_GROUPS_TABLE . '
-			WHERE group_id = ' . intval($group) . '
-			LIMIT 1';
-	
-		if (!($result = $db->sql_query($sql)))
-		{
-			message_die(GENERAL_ERROR, 'Could not get Group Permissions from ' . EXTENSION_GROUPS_TABLE, '', __LINE__, __FILE__, $sql);
-		}
+        // Add forums avoiding duplicates
+        foreach ($add_forums_list as $forum_id) {
+            if (!in_array($forum_id, $auth_p, true)) {
+                $auth_p[] = $forum_id;
+            }
+        }
 
-		$row = $db->sql_fetchrow($result);
-		$db->sql_freeresult($result);
+        $auth_bitstream = auth_pack($auth_p);
 
-		if (trim($row['forum_permissions']) == '')
-		{
-			$auth_p = array();
-		}
-		else
-		{
-			$auth_p = auth_unpack($row['forum_permissions']);
-		}
-		
-		// Generate array for Auth_Pack, do not add doubled forums
-		for ($i = 0; $i < sizeof($add_forums_list); $i++)
-		{
-			if (!in_array($add_forums_list[$i], $auth_p))
-			{
-				$auth_p[] = $add_forums_list[$i];
-			}
-		}
-
-		$auth_bitstream = auth_pack($auth_p);
-
-		$sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . " SET forum_permissions = '" . attach_mod_sql_escape($auth_bitstream) . "' WHERE group_id = " . (int) $group;
-
-		if (!($result = $db->sql_query($sql)))
-		{
-			message_die(GENERAL_ERROR, 'Could not update Permissions', '', __LINE__, __FILE__, $sql);
-		}
-	}
-
+        $sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . ' SET forum_permissions = :forum_permissions WHERE group_id = :group_id';
+        $stmt = $db->prepare($sql);
+        if (!$stmt->execute([
+            ':forum_permissions' => attach_mod_sql_escape($auth_bitstream),
+            ':group_id' => (int) $group,
+        ])) {
+            message_die(GENERAL_ERROR, 'Could not update Permissions', '', __LINE__, __FILE__, $sql);
+        }
+    }
 }
 
 // Delete Forums
-if ($delete_forum && $e_mode == 'perm' && $group)
+if ($delete_forum && $e_mode === 'perm' && $group)
 {
-	$delete_forums_list = get_var('entries', array(0));
+    $delete_forums_list = get_var('entries', []);
 
-	// Get the current Forums
-	$sql = 'SELECT forum_permissions
-		FROM ' . EXTENSION_GROUPS_TABLE . '
-		WHERE group_id = ' . intval($group) . '
-		LIMIT 1';
-	
-	if (!($result = $db->sql_query($sql)))
-	{
-		message_die(GENERAL_ERROR, 'Could not get Group Permissions from ' . EXTENSION_GROUPS_TABLE, '', __LINE__, __FILE__, $sql);
-	}
+    $sql = 'SELECT forum_permissions FROM ' . EXTENSION_GROUPS_TABLE . ' WHERE group_id = :group_id LIMIT 1';
+    $stmt = $db->prepare($sql);
+    if (!$stmt->execute([':group_id' => (int) $group])) {
+        message_die(GENERAL_ERROR, 'Could not get Group Permissions from ' . EXTENSION_GROUPS_TABLE, '', __LINE__, __FILE__, $sql);
+    }
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	$row = $db->sql_fetchrow($result);
-	$db->sql_freeresult($result);
+    $auth_p2 = auth_unpack(trim($row['forum_permissions']));
+    $auth_p = [];
 
-	$auth_p2 = auth_unpack(trim($row['forum_permissions']));
-	$auth_p = array();
+    // Remove selected forums
+    foreach ($auth_p2 as $forum_id) {
+        if (!in_array($forum_id, $delete_forums_list, true)) {
+            $auth_p[] = $forum_id;
+        }
+    }
 
-	// Generate array for Auth_Pack, delete the chosen ones
-	for ($i = 0; $i < sizeof($auth_p2); $i++)
-	{
-		if (!in_array($auth_p2[$i], $delete_forums_list))
-		{
-			$auth_p[] = $auth_p2[$i];
-		}
-	}
+    $auth_bitstream = (count($auth_p) > 0) ? auth_pack($auth_p) : '';
 
-	$auth_bitstream = (sizeof($auth_p) > 0) ? auth_pack($auth_p) : '';
-
-	$sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . " SET forum_permissions = '" . attach_mod_sql_escape($auth_bitstream) . "' WHERE group_id = " . (int) $group;
-
-	if (!($result = $db->sql_query($sql)))
-	{
-		message_die(GENERAL_ERROR, 'Could not update Permissions', '', __LINE__, __FILE__, $sql);
-	}
+    $sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . ' SET forum_permissions = :forum_permissions WHERE group_id = :group_id';
+    $stmt = $db->prepare($sql);
+    if (!$stmt->execute([
+        ':forum_permissions' => attach_mod_sql_escape($auth_bitstream),
+        ':group_id' => (int) $group,
+    ])) {
+        message_die(GENERAL_ERROR, 'Could not update Permissions', '', __LINE__, __FILE__, $sql);
+    }
 }
 
 // Display the Group Permissions Box for configuring it

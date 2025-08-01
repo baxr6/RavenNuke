@@ -97,15 +97,13 @@ class Template {
                         return false;
                 }
 
-                reset($filename_array);
-                while(list($handle, $filename) = each($filename_array))
+                foreach($filename_array as $handle => $filename)
                 {
                         $this->files[$handle] = $this->make_filename($filename);
                 }
-
+                
                 return true;
         }
-
 
         /**
          * Load the file for the handle, compile the file,
@@ -202,8 +200,7 @@ class Template {
          */
         function assign_vars($vararray)
         {
-                reset ($vararray);
-                while (list($key, $val) = each($vararray))
+                foreach($vararray as $key => $val)
                 {
                         $this->_tpldata['.'][0][$key] = $val;
                 }
@@ -222,28 +219,24 @@ class Template {
                 return true;
         }
 
-
         /**
-         * Generates a full path+filename for the given filename, which can either
-         * be an absolute name, or a name relative to the rootdir for this Template
-         * object.
+         * Returns an absolute path to a template filename, given a relative path.
          */
         function make_filename($filename)
         {
-                // Check if it's an absolute or relative path.
-                if (substr($filename, 0, 1) != '/')
-                {
-                       $filename = ($rp_filename = phpbb_realpath($this->root . '/' . $filename)) ? $rp_filename : $filename;
+                // Set default template root if not set
+                if (empty($this->root)) {
+                        $this->root = 'modules/Forums/templates/subSilver/';
                 }
-
-                if (!file_exists($filename))
-                {
-                        die("Template->make_filename(): Error - file $filename does not exist");
+                
+                $full_path = $this->root . $filename;
+                
+                if (!file_exists($full_path)) {
+                        die("Template->make_filename(): Error - file $filename does not exist at: $full_path");
                 }
-
-                return $filename;
+                
+                return $full_path;
         }
-
 
         /**
          * If not already done, load the file for the given handle and populate
@@ -275,8 +268,6 @@ class Template {
 
                 return true;
         }
-
-
 
         /**
          * Compiles the given string of code, and returns
@@ -419,7 +410,6 @@ class Template {
 
         }
 
-
         /**
          * Generates a reference to the given variable inside the given (possibly nested)
          * block namespace. This is a string of the form:
@@ -444,7 +434,6 @@ class Template {
                 return $varref;
 
         }
-
 
         /**
          * Generates a reference to the array of data values for the given

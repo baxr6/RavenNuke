@@ -28,9 +28,9 @@ define('HEADER_INC', TRUE);
 
 
 // Check for forum-specific page title variables
-global $name, $is_inline_review, $forum_name, $topic_title, $pagetitle, $sitename, $prefix, $db;
-
-if (!isset($page_title) || empty($page_title)) {
+global $lang, $name, $is_inline_review, $forum_name, $topic_title, $page_title, $sitename, $prefix, $db;
+print_r($page_title);
+if (!isset($pagetitle) || empty($page_title)) {
     if (isset($topic_title) && !empty($topic_title)) {
         $page_title = $topic_title;
     } elseif (isset($forum_name) && !empty($forum_name)) {

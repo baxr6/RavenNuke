@@ -20,6 +20,8 @@ seoGetLang('nukeNAV');
 $dhMETA = seoGetMETAtags($name, 'META');
 // Mantis 0001629: remove ending whitespace in title (and possibly other tags)
 if (isset($dhMETA['title'][1])) $dhMETA['title'][1] = trim($dhMETA['title'][1]);
+
+
 // This will allow everything to function as it has been which is acceptable and still allows for future enhancements
 if (file_exists('includes/mimetype.php')) include('includes/mimetype.php');
 elseif (file_exists('../includes/mimetype.php')) include('../includes/mimetype.php');

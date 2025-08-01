@@ -48,10 +48,14 @@ if ($num == 1) {
 		 * montego - Compliance fix when a field is empty/null from the db (producing empty <b></b> or <strong></strong> tags)
 		 */
 		$usrURI = array('user_website', 'user_avatar');  // Don't override empty URI fields with blank
-		foreach($usrinfo as $key => $value) {
-			$value = trim($value);
-			if ($value == '' and !in_array($key, $usrURI)) $usrinfo[$key] = '&nbsp;';
-		}
+foreach($usrinfo as $key => $value) {
+    $value = trim((string)$value); // cast null (or anything else) to string first
+    if ($value === '' && !in_array($key, $usrURI)) {
+        $usrinfo[$key] = '&nbsp;';
+    } else {
+        $usrinfo[$key] = $value; // assign trimmed value back
+    }
+}
 		/*
 		 * General User Info
 		 */

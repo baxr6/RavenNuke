@@ -247,7 +247,9 @@ class dhclass  {
 				$meta['title'][1] .= $suffix;
 			}
 		}
-		if (count($meta) > 0 and $mode == 'META') 
+		// Did my head in angryface
+		//if (count($meta) > 0 and $mode == 'META') 
+		if (count($meta) > 0)
 			foreach ($meta as $key => $metaTag) 
 				$meta[$key][1] = $this->replaceVariables($key, $metaTag[1]);
 		return $meta;
@@ -302,16 +304,22 @@ class dhclass  {
 		return $this->dt_mod_name;
 	}
 
-	// Replace variables in string (e.g. META tag) with site variables
-	function replaceVariables($tag, $value) {
-		global $sitename, $slogan;
-		$validTags = array('title', 'DESCRIPTION', 'AUTHOR', 'COPYRIGHT');
-		$variables = array('%sitename%', '%slogan%', '%module%', '%year%');
-		$replace   = array($sitename, $slogan, $this->dt_mod_title, date('Y'));
-		if (!empty($value) and in_array($tag, $validTags)) $value = str_replace($variables, $replace, $value);
-		return $value;
+function replaceVariables($tag, $value) {
+
+	// Attempt to retrieve site vars from multiple locations
+	$sitename = $GLOBALS['sitename'] ?? $GLOBALS['nuke_config']['sitename'] ?? '';
+	$slogan   = $GLOBALS['slogan'] ?? $GLOBALS['nuke_config']['slogan'] ?? '';
+	$module   = $this->dt_mod_title ?? '';
+	$year     = date('Y');
+	$variables = array('%sitename%', '%slogan%', '%module%', '%year%');
+	$replace   = array($sitename, $slogan, $module, $year);
+
+	if (!empty($value)) {
+		$value = str_replace($variables, $replace, $value);
 	}
-	// Get category ID from content
+	return $value;
+}
+// Get category ID from content
 	function getCatIDfromSubcat() {
 		global $db, $prefix;
 		$catid = 0;

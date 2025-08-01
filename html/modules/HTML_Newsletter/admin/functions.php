@@ -557,19 +557,47 @@ function msnl_fValidateMail($email) {
 		return $email;
 	}
 }
-/************************************************************************
-* Function: msnl_fFixURL
-* Inputs:   $sURL = the "URL" to make absolute.
-* Returns:  string  a string with the URL that was made absolute if relative
-************************************************************************/
-function msnl_fFixURL($sURL='') {
-	global $domain;
-	$asURL = parse_url($sURL);
-	$sImageURL = 'http://';
-	$sImageURL .= (isset($asURL['host'])) ? $asURL['host'] : $domain;
-	$sTmp = (isset($asURL['path'])) ? $asURL['path'] : '';
-	$sImageURL .= (isset($sTmp{0}) && $sTmp{0} != '/') ? '/' : '';
-	$sImageURL .= $sTmp;
-	return $sImageURL;
-}
+function msnl_fFixURL($sURL = '') {
+    global $domain;
+    if (empty($sURL)) {
+        return '';
+    }
 
+    $asURL = parse_url($sURL);
+
+    // If URL is already absolute (has scheme), return as is
+    if (isset($asURL['scheme'])) {
+        return $sURL;
+    }
+
+    // Determine scheme (http or https) based on $domain
+    $scheme = (strpos($domain, 'https://') === 0) ? 'https://' : 'http://';
+
+    // Use host from the URL if available, else fall back to domain
+    $host = isset($asURL['host']) ? $asURL['host'] : parse_url($domain, PHP_URL_HOST);
+
+    // Build URL
+    $url = $scheme . $host;
+
+    // Append path
+    $path = isset($asURL['path']) ? $asURL['path'] : '';
+
+    // If path doesn't start with '/', add '/'
+    if ($path !== '' && $path[0] !== '/') {
+        $url .= '/';
+    }
+
+    $url .= $path;
+
+    // Append query string if exists
+    if (isset($asURL['query'])) {
+        $url .= '?' . $asURL['query'];
+    }
+
+    // Append fragment if exists
+    if (isset($asURL['fragment'])) {
+        $url .= '#' . $asURL['fragment'];
+    }
+
+    return $url;
+}

@@ -2,7 +2,7 @@
 /************************************************************************/
 /* nukeFEED
 /* http://www.nukeSEO.com
-/* Copyright © 2007 by Kevin Guske
+/* Copyright ï¿½ 2007 by Kevin Guske
 /************************************************************************/
 /* This program is free software. You can redistribute it and/or modify */
 /* it under the terms of the GNU General Public License as published by */
@@ -495,7 +495,7 @@ if ( !function_exists('seoCheckInstall') )
     $getValueSQL = 'SELECT config_value as value FROM `'.$prefix.'_seo_config` where config_type=\'Feeds\' and config_name = \'version_number\'';
     $updateSQL = array();
     $updateSQL[] = "UPDATE `".$prefix."_seo_config` SET config_value = '".nF_version."' where config_type='Feeds' and config_name = 'version_number';";
-    seoCheckUpdateTable($getValueSQL, '".nF_version."', $updateSQL);
+    seoCheckUpdateTable('".nF_version."', $getValueSQL, $updateSQL);
   }
 }
 

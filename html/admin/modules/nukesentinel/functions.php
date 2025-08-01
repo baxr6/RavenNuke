@@ -3,7 +3,7 @@
 /********************************************************/
 /* NukeSentinel(tm)                                     */
 /* By: NukeScripts(tm) (http://www.nukescripts.net)     */
-/* Copyright ï¿½ 2000-2008 by NukeScripts(tm)             */
+/* Copyright © 2000-2008 by NukeScripts(tm)             */
 /* See CREDITS.txt for ALL contributors                 */
 /********************************************************/
 
@@ -39,8 +39,10 @@ function abget_countrytitle($c2c){
 
 function absave_config($config_name, $config_value){
   global $prefix, $db;
-	 $config_name = addslashes($config_name) ? addslashes($config_name) : '';
-	 $config_value = addslashes($config_value) ? addslashes($config_value) : '';
+  if(!@get_magic_quotes_gpc()) {
+	 $config_name = addslashes($config_name);
+	 $config_value = addslashes($config_value);
+  }
   $resultnum = $db->sql_numrows($db->sql_query("SELECT * FROM `".$prefix."_nsnst_config` WHERE `config_name`='$config_name' LIMIT 0,1"));
   if($resultnum < 1) {
 	 $db->sql_query("INSERT INTO `".$prefix."_nsnst_config` (`config_name`, `config_value`) VALUES ('$config_name', '$config_value')");

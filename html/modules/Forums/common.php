@@ -112,7 +112,6 @@ if (@ini_get('register_globals') == '1' || strtolower(@ini_get('register_globals
 // this is a security precaution to prevent someone
 // trying to break out of a SQL statement.
 //
-
 // Strip slashes from GET/POST/COOKIE manually (since magic_quotes_gpc is gone in PHP 8+)
 function stripslashes_deep($value) {
     return is_array($value) ? array_map('stripslashes_deep', $value) : stripslashes($value);
@@ -121,6 +120,7 @@ function stripslashes_deep($value) {
 $HTTP_GET_VARS = isset($HTTP_GET_VARS) ? stripslashes_deep($HTTP_GET_VARS) : array();
 $HTTP_POST_VARS = isset($HTTP_POST_VARS) ? stripslashes_deep($HTTP_POST_VARS) : array();
 $HTTP_COOKIE_VARS = isset($HTTP_COOKIE_VARS) ? stripslashes_deep($HTTP_COOKIE_VARS) : array();
+
 
 //
 // Define some basic configuration arrays this also prevents

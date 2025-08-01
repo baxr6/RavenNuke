@@ -60,8 +60,10 @@ die();
 function mod_main($title, $desc) {
 	global $prefix, $db, $admin_file;
 
-		$title = addslashes($title) ? addslashes($title) : '';
-		$desc = addslashes($desc) ? addslashes($desc) : '';
+	if (@get_magic_quotes_gpc() == 0) {
+		$title = addslashes($title);
+		$desc = addslashes($desc);
+	}
 	$db->sql_query('UPDATE ' . $prefix . '_reviews_main SET title=\'' . $title . '\', description=\'' . $desc . '\'');
 	Header('Location: ' . $admin_file . '.php?op=reviews');
 }

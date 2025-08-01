@@ -3,7 +3,7 @@
 /********************************************************/
 /* NukeSentinel(tm)                                     */
 /* By: NukeScripts(tm) (http://www.nukescripts.net)     */
-/* Copyright ï¿½ 2000-2008 by NukeScripts(tm)             */
+/* Copyright © 2000-2008 by NukeScripts(tm)             */
 /* See CREDITS.txt for ALL contributors                 */
 /********************************************************/
 
@@ -184,7 +184,9 @@ if($testnum1 > 0 OR $testnum2 >0 OR $testnum3 >0 OR $testnum4 >0) {
   $xnotes = str_replace("<br>", "\r\n", $xnotes);
   $xnotes = str_replace("<br />", "\r\n", $xnotes);
   $xnotes = htmlentities($xnotes, ENT_QUOTES);
-    $xnotes = addslashes($xnotes) ? addslashes($xnotes) : '';
+  if(!@get_magic_quotes_gpc()) {
+    $xnotes = addslashes($xnotes);
+  }
   $xtime = time();
   $db->sql_query("INSERT INTO `".$prefix."_nsnst_protected_ranges` VALUES ('$longip_lo', '$longip_hi', '$xtime', '$xnotes', '$xc2c')");
   if($another == 1) {

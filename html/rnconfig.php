@@ -274,7 +274,7 @@ $showAdminMenu = true; // Use "false" to hide the Super User (upper) portion of 
 * Miscellaneous System Switches:
 **********************************************************************************/
 $statisticsExcludeList = array('admin'); // Use to exclude gathering statistics: 'admin' implies any admin, add normal usernames to exclude as additional array elements
-$disableCSRFChecking = true; // Set to "true" in order to disable Cross-Site Request Forgery (CSRF) attack protection - should ONLY use as a last resort if your environment does not allow for output buffering
+$disableCSRFChecking = false; // Set to "true" in order to disable Cross-Site Request Forgery (CSRF) attack protection - should ONLY use as a last resort if your environment does not allow for output buffering
 
 //This will not remove depricated warning, but will make it PHP 6 compatable.
 //We do not like suppressing errors, but there is no other way as PHP 5.3+ will produce warnings.

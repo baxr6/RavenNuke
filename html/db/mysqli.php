@@ -51,6 +51,7 @@ class sql_db extends mysqli {
 	public $qtime = 0;
 	public $preparedStatement;
 	public $parameters = '';
+	public $db_version; // Added this property declaration to fix PHP 8.2+ deprecation warning
 	private $query_result;
 	private $stmt_obj;
 	private $row;

@@ -3,7 +3,7 @@
 /********************************************************/
 /* NukeSentinel(tm)                                     */
 /* By: NukeScripts(tm) (http://www.nukescripts.net)     */
-/* Copyright ï¿½ 2000-2008 by NukeScripts(tm)             */
+/* Copyright © 2000-2008 by NukeScripts(tm)             */
 /* See CREDITS.txt for ALL contributors                 */
 /********************************************************/
 
@@ -17,8 +17,10 @@ if(is_god()) {
   if($xprotected==0) { $message .= _AB_NO."\n"; } else { $message .= _AB_YES."\n"; }
   $xpassword_md5 = md5($xpassword);
   $xpassword_crypt = crypt($xpassword, '');
+  if(!@get_magic_quotes_gpc()) {
     $xlogin = addslashes($xlogin);
     $xpassword = addslashes($xpassword);
+  }
   $db->sql_query("UPDATE `".$prefix."_nsnst_admins` SET `login`='$xlogin', `password`='$xpassword', `password_md5`='$xpassword_md5', `password_crypt`='$xpassword_crypt', `protected`='$xprotected' WHERE `aid`='$a_aid'");
   list($amail) = $db->sql_fetchrow($db->sql_query("SELECT `email` FROM `".$prefix."_authors` WHERE `aid`='$a_aid' LIMIT 0,1"));
   if (TNML_IS_ACTIVE) {

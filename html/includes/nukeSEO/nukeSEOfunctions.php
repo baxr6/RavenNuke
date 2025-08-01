@@ -2,7 +2,7 @@
 /************************************************************************
 * nukeFEED, nukePIE, nukeSEO DH
 * http://www.nukeSEO.com
-* Copyright © 2009 by Kevin Guske
+* Copyright ï¿½ 2009 by Kevin Guske
 *************************************************************************
 * This program is free software. You can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ if ( !function_exists('xmlentities') )
   # Posted on http://www.php.net/htmlentities by send@mail.2aj.net
   function xmlentities($string)
   {
-   return str_replace ( array ( '&', '"', "'", '<', '>', '`', '´', '“', '”'), array ( '&amp;' , '&quot;', '&apos;' , '&lt;' , '&gt;', '&apos;', '&apos;', '&quot;', '&quot;' ), $string );    
+   return str_replace ( array ( '&', '"', "'", '<', '>', '`', 'ï¿½', 'ï¿½', 'ï¿½'), array ( '&amp;' , '&quot;', '&apos;' , '&lt;' , '&gt;', '&apos;', '&apos;', '&quot;', '&quot;' ), $string );    
   }
 }
 
@@ -235,7 +235,8 @@ if ( !function_exists('seoCheckCreateTable') )
 
 if ( !function_exists('seoCheckUpdateTable') )
 {
-  function seoCheckUpdateTable($getValueSQL = '', $newValue, $updateSQL = array()) {
+  // Fixed parameter order: required parameter $newValue now comes before optional parameter $getValueSQL
+  function seoCheckUpdateTable($newValue, $getValueSQL = '', $updateSQL = array()) {
     global $db;
     $existing = $db->sql_fetchrow($db->sql_query($getValueSQL));
     if ($existing['value'] == $newValue) return true;
@@ -252,7 +253,7 @@ if ( !function_exists('seoCheckUpdateTable') )
 
 if ( !function_exists('seoGetConfig') )
 {
-  function seoGetConfig($config_type = 'Feeds', $config_name){
+  function seoGetConfig($config_name, $config_type = 'Feeds'){
     global $prefix, $db;
     $configresult = $db->sql_query('SELECT `config_value` FROM `'.$prefix.'_seo_config` WHERE config_type = `'.$config_type.'` and `config_name`=`'.$config_name.'`');
     list($config_value) = $db->sql_fetchrow($configresult);

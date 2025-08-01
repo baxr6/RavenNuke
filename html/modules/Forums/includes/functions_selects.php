@@ -90,8 +90,8 @@ function language_select($default, $select_name = "language", $dirname="modules/
         @reset($lang);
 
         $lang_select = '<select name="' . $select_name . '">';
-        while ( list($displayname, $filename) = @each($lang) )
-        {
+        //while ( list($displayname, $filename) = @each($lang) )
+        foreach ($lang as $displayname => $filename) {
                 $selected = ( strtolower($default) == strtolower($filename) ) ? ' selected="selected"' : '';
                 $lang_select .= '<option value="' . $filename . '"' . $selected . '>' . ucwords($displayname) . '</option>';
         }
@@ -140,9 +140,8 @@ function tz_select($default, $select_name = 'timezone')
         }
         $tz_select = '<select name="' . $select_name . '">';
 
-        while( list($offset, $zone) = @each($lang['tz']) )
-        {
-                $selected = ( $offset == $default ) ? ' selected="selected"' : '';
+foreach ($lang['tz'] as $offset => $zone) {                
+        $selected = ( $offset == $default ) ? ' selected="selected"' : '';
                 $tz_select .= '<option value="' . $offset . '"' . $selected . '>' . $zone . '</option>';
         }
         $tz_select .= '</select>';

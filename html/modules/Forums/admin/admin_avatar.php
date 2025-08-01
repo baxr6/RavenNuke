@@ -57,7 +57,9 @@
  *   (at your option) any later version.
  *
  ***************************************************************************/
-define('IN_PHPBB', 1);
+if (!defined('IN_PHPBB')) {
+    define('IN_PHPBB', 1);
+}
 if( !empty($setmodules) )
 {
         $file = basename(__FILE__);

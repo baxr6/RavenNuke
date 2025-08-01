@@ -72,19 +72,21 @@ class Template {
                 $this->_tpldata = array();
         }
 
-        /**
-         * Sets the template root directory for this Template object.
-         */
-        function set_rootdir($dir)
-        {
-                if (!is_dir($dir))
-                {
-                        return false;
-                }
+function set_rootdir($dir)
+{
+    if (!is_dir($dir))
+    {
+        return false;
+    }
 
-                $this->root = $dir;
-                return true;
-        }
+    // Ensure trailing slash
+    if (substr($dir, -1) !== DIRECTORY_SEPARATOR) {
+        $dir .= DIRECTORY_SEPARATOR;
+    }
+
+    $this->root = $dir;
+    return true;
+}
 
         /**
          * Sets the template filenames for handles. $filename_array
@@ -219,24 +221,27 @@ class Template {
                 return true;
         }
 
-        /**
-         * Returns an absolute path to a template filename, given a relative path.
-         */
-        function make_filename($filename)
-        {
-                // Set default template root if not set
-                if (empty($this->root)) {
-                        $this->root = 'modules/Forums/templates/subSilver/';
-                }
-                
-                $full_path = $this->root . $filename;
-                
-                if (!file_exists($full_path)) {
-                        die("Template->make_filename(): Error - file $filename does not exist at: $full_path");
-                }
-                
-                return $full_path;
-        }
+function make_filename($filename)
+{
+    // Set default template root if not set, no trailing slash
+    if (empty($this->root)) {
+        $this->set_rootdir('/var/www/ravennuke/modules/Forums/templates/subSilver');
+    } else {
+        // Remove trailing slash if any, to avoid double slash
+        $this->root = rtrim($this->root, '/');
+    }
+
+    // Remove leading slash from filename if any
+    $filename = ltrim($filename, '/');
+
+    $full_path = $this->root . '/' . $filename;
+
+    if (!file_exists($full_path)) {
+        die("Template->make_filename(): Error - file '$filename' does not exist at: $full_path");
+    }
+
+    return $full_path;
+}
 
         /**
          * If not already done, load the file for the given handle and populate

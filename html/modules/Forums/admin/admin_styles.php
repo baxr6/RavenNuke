@@ -43,15 +43,15 @@ if( !empty($setmodules) )
 $phpbb_root_path = "./../";
 require_once($phpbb_root_path . 'extension.inc');
 
-$confirm = (isset($HTTP_POST_VARS['confirm']) || isset($_POST['confirm'])) ? TRUE : FALSE;
-$cancel = (isset($HTTP_POST_VARS['cancel']) || isset($_POST['cancel'])) ? TRUE : FALSE;
+$confirm = (isset($_POST['confirm']) || isset($_POST['confirm'])) ? TRUE : FALSE;
+$cancel = (isset($_POST['cancel']) || isset($_POST['cancel'])) ? TRUE : FALSE;
 
-$no_page_header = (!empty($HTTP_POST_VARS['send_file']) || !empty($_POST['send_file']) || $cancel) ? TRUE : FALSE;
+$no_page_header = (!empty($_POST['send_file']) || !empty($_POST['send_file']) || $cancel) ? TRUE : FALSE;
 
 require_once('./pagestart.' . $phpEx);
 
-$confirm = ( isset($HTTP_POST_VARS['confirm']) ) ? TRUE : FALSE;
-$cancel = ( isset($HTTP_POST_VARS['cancel']) ) ? TRUE : FALSE;
+$confirm = ( isset($_POST['confirm']) ) ? TRUE : FALSE;
+$cancel = ( isset($_POST['cancel']) ) ? TRUE : FALSE;
 
 if ($cancel)
 {
@@ -60,9 +60,9 @@ if ($cancel)
         exit;
 }
 
-if( isset($HTTP_GET_VARS['mode']) || isset($HTTP_POST_VARS['mode']) )
+if( isset($HTTP_GET_VARS['mode']) || isset($_POST['mode']) )
 {
-	$mode = ( isset($HTTP_GET_VARS['mode']) ) ? $HTTP_GET_VARS['mode'] : $HTTP_POST_VARS['mode'];
+	$mode = ( isset($HTTP_GET_VARS['mode']) ) ? $HTTP_GET_VARS['mode'] : $_POST['mode'];
 	$mode = htmlspecialchars($mode, ENT_COMPAT);
 }
 else
@@ -73,8 +73,8 @@ else
 switch( $mode )
 {
 	case "addnew":
-		$install_to = ( isset($HTTP_GET_VARS['install_to']) ) ? urldecode($HTTP_GET_VARS['install_to']) : $HTTP_POST_VARS['install_to'];
-		$style_name = ( isset($HTTP_GET_VARS['style']) ) ? urldecode($HTTP_GET_VARS['style']) : $HTTP_POST_VARS['style'];
+		$install_to = ( isset($HTTP_GET_VARS['install_to']) ) ? urldecode($HTTP_GET_VARS['install_to']) : $_POST['install_to'];
+		$style_name = ( isset($HTTP_GET_VARS['style']) ) ? urldecode($HTTP_GET_VARS['style']) : $_POST['style'];
 
 		if( isset($install_to) )
 		{
@@ -204,189 +204,145 @@ switch( $mode )
 
 	case "create":
 	case "edit":
-		$submit = ( isset($HTTP_POST_VARS['submit']) ) ? TRUE : 0;
+		$submit = ( isset($_POST['submit']) ) ? TRUE : 0;
 
 		if( $submit )
 		{
                         //
 			// DAMN! Thats alot of data to validate...
 			//
-			$updated['style_name'] = $HTTP_POST_VARS['style_name'];
-			$updated['template_name'] = $HTTP_POST_VARS['template_name'];
-			$updated['head_stylesheet'] = $HTTP_POST_VARS['head_stylesheet'];
-			$updated['body_background'] = $HTTP_POST_VARS['body_background'];
-			$updated['body_bgcolor'] = $HTTP_POST_VARS['body_bgcolor'];
-			$updated['body_text'] = $HTTP_POST_VARS['body_text'];
-			$updated['body_link'] = $HTTP_POST_VARS['body_link'];
-			$updated['body_vlink'] = $HTTP_POST_VARS['body_vlink'];
-			$updated['body_alink'] = $HTTP_POST_VARS['body_alink'];
-			$updated['body_hlink'] = $HTTP_POST_VARS['body_hlink'];
-			$updated['tr_color1'] = $HTTP_POST_VARS['tr_color1'];
-			$updated_name['tr_color1_name'] =  $HTTP_POST_VARS['tr_color1_name'];
-			$updated['tr_color2'] = $HTTP_POST_VARS['tr_color2'];
-			$updated_name['tr_color2_name'] = $HTTP_POST_VARS['tr_color2_name'];
-			$updated['tr_color3'] = $HTTP_POST_VARS['tr_color3'];
-			$updated_name['tr_color3_name'] = $HTTP_POST_VARS['tr_color3_name'];
-			$updated['tr_class1'] = $HTTP_POST_VARS['tr_class1'];
-			$updated_name['tr_class1_name'] = $HTTP_POST_VARS['tr_class1_name'];
-			$updated['tr_class2'] = $HTTP_POST_VARS['tr_class2'];
-			$updated_name['tr_class2_name'] = $HTTP_POST_VARS['tr_class2_name'];
-			$updated['tr_class3'] = $HTTP_POST_VARS['tr_class3'];
-			$updated_name['tr_class3_name'] = $HTTP_POST_VARS['tr_class3_name'];
-			$updated['th_color1'] = $HTTP_POST_VARS['th_color1'];
-			$updated_name['th_color1_name'] = $HTTP_POST_VARS['th_color1_name'];
-			$updated['th_color2'] = $HTTP_POST_VARS['th_color2'];
-			$updated_name['th_color2_name'] = $HTTP_POST_VARS['th_color2_name'];
-			$updated['th_color3'] = $HTTP_POST_VARS['th_color3'];
-			$updated_name['th_color3_name'] = $HTTP_POST_VARS['th_color3_name'];
-			$updated['th_class1'] = $HTTP_POST_VARS['th_class1'];
-			$updated_name['th_class1_name'] = $HTTP_POST_VARS['th_class1_name'];
-			$updated['th_class2'] = $HTTP_POST_VARS['th_class2'];
-			$updated_name['th_class2_name'] = $HTTP_POST_VARS['th_class2_name'];
-			$updated['th_class3'] = $HTTP_POST_VARS['th_class3'];
-			$updated_name['th_class3_name'] = $HTTP_POST_VARS['th_class3_name'];
-			$updated['td_color1'] = $HTTP_POST_VARS['td_color1'];
-			$updated_name['td_color1_name'] = $HTTP_POST_VARS['td_color1_name'];
-			$updated['td_color2'] = $HTTP_POST_VARS['td_color2'];
-			$updated_name['td_color2_name'] = $HTTP_POST_VARS['td_color2_name'];
-			$updated['td_color3'] = $HTTP_POST_VARS['td_color3'];
-			$updated_name['td_color3_name'] = $HTTP_POST_VARS['td_color3_name'];
-			$updated['td_class1'] = $HTTP_POST_VARS['td_class1'];
-			$updated_name['td_class1_name'] = $HTTP_POST_VARS['td_class1_name'];
-			$updated['td_class2'] = $HTTP_POST_VARS['td_class2'];
-			$updated_name['td_class2_name'] = $HTTP_POST_VARS['td_class2_name'];
-			$updated['td_class3'] = $HTTP_POST_VARS['td_class3'];
-			$updated_name['td_class3_name'] = $HTTP_POST_VARS['td_class3_name'];
-			$updated['fontface1'] = $HTTP_POST_VARS['fontface1'];
-			$updated_name['fontface1_name'] = $HTTP_POST_VARS['fontface1_name'];
-			$updated['fontface2'] = $HTTP_POST_VARS['fontface2'];
-			$updated_name['fontface2_name'] = $HTTP_POST_VARS['fontface2_name'];
-			$updated['fontface3'] = $HTTP_POST_VARS['fontface3'];
-			$updated_name['fontface3_name'] = $HTTP_POST_VARS['fontface3_name'];
-			$updated['fontsize1'] = intval($HTTP_POST_VARS['fontsize1']);
-			$updated_name['fontsize1_name'] = $HTTP_POST_VARS['fontsize1_name'];
-			$updated['fontsize2'] = intval($HTTP_POST_VARS['fontsize2']);
-			$updated_name['fontsize2_name'] = $HTTP_POST_VARS['fontsize2_name'];
-			$updated['fontsize3'] = intval($HTTP_POST_VARS['fontsize3']);
-			$updated_name['fontsize3_name'] = $HTTP_POST_VARS['fontsize3_name'];
-			$updated['fontcolor1'] = $HTTP_POST_VARS['fontcolor1'];
-			$updated_name['fontcolor1_name'] = $HTTP_POST_VARS['fontcolor1_name'];
-			$updated['fontcolor2'] = $HTTP_POST_VARS['fontcolor2'];
-			$updated_name['fontcolor2_name'] = $HTTP_POST_VARS['fontcolor2_name'];
-			$updated['fontcolor3'] = $HTTP_POST_VARS['fontcolor3'];
-			$updated_name['fontcolor3_name'] = $HTTP_POST_VARS['fontcolor3_name'];
-			$updated['span_class1'] = $HTTP_POST_VARS['span_class1'];
-			$updated_name['span_class1_name'] = $HTTP_POST_VARS['span_class1_name'];
-			$updated['span_class2'] = $HTTP_POST_VARS['span_class2'];
-			$updated_name['span_class2_name'] = $HTTP_POST_VARS['span_class2_name'];
-			$updated['span_class3'] = $HTTP_POST_VARS['span_class3'];
-			$updated_name['span_class3_name'] = $HTTP_POST_VARS['span_class3_name'];
-			$style_id = intval($HTTP_POST_VARS['style_id']);
+			$updated['style_name'] = $_POST['style_name'];
+			$updated['template_name'] = $_POST['template_name'];
+			$updated['head_stylesheet'] = $_POST['head_stylesheet'];
+			$updated['body_background'] = $_POST['body_background'];
+			$updated['body_bgcolor'] = $_POST['body_bgcolor'];
+			$updated['body_text'] = $_POST['body_text'];
+			$updated['body_link'] = $_POST['body_link'];
+			$updated['body_vlink'] = $_POST['body_vlink'];
+			$updated['body_alink'] = $_POST['body_alink'];
+			$updated['body_hlink'] = $_POST['body_hlink'];
+			$updated['tr_color1'] = $_POST['tr_color1'];
+			$updated_name['tr_color1_name'] =  $_POST['tr_color1_name'];
+			$updated['tr_color2'] = $_POST['tr_color2'];
+			$updated_name['tr_color2_name'] = $_POST['tr_color2_name'];
+			$updated['tr_color3'] = $_POST['tr_color3'];
+			$updated_name['tr_color3_name'] = $_POST['tr_color3_name'];
+			$updated['tr_class1'] = $_POST['tr_class1'];
+			$updated_name['tr_class1_name'] = $_POST['tr_class1_name'];
+			$updated['tr_class2'] = $_POST['tr_class2'];
+			$updated_name['tr_class2_name'] = $_POST['tr_class2_name'];
+			$updated['tr_class3'] = $_POST['tr_class3'];
+			$updated_name['tr_class3_name'] = $_POST['tr_class3_name'];
+			$updated['th_color1'] = $_POST['th_color1'];
+			$updated_name['th_color1_name'] = $_POST['th_color1_name'];
+			$updated['th_color2'] = $_POST['th_color2'];
+			$updated_name['th_color2_name'] = $_POST['th_color2_name'];
+			$updated['th_color3'] = $_POST['th_color3'];
+			$updated_name['th_color3_name'] = $_POST['th_color3_name'];
+			$updated['th_class1'] = $_POST['th_class1'];
+			$updated_name['th_class1_name'] = $_POST['th_class1_name'];
+			$updated['th_class2'] = $_POST['th_class2'];
+			$updated_name['th_class2_name'] = $_POST['th_class2_name'];
+			$updated['th_class3'] = $_POST['th_class3'];
+			$updated_name['th_class3_name'] = $_POST['th_class3_name'];
+			$updated['td_color1'] = $_POST['td_color1'];
+			$updated_name['td_color1_name'] = $_POST['td_color1_name'];
+			$updated['td_color2'] = $_POST['td_color2'];
+			$updated_name['td_color2_name'] = $_POST['td_color2_name'];
+			$updated['td_color3'] = $_POST['td_color3'];
+			$updated_name['td_color3_name'] = $_POST['td_color3_name'];
+			$updated['td_class1'] = $_POST['td_class1'];
+			$updated_name['td_class1_name'] = $_POST['td_class1_name'];
+			$updated['td_class2'] = $_POST['td_class2'];
+			$updated_name['td_class2_name'] = $_POST['td_class2_name'];
+			$updated['td_class3'] = $_POST['td_class3'];
+			$updated_name['td_class3_name'] = $_POST['td_class3_name'];
+			$updated['fontface1'] = $_POST['fontface1'];
+			$updated_name['fontface1_name'] = $_POST['fontface1_name'];
+			$updated['fontface2'] = $_POST['fontface2'];
+			$updated_name['fontface2_name'] = $_POST['fontface2_name'];
+			$updated['fontface3'] = $_POST['fontface3'];
+			$updated_name['fontface3_name'] = $_POST['fontface3_name'];
+			$updated['fontsize1'] = intval($_POST['fontsize1']);
+			$updated_name['fontsize1_name'] = $_POST['fontsize1_name'];
+			$updated['fontsize2'] = intval($_POST['fontsize2']);
+			$updated_name['fontsize2_name'] = $_POST['fontsize2_name'];
+			$updated['fontsize3'] = intval($_POST['fontsize3']);
+			$updated_name['fontsize3_name'] = $_POST['fontsize3_name'];
+			$updated['fontcolor1'] = $_POST['fontcolor1'];
+			$updated_name['fontcolor1_name'] = $_POST['fontcolor1_name'];
+			$updated['fontcolor2'] = $_POST['fontcolor2'];
+			$updated_name['fontcolor2_name'] = $_POST['fontcolor2_name'];
+			$updated['fontcolor3'] = $_POST['fontcolor3'];
+			$updated_name['fontcolor3_name'] = $_POST['fontcolor3_name'];
+			$updated['span_class1'] = $_POST['span_class1'];
+			$updated_name['span_class1_name'] = $_POST['span_class1_name'];
+			$updated['span_class2'] = $_POST['span_class2'];
+			$updated_name['span_class2_name'] = $_POST['span_class2_name'];
+			$updated['span_class3'] = $_POST['span_class3'];
+			$updated_name['span_class3_name'] = $_POST['span_class3_name'];
+			$style_id = intval($_POST['style_id']);
 			//
 			// Wheeeew! Thank heavens for copy and paste and search and replace :D
 			//
 
-			if($mode == "edit")
-			{
-				$sql = "UPDATE " . THEMES_TABLE . " SET ";
-				$count = 0;
+if ($mode === "edit") {
+    // === Update themes table ===
+    $updates = [];
+    foreach ($updated as $key => $val) {
+        if (stripos($key, 'fontsize') !== false) {
+            $updates[] = "$key = $val"; // Allow raw numeric for fontsize
+        } else {
+            $safe_val = str_replace("'", "''", $val);
+            $updates[] = "$key = '$safe_val'";
+        }
+    }
 
-				while(list($key, $val) = each($updated))
-				{
-					if($count != 0)
-					{
-						$sql .= ", ";
-					}
+    $sql = "UPDATE " . THEMES_TABLE . " SET " . implode(', ', $updates) . " WHERE themes_id = '" . (int)$style_id . "'";
+    if (!$db->sql_query($sql)) {
+        message_die(GENERAL_ERROR, "Could not update themes table!", "", __LINE__, __FILE__, $sql);
+    }
 
-					//
-					// I don't like this but it'll keep MSSQL from throwing
-					// an error and save me alot of typing
-					//
-					$sql .= ( stristr($key, "fontsize") ) ? "$key = $val" : "$key = '" . str_replace("\'", "''", $val) . "'";
+    // === Check if themes name entry exists ===
+    $sql = "SELECT themes_id FROM " . THEMES_NAME_TABLE . " WHERE themes_id = '" . (int)$style_id . "'";
+    $result = $db->sql_query($sql);
+    if (!$result) {
+        message_die(GENERAL_ERROR, "Could not get data from themes_name table", "", __LINE__, __FILE__, $sql);
+    }
 
-					$count++;
-				}
+    if ($db->sql_numrows($result) > 0) {
+        // === Update themes_name table ===
+        $updates = [];
+        foreach ($updated_name as $key => $val) {
+            $safe_val = str_replace("'", "''", $val);
+            $updates[] = "$key = '$safe_val'";
+        }
 
-				$sql .= " WHERE themes_id = '$style_id'";
+        $sql = "UPDATE " . THEMES_NAME_TABLE . " SET " . implode(', ', $updates) . " WHERE themes_id = '" . (int)$style_id . "'";
+    } else {
+        // === Insert new entry into themes_name ===
+        $fields = ['themes_id'];
+        $values = [(int)$style_id];
 
-				if(!$result = $db->sql_query($sql))
-				{
-					message_die(GENERAL_ERROR, "Could not update themes table!", "", __LINE__, __FILE__, $sql);
-				}
+        foreach ($updated_name as $key => $val) {
+            $fields[] = $key;
+            $values[] = "'" . str_replace("'", "''", $val) . "'";
+        }
 
-				//
-				// Check if there's a names table entry for this style
-				//
-                                $sql = "SELECT themes_id
-                                        FROM " . THEMES_NAME_TABLE . "
-					WHERE themes_id = '$style_id'";
-				if(!$result = $db->sql_query($sql))
-				{
-					message_die(GENERAL_ERROR, "Could not get data from themes_name table", "", __LINE__, __FILE__, $sql);
-				}
+        $sql = "INSERT INTO " . THEMES_NAME_TABLE . " (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $values) . ")";
+    }
 
-				if($db->sql_numrows($result) > 0)
-				{
-                                        $sql = "UPDATE " . THEMES_NAME_TABLE . "
-						SET ";
-					$count = 0;
-					while(list($key, $val) = each($updated_name))
-					{
-						if($count != 0)
-						{
-							$sql .= ", ";
-						}
+    if (!$db->sql_query($sql)) {
+        message_die(GENERAL_ERROR, "Could not update themes name table!", "", __LINE__, __FILE__, $sql);
+    }
 
-						$sql .= "$key = '$val'";
+    // === Display success message ===
+    $message  = $lang['Theme_updated'] . "<br /><br />";
+    $message .= sprintf($lang['Click_return_styleadmin'], "<a href=\"" . append_sid("admin_styles.$phpEx") . "\">", "</a>") . "<br /><br />";
+    $message .= sprintf($lang['Click_return_admin_index'], "<a href=\"" . append_sid("index.$phpEx?pane=right") . "\">", "</a>");
 
-						$count++;
-					}
-
-					$sql .= " WHERE themes_id = '$style_id'";
-				}
-				else
-				{
-					//
-					// Nope, no names entry so we create a new one.
-					//
-					$sql = "INSERT INTO " . THEMES_NAME_TABLE . " (themes_id, ";
-					while(list($key, $val) = each($updated_name))
-					{
-						$fields[] = $key;
-						$vals[] = str_replace("\'", "''", $val);
-					}
-
-					for($i = 0; $i < count($fields); $i++)
-					{
-						if($i > 0)
-						{
-							$sql .= ", ";
-						}
-						$sql .= $fields[$i];
-					}
-
-					$sql .= ") VALUES ($style_id, ";
-					for($i = 0; $i < count($vals); $i++)
-					{
-						if($i > 0)
-						{
-							$sql .= ", ";
-						}
-						$sql .= "'" . $vals[$i] . "'";
-					}
-
-					$sql .= ")";
-				}
-
-				if(!$result = $db->sql_query($sql))
-				{
-					message_die(GENERAL_ERROR, "Could not update themes name table!", "", __LINE__, __FILE__, $sql);
-				}
-
-				$message = $lang['Theme_updated'] . "<br /><br />" . sprintf($lang['Click_return_styleadmin'], "<a href=\"" . append_sid("admin_styles.$phpEx") . "\">", "</a>") . "<br /><br />" . sprintf($lang['Click_return_admin_index'], "<a href=\"" . append_sid("index.$phpEx?pane=right") . "\">", "</a>");
-
-				message_die(GENERAL_MESSAGE, $message);
-			}
+    message_die(GENERAL_MESSAGE, $message);
+}
 			else
 			{
 				//
@@ -405,7 +361,8 @@ switch( $mode )
 					message_die(GENERAL_ERROR, $lang['Style_exists'], $lang['Error']);
                                 }
 
-				while(list($key, $val) = each($updated))
+				//while(list($key, $val) = each($updated))
+				foreach($updated as $key => $val)
 				{
 					$field_names[] = $key;
 
@@ -452,7 +409,8 @@ switch( $mode )
 				// Insert names data
 				//
 				$sql = "INSERT INTO " . THEMES_NAME_TABLE . " (themes_id, ";
-				while(list($key, $val) = each($updated_name))
+				//while(list($key, $val) = each($updated_name))
+				foreach($updated_name as $key => $val)
 				{
 					$fields[] = $key;
 					$vals[] = $val;
@@ -513,7 +471,7 @@ switch( $mode )
 
 				if ( $selected_values = $db->sql_fetchrow($result) )
 				{
-					while(list($key, $val) = @each($selected_values))
+					foreach ($selected_values as $key => $val)
 					{
 						$selected[$key] = $val;
 					}
@@ -532,7 +490,8 @@ switch( $mode )
 
 				if ( $selected_names = $db->sql_fetchrow($result) )
 				{
-					while(list($key, $val) = @each($selected_names))
+					//while(list($key, $val) = @each($selected_names))
+						foreach($selected_names as $key => $val)
 					{
 						$selected[$key] = $val;
 					}
@@ -706,9 +665,9 @@ switch( $mode )
 		break;
 
 	case "export";
-		if($HTTP_POST_VARS['export_template'])
+		if($_POST['export_template'])
 		{
-			$template_name = $HTTP_POST_VARS['export_template'];
+			$template_name = $_POST['export_template'];
 
                         $sql = "SELECT *
                                 FROM " . THEMES_TABLE . "
@@ -730,7 +689,8 @@ switch( $mode )
 
 			for($i = 0; $i < count($theme_rowset); $i++)
 			{
-				while(list($key, $val) = each($theme_rowset[$i]))
+				//while(list($key, $val) = each($theme_rowset[$i]))
+				foreach($theme_rowset[$i] as $key => $val)
 				{
 					if(!intval($key) && $key != "0" && $key != "themes_id")
 					{
@@ -778,13 +738,13 @@ switch( $mode )
 			message_die(GENERAL_MESSAGE, $message);
 
 		}
-		else if($HTTP_POST_VARS['send_file'])
+		else if($_POST['send_file'])
 		{
 
 			header("Content-Type: text/x-delimtext; name=\"theme_info.cfg\"");
 			header("Content-disposition: attachment; filename=theme_info.cfg");
 
-			echo stripslashes($HTTP_POST_VARS['theme_info']);
+			echo stripslashes($_POST['theme_info']);
 		}
 		else
 		{
@@ -825,7 +785,7 @@ switch( $mode )
 		break;
 
 	case "delete":
-		$style_id = ( isset($HTTP_GET_VARS['style_id']) ) ? intval($HTTP_GET_VARS['style_id']) : intval($HTTP_POST_VARS['style_id']);
+		$style_id = ( isset($HTTP_GET_VARS['style_id']) ) ? intval($HTTP_GET_VARS['style_id']) : intval($_POST['style_id']);
 
 		if( !$confirm )
 		{
@@ -937,7 +897,7 @@ switch( $mode )
 		break;
 }
 
-if (empty($HTTP_POST_VARS['send_file']))
+if (empty($_POST['send_file']))
 {
 	include_once('./page_footer_admin.'.$phpEx);
 }

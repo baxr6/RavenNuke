@@ -188,6 +188,8 @@ function adminmenu($url, $title, $image) {
 	}
 	echo '<td class="text-center content" style="width: 16%; vertical-align: top;"><a href="' , $url , '">' , $img
 		, '<span class="thick">' , $title , '</span>' , $close , '<br /><br /></td>';
+	$counter = isset($counter) && is_numeric($counter) ? (int)$counter : 0;
+
 	if ($counter == 5) {
 		echo '</tr><tr>';
 		$counter = 0;

@@ -60,9 +60,9 @@ if ($cancel)
         exit;
 }
 
-if( isset($HTTP_GET_VARS['mode']) || isset($_POST['mode']) )
+if( isset($_GET['mode']) || isset($_POST['mode']) )
 {
-	$mode = ( isset($HTTP_GET_VARS['mode']) ) ? $HTTP_GET_VARS['mode'] : $_POST['mode'];
+	$mode = ( isset($_GET['mode']) ) ? $_GET['mode'] : $_POST['mode'];
 	$mode = htmlspecialchars($mode, ENT_COMPAT);
 }
 else
@@ -73,8 +73,8 @@ else
 switch( $mode )
 {
 	case "addnew":
-		$install_to = ( isset($HTTP_GET_VARS['install_to']) ) ? urldecode($HTTP_GET_VARS['install_to']) : $_POST['install_to'];
-		$style_name = ( isset($HTTP_GET_VARS['style']) ) ? urldecode($HTTP_GET_VARS['style']) : $_POST['style'];
+		$install_to = ( isset($_GET['install_to']) ) ? urldecode($_GET['install_to']) : $_POST['install_to'];
+		$style_name = ( isset($_GET['style']) ) ? urldecode($_GET['style']) : $_POST['style'];
 
 		if( isset($install_to) )
 		{
@@ -454,7 +454,7 @@ if ($mode === "edit") {
 				$themes_title = $lang['Edit_theme'];
 				$themes_explain = $lang['Edit_theme_explain'];
 
-				$style_id = intval($HTTP_GET_VARS['style_id']);
+				$style_id = intval($_GET['style_id']);
 
 				$selected_names = array();
 				$selected_values = array();
@@ -785,7 +785,7 @@ if ($mode === "edit") {
 		break;
 
 	case "delete":
-		$style_id = ( isset($HTTP_GET_VARS['style_id']) ) ? intval($HTTP_GET_VARS['style_id']) : intval($_POST['style_id']);
+		$style_id = ( isset($_GET['style_id']) ) ? intval($_GET['style_id']) : intval($_POST['style_id']);
 
 		if( !$confirm )
 		{

@@ -28,7 +28,7 @@ if ( !defined('IN_PHPBB') )
 
 function check_unread($forum_id)
 {
-    global $new_topic_data, $tracking_topics, $tracking_forums, $HTTP_COOKIE_VARS, $board_config;
+    global $new_topic_data, $tracking_topics, $tracking_forums, $_COOKIE, $board_config;
 
     $unread_topics = false; // Initialize variable to avoid undefined warnings
 
@@ -53,8 +53,8 @@ function check_unread($forum_id)
             }
         }
 
-        if (isset($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_f_all'])) {
-            if ($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_f_all'] > $forum_last_post_time) {
+        if (isset($_COOKIE[$board_config['cookie_name'] . '_f_all'])) {
+            if ($_COOKIE[$board_config['cookie_name'] . '_f_all'] > $forum_last_post_time) {
                 $unread_topics = false;
             }
         }

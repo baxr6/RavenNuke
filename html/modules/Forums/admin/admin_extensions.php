@@ -67,7 +67,7 @@ $size = get_var('size', '');
 $mode = get_var('mode', '');
 $e_mode = get_var('e_mode', '');
 
-$submit = (isset($HTTP_POST_VARS['submit'])) ? TRUE : FALSE;
+$submit = (isset($_POST['submit'])) ? TRUE : FALSE;
 
 // Get Attachment Config
 $attach_config = array();
@@ -159,7 +159,7 @@ if ($submit && $mode == 'extensions')
 	$extension = get_var('add_extension', '');
 	$extension_explain = get_var('add_extension_explain', '');
 	$extension_group = get_var('add_group_select', 0);
-	$add = ( isset($HTTP_POST_VARS['add_extension_check']) ) ? TRUE : FALSE;
+	$add = ( isset($_POST['add_extension_check']) ) ? TRUE : FALSE;
 
 	if ($extension != '' && $add)
 	{
@@ -422,8 +422,8 @@ if ($submit && $mode == 'groups')
 	$filesize = get_var('add_max_filesize', 0);
 	$size_select = get_var('add_size_select', '');
 
-	$is_allowed = (isset($HTTP_POST_VARS['add_allowed'])) ? 1 : 0;
-	$add = ( isset($HTTP_POST_VARS['add_extension_group_check']) ) ? TRUE : FALSE;
+	$is_allowed = (isset($_POST['add_allowed'])) ? 1 : 0;
+	$add = ( isset($_POST['add_extension_group_check']) ) ? TRUE : FALSE;
 
 	if ($extension_group != '' && $add)
 	{
@@ -634,7 +634,7 @@ if ($submit && $mode == 'forbidden')
 	}
 		
 	$extension = get_var('add_extension', '');
-	$add = (isset($HTTP_POST_VARS['add_extension_check'])) ? TRUE : FALSE;
+	$add = (isset($_POST['add_extension_check'])) ? TRUE : FALSE;
 		
 	if ($extension != '' && $add)
 	{
@@ -767,10 +767,10 @@ if ($e_mode == 'perm')
 {
 	$group = get_var('e_group', 0);
 
-	$add_forum = (isset($HTTP_POST_VARS['add_forum'])) ? TRUE : FALSE;
-	$delete_forum = (isset($HTTP_POST_VARS['del_forum'])) ? TRUE : FALSE;
+	$add_forum = (isset($_POST['add_forum'])) ? TRUE : FALSE;
+	$delete_forum = (isset($_POST['del_forum'])) ? TRUE : FALSE;
 
-	if (isset($HTTP_POST_VARS['close_perm']))
+	if (isset($_POST['close_perm']))
 	{
 		$e_mode = '';
 	}

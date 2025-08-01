@@ -52,7 +52,7 @@ function inarray($needle, $haystack)
 //
 // Generate relevant output
 //
-if( isset($HTTP_GET_VARS['pane']) && $HTTP_GET_VARS['pane'] == 'left' )
+if( isset($_GET['pane']) && $_GET['pane'] == 'left' )
 {
         $dir = @opendir(".");
 
@@ -117,7 +117,7 @@ foreach ($module as $cat => $action_array) {
 
         include_once('./page_footer_admin.'.$phpEx);
 }
-elseif( isset($HTTP_GET_VARS['pane']) && $HTTP_GET_VARS['pane'] == 'right' )
+elseif( isset($_GET['pane']) && $_GET['pane'] == 'right' )
 {
 
         include_once('./page_header_admin.'.$phpEx);

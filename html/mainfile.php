@@ -1154,10 +1154,14 @@ function formatTimestamp($time) {
 		preg_match('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetime);
 		$time = gmmktime($datetime[4], $datetime[5], $datetime[6], $datetime[2], $datetime[3], $datetime[1]);
 	}
-	$time -= date('Z');
-	$datetime = strftime(_DATESTRING, $time);
-	$datetime = ucfirst($datetime);
-	return $datetime;
+// Create a DateTime object from $time
+$date = new DateTime('@' . $time);
+
+// Set the timezone if needed (e.g., UTC)
+$date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+
+// Format the date with your format string
+$datetime = ucfirst($date->format(_DATESTRING));	return $datetime;
 }
 
 function get_author($aid) {

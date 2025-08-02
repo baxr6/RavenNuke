@@ -522,7 +522,6 @@ function strord($string) {
 	}
 	return $result;
 }
-
 function terms() {
 	global $module_name, $prefix, $db, $sitename;
 	$today = getdate();

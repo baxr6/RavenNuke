@@ -405,40 +405,34 @@ function Configure() {
 	include_once('footer.php');
 }
 
-function ConfigSave($xsitename, $xnukeurl, $xsite_logo, $xslogan, $xstartdate, $xadminmail, $xanonpost, $xfoot1, $xfoot2, $xfoot3, $xcommentlimit,
-                    $xanonymous, $xpollcomm, $xarticlecomm, $xbroadcast_msg, $xmy_headlines, $xtop, $xstoryhome, $xuser_news, $xoldnum, $xbanners, $xbackend_title,
-                    $xbackend_language, $xlanguage, $xlocale, $xmultilingual, $xuseflags, $xnotify, $xnotify_email, $xnotify_subject, $xnotify_message, $xnotify_from,
-                    $xmoderate, $xadmingraphic, $xCensorMode, $xCensorReplace)
-{
-    global $admin_file, $db, $prefix;
+function ConfigSave($xsitename,$xnukeurl,$xsite_logo,$xslogan,$xstartdate,$xadminmail,$xanonpost,$xfoot1,$xfoot2,$xfoot3,$xcommentlimit,
+					$xanonymous,$xpollcomm,$xarticlecomm,$xbroadcast_msg,$xmy_headlines,$xtop,$xstoryhome,$xuser_news,$xoldnum,$xbanners,$xbackend_title,
+					$xbackend_language,$xlanguage,$xlocale,$xmultilingual,$xuseflags,$xnotify,$xnotify_email,$xnotify_subject,$xnotify_message,$xnotify_from,$xmoderate,
+					$xadmingraphic,$xCensorMode,$xCensorReplace) {
+	global $admin_file, $db, $prefix;
+	$xsitename = htmlspecialchars($xsitename, ENT_QUOTES, _CHARSET);
+	$xslogan = htmlspecialchars($xslogan, ENT_QUOTES, _CHARSET);
+	$xbackend_title = htmlspecialchars($xbackend_title, ENT_QUOTES, _CHARSET);
+	$xnotify_subject = htmlspecialchars($xnotify_subject, ENT_QUOTES, _CHARSET);
+	$xfoot1 = isset($xfoot1) ? addslashes($xfoot1) : '';
+	$xfoot2 = isset($xfoot2) ? addslashes($xfoot2) : '';
+	$xfoot3 = isset($xfoot3) ? addslashes($xfoot3) : '';
+	$xnotify_message = isset($xnotify_message) ? addslashes($xnotify_message) : '';
 
-    // Sanitize for HTML output (for later display)
-$xsitename        = htmlspecialchars(mb_convert_encoding($xsitename, 'UTF-8', 'auto'), ENT_QUOTES, _CHARSET);
-$xslogan          = htmlspecialchars(mb_convert_encoding($xslogan, 'UTF-8', 'auto'), ENT_QUOTES, _CHARSET);
-$xbackend_title   = htmlspecialchars(mb_convert_encoding($xbackend_title, 'UTF-8', 'auto'), ENT_QUOTES, _CHARSET);
-$xnotify_subject  = htmlspecialchars(mb_convert_encoding($xnotify_subject, 'UTF-8', 'auto'), ENT_QUOTES, _CHARSET);
+	$sql = 'UPDATE '.$prefix.'_config SET sitename=\''.$xsitename.'\', nukeurl=\''.$xnukeurl.'\', site_logo=\''
+		.$xsite_logo.'\', slogan=\''.$xslogan.'\', startdate=\''.$xstartdate.'\', adminmail=\''.$xadminmail.'\', anonpost=\''
+		.$xanonpost.'\', foot1=\''.$xfoot1.'\', foot2=\''.$xfoot2.'\', foot3=\''
+		.$xfoot3.'\', commentlimit=\''.$xcommentlimit.'\', anonymous=\''.$xanonymous.'\', minpass=\'8\', pollcomm=\''
+		.$xpollcomm.'\', articlecomm=\''.$xarticlecomm.'\', broadcast_msg=\''.$xbroadcast_msg.'\', my_headlines=\''
+		.$xmy_headlines.'\', top=\''.$xtop.'\', storyhome=\''.$xstoryhome.'\', user_news=\''.$xuser_news.'\', oldnum=\''
+		.$xoldnum.'\', banners=\''.$xbanners.'\', backend_title=\''.$xbackend_title
+		.'\', backend_language=\''.$xbackend_language.'\', language=\''.$xlanguage.'\', locale=\''.$xlocale.'\', multilingual=\''
+		.$xmultilingual.'\', useflags=\''.$xuseflags.'\', notify=\''.$xnotify.'\', notify_email=\''.$xnotify_email
+		.'\', notify_subject=\''.$xnotify_subject.'\', notify_message=\''.$xnotify_message.'\', notify_from=\''
+		.$xnotify_from.'\', moderate=\''.$xmoderate.'\', admingraphic=\''.$xadmingraphic.'\', CensorMode=\''.$xCensorMode.'\', CensorReplace=\''.$xCensorReplace.'\'';
+	$db->sql_query($sql);
 
-    $sql = "UPDATE `{$prefix}_config` SET 
-        sitename=?, nukeurl=?, site_logo=?, slogan=?, startdate=?, adminmail=?, anonpost=?, foot1=?, foot2=?, foot3=?, 
-        commentlimit=?, anonymous=?, minpass='8', pollcomm=?, articlecomm=?, broadcast_msg=?, my_headlines=?, 
-        top=?, storyhome=?, user_news=?, oldnum=?, banners=?, backend_title=?, backend_language=?, language=?, 
-        locale=?, multilingual=?, useflags=?, notify=?, notify_email=?, notify_subject=?, notify_message=?, 
-        notify_from=?, moderate=?, admingraphic=?, CensorMode=?, CensorReplace=?";
-
-    $stmt = $db->prepare($sql);
-    $stmt->bind_param(
-        'ssssssisssssiiiiiiiissssssssssssssss',
-        $xsitename, $xnukeurl, $xsite_logo, $xslogan, $xstartdate, $xadminmail, $xanonpost, 
-        $xfoot1, $xfoot2, $xfoot3, $xcommentlimit, $xanonymous, $xpollcomm, $xarticlecomm, 
-        $xbroadcast_msg, $xmy_headlines, $xtop, $xstoryhome, $xuser_news, $xoldnum, $xbanners, 
-        $xbackend_title, $xbackend_language, $xlanguage, $xlocale, $xmultilingual, $xuseflags, 
-        $xnotify, $xnotify_email, $xnotify_subject, $xnotify_message, $xnotify_from, $xmoderate, 
-        $xadmingraphic, $xCensorMode, $xCensorReplace
-    );
-    $stmt->execute();
-    $stmt->close();
-
-    header('Location: ' . $admin_file . '.php?op=Configure');
+	 Header('Location: '.$admin_file.'.php?op=Configure');
 }
 
 ?>

@@ -26,9 +26,7 @@ if( !empty($setmodules) )
         return;
 }
 
-if (!defined('IN_PHPBB')) {
-    define('IN_PHPBB', 1);
-}
+define('IN_PHPBB', 1);
 
 //
 // Let's set the root dir for phpBB

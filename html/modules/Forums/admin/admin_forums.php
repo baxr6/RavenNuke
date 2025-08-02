@@ -19,9 +19,7 @@
  *
  ***************************************************************************/
 
-if (!defined('IN_PHPBB')) {
-    define('IN_PHPBB', 1);
-}
+define('IN_PHPBB', 1);
 
 if( !empty($setmodules) )
 {
@@ -233,16 +231,15 @@ if( isset($HTTP_POST_VARS['addforum']) || isset($HTTP_POST_VARS['addcategory']) 
 {
         $mode = ( isset($HTTP_POST_VARS['addforum']) ) ? "addforum" : "addcat";
 
-if ($mode == "addforum") {
-    $addforum = $HTTP_POST_VARS['addforum'];
-    reset($addforum);  // Make sure the internal pointer is at the start
-    $cat_id = key($addforum);
-    $cat_id = intval($cat_id);
-    //
-    // stripslashes needs to be run on this because slashes are added when the forum name is posted
-    //
-    $forumname = stripslashes($HTTP_POST_VARS['forumname'][$cat_id]);
-}
+        if( $mode == "addforum" )
+        {
+                list($cat_id) = each($HTTP_POST_VARS['addforum']);
+				$cat_id = intval($cat_id);
+                //
+                // stripslashes needs to be run on this because slashes are added when the forum name is posted
+                //
+                $forumname = stripslashes($HTTP_POST_VARS['forumname'][$cat_id]);
+        }
 }
 
 if( !empty($mode) )
@@ -463,10 +460,12 @@ if( !empty($mode) )
                         //
                         $field_sql = "";
                         $value_sql = "";
-foreach ($forum_auth_ary as $field => $value) {
-    $field_sql .= ", $field";
-    $value_sql .= ", $value";
-}
+                        while( list($field, $value) = each($forum_auth_ary) )
+                        {
+                                $field_sql .= ", $field";
+                                $value_sql .= ", $value";
+
+                        }
 
                         // There is no problem having duplicate forum names so we won't check for it.
 

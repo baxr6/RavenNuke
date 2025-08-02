@@ -12,5 +12,5 @@ $dbMysql->dbQueryDelete();
 $dbMysql->dbTableDropSelective();
 $dbMysql->dbServerDisconnect();
 $dbMysql->addDefaultXhtmlTemplate('foot');
-$dbMysql->destroy();
+//$dbMysql->destroy();
 ?>

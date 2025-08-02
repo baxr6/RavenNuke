@@ -3,12 +3,12 @@
 /********************************************************/
 /* NukeSentinel(tm)                                     */
 /* By: NukeScripts(tm) (http://www.nukescripts.net)     */
-/* Copyright © 2000-2008 by NukeScripts(tm)             */
+/* Copyright ï¿½ 2000-2008 by NukeScripts(tm)             */
 /* See CREDITS.txt for ALL contributors                 */
 /********************************************************/
 
 if(!defined('NUKESENTINEL_ADMIN')) { header("Location: ../../../".$admin_file.".php"); }
-if(!@get_magic_quotes_gpc()) { $referer = addslashes($referer); }
+$referer = addslashes($referer) ? addslashes($referer) : '';
 $testnum1 = $db->sql_numrows($db->sql_query("SELECT * FROM `".$prefix."_nsnst_referers` WHERE `referer`='".$referer."' AND `rid`!='".$rid."'"));
 if($testnum1 > 0) {
   $pagetitle = _AB_NUKESENTINEL.": "._AB_EDITREFERERERROR;

@@ -478,8 +478,8 @@ if ($viewlevel>=$servertraffic_view) {
 	$totalhits = 0;
 	$result = $db->sql_query('SELECT sum(hits) FROM ' . $prefix . '_stats_year');
 	list($totalhits) = $db->sql_fetchrow($result);
-    $content .= '<li class="' . $rnIBicon . ' IBtotalhits" title="' . _WERECEIVED . ' ' . number_format((float) $totalhits, 0) . ' ' . _PAGESVIEWS . ' ' . $startdate . '">' . _INFOBOX_TOTALHITS . number_format((float) $totalhits, 0) . '</li>' . PHP_EOL;
- 	$today = 0;
+	$content .= '<li class="' . $rnIBicon . ' IBtotalhits" title="' . _WERECEIVED . ' ' . number_format($totalhits,0) . ' ' . _PAGESVIEWS . ' ' . $startdate . '">' . _INFOBOX_TOTALHITS.number_format($totalhits,0) . '</li>'.PHP_EOL;
+	$today = 0;
 	$todayDST = date('I',time())*3600;
 	$t_time = time()-$todayDST;
 	$t_year = date('Y', $t_time);
@@ -487,12 +487,12 @@ if ($viewlevel>=$servertraffic_view) {
 	$t_date = date('j', $t_time);
 	$result = $db->sql_query('SELECT hits FROM ' . $prefix . '_stats_date WHERE year=' . $t_year . ' AND month=' . $t_month . ' AND date=' . $t_date);
 	list($today) = $db->sql_fetchrow($result);
-	$content .= '<li class="' . $rnIBicon . ' IBtodayhits" title="' . _INFOBOX_TODAYHITS.number_format((float) $today, 0) . '">' . _INFOBOX_TODAYHITS.number_format((float) $today, 0) . '</li>'.PHP_EOL;
+	$content .= '<li class="' . $rnIBicon . ' IBtodayhits" title="' . _INFOBOX_TODAYHITS.number_format($today,0) . '">' . _INFOBOX_TODAYHITS.number_format($today,0) . '</li>'.PHP_EOL;
 	if ($how_many_years>0 AND $viewlevel>=$traffic_year_view) {
 		$sql = 'SELECT year, hits FROM ' . $prefix . '_stats_year ORDER BY year DESC LIMIT ' . intval($how_many_years);
 		$result = $db->sql_query($sql);
 		while ($row = $db->sql_fetchrow($result)) {
-			$content .= '<li class="' . $rnIBicon . ' IByearlyhits" title="' . $row['year'] . ': ' . number_format((float) $row['hits']) . '">' . $row['year'] . ': ' . number_format((float) $row['hits']) . '</li>'.PHP_EOL;
+			$content .= '<li class="' . $rnIBicon . ' IByearlyhits" title="' . $row['year'] . ': ' . number_format($row['hits']) . '">' . $row['year'] . ': ' . number_format($row['hits']) . '</li>'.PHP_EOL;
 		}
 	}
 	$content .= '</ul>'.PHP_EOL;

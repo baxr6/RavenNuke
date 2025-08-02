@@ -26,21 +26,8 @@ if ( !defined('IN_PHPBB') )
 }
 define('HEADER_INC', TRUE);
 
+global $name, $sitename, $is_inline_review, $prefix, $db;
 
-// Check for forum-specific page title variables
-global $lang, $name, $is_inline_review, $forum_name, $topic_title, $page_title, $sitename, $prefix, $db;
-print_r($page_title);
-if (!isset($pagetitle) || empty($page_title)) {
-    if (isset($topic_title) && !empty($topic_title)) {
-        $page_title = $topic_title;
-    } elseif (isset($forum_name) && !empty($forum_name)) {
-        $page_title = $forum_name;
-    } elseif (isset($pagetitle) && !empty($pagetitle)) {
-        $page_title = $pagetitle;
-    } else {
-        $page_title = $board_config['sitename'];
-    }
-}
 $sql = "SELECT custom_title from ".$prefix."_modules where title='$name'";
 $result = $db->sql_query($sql);
 $row = $db->sql_fetchrow($result);
@@ -345,7 +332,7 @@ if (!isset($nav_links))
 
 $nav_links_html = '';
 $nav_link_proto = '<link rel="%s" href="%s" title="%s" />' . "\n";
-foreach($nav_links as $nav_item => $nav_array)
+while( list($nav_item, $nav_array) = @each($nav_links) )
 {
         if ( !empty($nav_array['url']) )
         {
@@ -354,12 +341,13 @@ foreach($nav_links as $nav_item => $nav_array)
         else
         {
                 // We have a nested array, used for items like <link rel='chapter'> that can occur more than once.
-                foreach($nav_array as $nested_array)
+                while( list(,$nested_array) = each($nav_array) )
                 {
                         $nav_links_html .= sprintf($nav_link_proto, $nav_item, $nested_array['url'], $nested_array['title']);
                 }
         }
 }
+
 // Format Timezone. We are unable to use array_pop here, because of PHP3 compatibility
 $l_timezone = explode('.', $board_config['board_timezone']);
 $l_timezone = (count($l_timezone) > 1 && $l_timezone[count($l_timezone)-1] != 0) ? $lang[sprintf('%.1f', $board_config['board_timezone'])] : $lang[number_format($board_config['board_timezone'])];

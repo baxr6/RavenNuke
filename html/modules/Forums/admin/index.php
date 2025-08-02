@@ -20,9 +20,7 @@
  *
  ***************************************************************************/
 
-if (!defined('IN_PHPBB')) {
-    define('IN_PHPBB', 1);
-}
+define('IN_PHPBB', 1);
 
 //
 // Load default header
@@ -31,7 +29,6 @@ $no_page_header = TRUE;
 $phpbb_root_path = "./../";
 require_once('./../extension.inc');
 require_once('./pagestart.' . $phpEx);
-
 
 // ---------------
 // Begin functions
@@ -89,31 +86,34 @@ if( isset($HTTP_GET_VARS['pane']) && $HTTP_GET_VARS['pane'] == 'left' )
 
         ksort($module);
 
-foreach ($module as $cat => $action_array) {
-    $cat = (!empty($lang[$cat])) ? $lang[$cat] : preg_replace("/_/", " ", $cat);
+        while( list($cat, $action_array) = each($module) )
+        {
+                $cat = ( !empty($lang[$cat]) ) ? $lang[$cat] : preg_replace("/_/", " ", $cat);
 
-    $template->assign_block_vars("catrow", array(
-        "ADMIN_CATEGORY" => $cat
-    ));
+                $template->assign_block_vars("catrow", array(
+                        "ADMIN_CATEGORY" => $cat)
+                );
 
-    ksort($action_array);
+                ksort($action_array);
 
-    $row_count = 0;
-    foreach ($action_array as $action => $file) {
-        $row_color = (!($row_count % 2)) ? $theme['td_color1'] : $theme['td_color2'];
-        $row_class = (!($row_count % 2)) ? $theme['td_class1'] : $theme['td_class2'];
+                $row_count = 0;
+                while( list($action, $file)        = each($action_array) )
+                {
+                        $row_color = ( !($row_count%2) ) ? $theme['td_color1'] : $theme['td_color2'];
+                        $row_class = ( !($row_count%2) ) ? $theme['td_class1'] : $theme['td_class2'];
 
-        $action = (!empty($lang[$action])) ? $lang[$action] : preg_replace("/_/", " ", $action);
+                        $action = ( !empty($lang[$action]) ) ? $lang[$action] : preg_replace("/_/", " ", $action);
 
-        $template->assign_block_vars("catrow.modulerow", array(
-            "ROW_COLOR" => "#" . $row_color,
-            "ROW_CLASS" => $row_class,
-            "ADMIN_MODULE" => $action,
-            "U_ADMIN_MODULE" => append_sid($file)
-        ));
-        $row_count++;
-    }
-}
+                        $template->assign_block_vars("catrow.modulerow", array(
+                                "ROW_COLOR" => "#" . $row_color,
+                                "ROW_CLASS" => $row_class,
+
+                                "ADMIN_MODULE" => $action,
+                                "U_ADMIN_MODULE" => append_sid($file))
+                        );
+                        $row_count++;
+                }
+        }
 
         $template->pparse("body");
 
@@ -123,7 +123,6 @@ elseif( isset($HTTP_GET_VARS['pane']) && $HTTP_GET_VARS['pane'] == 'right' )
 {
 
         include_once('./page_header_admin.'.$phpEx);
-$template->set_rootdir('modules/Forums/templates/subSilver/');
 
         $template->set_filenames(array(
                 "body" => "admin/index_body.tpl")
@@ -584,7 +583,6 @@ else
         //
         // Generate frameset
         //
-        
         $template->set_filenames(array(
                 "body" => "admin/index_frameset.tpl")
         );

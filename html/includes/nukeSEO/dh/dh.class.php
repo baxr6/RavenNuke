@@ -80,7 +80,7 @@ class dhclass  {
  *	override = override for current content level (used for override maintenance)
  *	generated = exclude override for current content level (for override maintenance) 
  */
-	function getHEAD($name, $mode='META') {
+	function getHEAD($mode='META', $name) {
 		global $db, $prefix, $dhTitle, $dhDesc, $dhKeys, $seocatid, $seosubcatid, $sitename, $slogan;
 		$this->setModuleName($name);
 		$dhTitle = $dhDesc = $dhKeys = '';
@@ -247,9 +247,7 @@ class dhclass  {
 				$meta['title'][1] .= $suffix;
 			}
 		}
-		// Did my head in angryface
-		//if (count($meta) > 0 and $mode == 'META') 
-		if (count($meta) > 0)
+		if (count($meta) > 0 and $mode == 'META') 
 			foreach ($meta as $key => $metaTag) 
 				$meta[$key][1] = $this->replaceVariables($key, $metaTag[1]);
 		return $meta;
@@ -304,22 +302,16 @@ class dhclass  {
 		return $this->dt_mod_name;
 	}
 
-function replaceVariables($tag, $value) {
-
-	// Attempt to retrieve site vars from multiple locations
-	$sitename = $GLOBALS['sitename'] ?? $GLOBALS['nuke_config']['sitename'] ?? '';
-	$slogan   = $GLOBALS['slogan'] ?? $GLOBALS['nuke_config']['slogan'] ?? '';
-	$module   = $this->dt_mod_title ?? '';
-	$year     = date('Y');
-	$variables = array('%sitename%', '%slogan%', '%module%', '%year%');
-	$replace   = array($sitename, $slogan, $module, $year);
-
-	if (!empty($value)) {
-		$value = str_replace($variables, $replace, $value);
+	// Replace variables in string (e.g. META tag) with site variables
+	function replaceVariables($tag, $value) {
+		global $sitename, $slogan;
+		$validTags = array('title', 'DESCRIPTION', 'AUTHOR', 'COPYRIGHT');
+		$variables = array('%sitename%', '%slogan%', '%module%', '%year%');
+		$replace   = array($sitename, $slogan, $this->dt_mod_title, date('Y'));
+		if (!empty($value) and in_array($tag, $validTags)) $value = str_replace($variables, $replace, $value);
+		return $value;
 	}
-	return $value;
-}
-// Get category ID from content
+	// Get category ID from content
 	function getCatIDfromSubcat() {
 		global $db, $prefix;
 		$catid = 0;

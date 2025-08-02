@@ -3,7 +3,7 @@
 /********************************************************/
 /* NukeSentinel(tm)                                     */
 /* By: NukeScripts(tm) (http://www.nukescripts.net)     */
-/* Copyright © 2000-2008 by NukeScripts(tm)             */
+/* Copyright ï¿½ 2000-2008 by NukeScripts(tm)             */
 /* See CREDITS.txt for ALL contributors                 */
 /********************************************************/
 
@@ -184,9 +184,7 @@ if($testnum1 > 0 OR $testnum2 >0 OR $testnum3 >0 OR $testnum4 >0) {
   $xnotes = str_replace("<br>", "\r\n", $xnotes);
   $xnotes = str_replace("<br />", "\r\n", $xnotes);
   $xnotes = htmlentities($xnotes, ENT_QUOTES);
-  if(!@get_magic_quotes_gpc()) {
-    $xnotes = addslashes($xnotes);
-  }
+  $xnotes = addslashes($xnotes) ? addslashes($xnotes) : '';
   $xtime = time();
   $db->sql_query("UPDATE `".$prefix."_nsnst_excluded_ranges` SET `ip_lo`='$longip_lo', `ip_hi`='$longip_hi', `c2c`='$xc2c', `date`='$xtime', `notes`='$xnotes' WHERE `ip_lo`='$old_ip_lo' AND `ip_hi`='$old_ip_hi'");
   header("Location: ".$admin_file.".php?op=$xop&min=$min&column=$column&direction=$direction&sip=$sip");

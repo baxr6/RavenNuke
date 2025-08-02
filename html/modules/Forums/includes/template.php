@@ -72,21 +72,19 @@ class Template {
                 $this->_tpldata = array();
         }
 
-function set_rootdir($dir)
-{
-    if (!is_dir($dir))
-    {
-        return false;
-    }
+        /**
+         * Sets the template root directory for this Template object.
+         */
+        function set_rootdir($dir)
+        {
+                if (!is_dir($dir))
+                {
+                        return false;
+                }
 
-    // Ensure trailing slash
-    if (substr($dir, -1) !== DIRECTORY_SEPARATOR) {
-        $dir .= DIRECTORY_SEPARATOR;
-    }
-
-    $this->root = $dir;
-    return true;
-}
+                $this->root = $dir;
+                return true;
+        }
 
         /**
          * Sets the template filenames for handles. $filename_array
@@ -99,13 +97,15 @@ function set_rootdir($dir)
                         return false;
                 }
 
-                foreach($filename_array as $handle => $filename)
+                reset($filename_array);
+                while(list($handle, $filename) = each($filename_array))
                 {
                         $this->files[$handle] = $this->make_filename($filename);
                 }
-                
+
                 return true;
         }
+
 
         /**
          * Load the file for the handle, compile the file,
@@ -202,7 +202,8 @@ function set_rootdir($dir)
          */
         function assign_vars($vararray)
         {
-                foreach($vararray as $key => $val)
+                reset ($vararray);
+                while (list($key, $val) = each($vararray))
                 {
                         $this->_tpldata['.'][0][$key] = $val;
                 }
@@ -221,27 +222,28 @@ function set_rootdir($dir)
                 return true;
         }
 
-function make_filename($filename)
-{
-    // Set default template root if not set, no trailing slash
-    if (empty($this->root)) {
-        $this->set_rootdir('/var/www/ravennuke/modules/Forums/templates/subSilver');
-    } else {
-        // Remove trailing slash if any, to avoid double slash
-        $this->root = rtrim($this->root, '/');
-    }
 
-    // Remove leading slash from filename if any
-    $filename = ltrim($filename, '/');
+        /**
+         * Generates a full path+filename for the given filename, which can either
+         * be an absolute name, or a name relative to the rootdir for this Template
+         * object.
+         */
+        function make_filename($filename)
+        {
+                // Check if it's an absolute or relative path.
+                if (substr($filename, 0, 1) != '/')
+                {
+                       $filename = ($rp_filename = phpbb_realpath($this->root . '/' . $filename)) ? $rp_filename : $filename;
+                }
 
-    $full_path = $this->root . '/' . $filename;
+                if (!file_exists($filename))
+                {
+                        die("Template->make_filename(): Error - file $filename does not exist");
+                }
 
-    if (!file_exists($full_path)) {
-        die("Template->make_filename(): Error - file '$filename' does not exist at: $full_path");
-    }
+                return $filename;
+        }
 
-    return $full_path;
-}
 
         /**
          * If not already done, load the file for the given handle and populate
@@ -273,6 +275,8 @@ function make_filename($filename)
 
                 return true;
         }
+
+
 
         /**
          * Compiles the given string of code, and returns
@@ -415,6 +419,7 @@ function make_filename($filename)
 
         }
 
+
         /**
          * Generates a reference to the given variable inside the given (possibly nested)
          * block namespace. This is a string of the form:
@@ -439,6 +444,7 @@ function make_filename($filename)
                 return $varref;
 
         }
+
 
         /**
          * Generates a reference to the array of data values for the given

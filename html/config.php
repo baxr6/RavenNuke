@@ -63,11 +63,11 @@ $prefix = 'nuke';
 $user_prefix = 'nuke';
 $dbtype = 'MySQLI';
 $sitekey = 'SdFk*fa2rnv21076~v28367-dm52?6w69.3a2fDS+e9';
-$gfx_chk = 7;
+$gfx_chk = 0;
 $subscription_url = '';
 $admin_file = 'admin';
 $tipath = 'images/topics/';
-$display_errors = true; //This should only be used (set to "true") when testing locally and not in a production environment
+$display_errors = false; //This should only be used (set to "true") when testing locally and not in a production environment
 
 /*********************************************************************
  * You are done with the key database/system settings.  Continue with

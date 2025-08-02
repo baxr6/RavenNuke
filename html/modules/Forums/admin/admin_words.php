@@ -27,9 +27,7 @@ if( !empty($setmodules) )
         return;
 }
 
-if (!defined('IN_PHPBB')) {
-    define('IN_PHPBB', 1);
-}
+define('IN_PHPBB', 1);
 
 //
 // Load default header

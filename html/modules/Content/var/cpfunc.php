@@ -645,12 +645,9 @@ function BrowseTag($tag, $order, $ofsbgn, $ofsppg) {
 
 function real_escape_content($string) {
 	global $db;
-	if (!get_magic_quotes_gpc()) {
-		$string = $db->sql_escape_string($string);
-	} else {
-		$string = $db->sql_escape_string(stripslashes($string));
-	}
 
-	return $string;
+	// Magic quotes no longer exist, so just escape directly
+	return $db->sql_escape_string($string);
 }
+
 ?>

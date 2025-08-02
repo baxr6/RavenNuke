@@ -140,17 +140,60 @@ function phpbb_clean_username($username)
   return $username;
 }
 
-function phpbb_ltrim(string $str, string $charlist = ''): string
+/**
+* This function is a wrapper for ltrim, as charlist is only supported in php >= 4.1.0
+* Added in phpBB 2.0.18
+*/
+function phpbb_ltrim($str, $charlist = false)
 {
-    return $charlist === '' ? ltrim($str) : ltrim($str, $charlist);
+   if ($charlist === false)
+   {
+      return ltrim($str);
+   }
+
+   $php_version = explode('.', PHP_VERSION);
+
+   // php version < 4.1.0
+   if ((int) $php_version[0] < 4 || ((int) $php_version[0] == 4 && (int) $php_version[1] < 1))
+   {
+      while ($str[0] == $charlist)
+      {
+         $str = substr($str, 1);
+      }
+   }
+   else
+   {
+      $str = ltrim($str, $charlist);
+   }
+
+   return $str;
 }
 
-
-function phpbb_rtrim(string $str, string $charlist = ''): string
+// added at phpBB 2.0.12 to fix a bug in PHP 4.3.10 (only supporting charlist in php >= 4.1.0)
+function phpbb_rtrim($str, $charlist = false)
 {
-    return $charlist === '' ? rtrim($str) : rtrim($str, $charlist);
-}
+  if ($charlist === false)
+  {
+    return rtrim($str);
+  }
 
+  $php_version = explode('.', PHP_VERSION);
+
+  // php version < 4.1.0
+  if ((int) $php_version[0] < 4 || ((int) $php_version[0] == 4 && (int) $php_version[1] < 1))
+  {
+    while ($str[strlen($str)-1] == $charlist)
+    {
+      $str = substr($str, 0, strlen($str)-1);
+    }
+  }
+  else
+  {
+    $str = rtrim($str, $charlist);
+  }
+
+  return $str;
+}
 
 /**
 * Our own generator of random values
@@ -529,37 +572,29 @@ function setup_style($style)
     $img_lang = ( file_exists(@phpbb_realpath($phpbb_root_path . $current_template_path . '/images/lang_' . $board_config['default_lang'])) ) ? $board_config['default_lang'] : 'english';
     }
 
-foreach ($images as $key => $value) {
-    if (!is_array($value)) {
+    while( list($key, $value) = @each($images) )
+    {
+      if ( !is_array($value) )
+      {
         $images[$key] = str_replace('{LANG}', 'lang_' . $img_lang, $value);
+      }
     }
-}
   }
 
   return $row;
 }
 
-function encode_ip(string $dotquad_ip): string
+function encode_ip($dotquad_ip)
 {
-    $ip_parts = explode('.', $dotquad_ip);
-
-    if (count($ip_parts) !== 4 || !array_reduce($ip_parts, fn($carry, $part) => $carry && is_numeric($part) && $part >= 0 && $part <= 255, true)) {
-        return '00000000'; // or throw an error
-    }
-
-    return sprintf('%02x%02x%02x%02x', ...$ip_parts);
+  $ip_sep = explode('.', $dotquad_ip);
+  return sprintf('%02x%02x%02x%02x', $ip_sep[0], $ip_sep[1], $ip_sep[2], $ip_sep[3]);
 }
 
-function decode_ip(string $int_ip): string
+function decode_ip($int_ip)
 {
-    if (strlen($int_ip) !== 8 || !ctype_xdigit($int_ip)) {
-        return '0.0.0.0'; // or throw an error
-    }
-
-    $hex_parts = str_split($int_ip, 2);
-    return implode('.', array_map('hexdec', $hex_parts));
+  $hexipbang = explode('.', chunk_split($int_ip, 2, '.'));
+  return hexdec($hexipbang[0]). '.' . hexdec($hexipbang[1]) . '.' . hexdec($hexipbang[2]) . '.' . hexdec($hexipbang[3]);
 }
-
 
 //
 // Create date/time from format and timezone

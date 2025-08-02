@@ -1513,7 +1513,7 @@ function get_theme($refresh = false) {
 
 	$user2 = explode(':', base64_decode(addslashes($user)));
 	$user_id = intval($user2[0]);
-	if(isset($user2[9]) && $user2[9]) {
+	if($user2[9]) {
 		if(!file_exists('themes/' . $user2[9] . '/theme.php')) {
 			$theme = $Default_Theme;
 		} else {

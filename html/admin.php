@@ -32,12 +32,12 @@ if (!isset($admin_file)) $admin_file = 'admin';
  *
  * @todo not sure about the regex being here.
 */
-#if(isset($_REQUEST['aid'])) {
-#	if( ($_REQUEST['aid'] && empty($admin) && $op != 'login') || preg_match('/[^\p{L}\p{N}\p{Pd}\p{Pc}]/', trim($_REQUEST['aid'])) ) {
-#		header('Location: ' . $admin_file . '.php');
-#		die('Access Denied');
-#	}
-#}
+if(isset($_REQUEST['aid'])) {
+	if( ($_REQUEST['aid'] && empty($admin) && $op != 'login') || preg_match('/[^\p{L}\p{N}\p{Pd}\p{Pc}]/', trim($_REQUEST['aid'])) ) {
+		header('Location: ' . $admin_file . '.php');
+		die('Access Denied');
+	}
+}
 
 get_lang('admin');
 
@@ -188,8 +188,6 @@ function adminmenu($url, $title, $image) {
 	}
 	echo '<td class="text-center content" style="width: 16%; vertical-align: top;"><a href="' , $url , '">' , $img
 		, '<span class="thick">' , $title , '</span>' , $close , '<br /><br /></td>';
-	$counter = isset($counter) && is_numeric($counter) ? (int)$counter : 0;
-
 	if ($counter == 5) {
 		echo '</tr><tr>';
 		$counter = 0;

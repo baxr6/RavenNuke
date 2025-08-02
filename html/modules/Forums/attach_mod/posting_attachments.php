@@ -420,7 +420,7 @@ class attach_parent
 			}
 		}
 
-		$this->num_attachments = is_array($this->attachment_list) ? count($this->attachment_list) : 0;	
+		$this->num_attachments = sizeof($this->attachment_list);
 		
 		if ($submit && $mode != 'vote')
 		{
@@ -978,39 +978,36 @@ class attach_parent
 
 		$attachments = array();
 
-// Ensure arrays are initialized
-$this->attachment_list = $this->attachment_list ?? [];
-$this->attachment_filename_list = $this->attachment_filename_list ?? [];
-$this->attachment_extension_list = $this->attachment_extension_list ?? [];
-$this->attachment_mimetype_list = $this->attachment_mimetype_list ?? [];
-$this->attachment_filesize_list = $this->attachment_filesize_list ?? [];
-$this->attachment_filetime_list = $this->attachment_filetime_list ?? [];
-$this->attachment_id_list = $this->attachment_id_list ?? [];
-$this->attachment_thumbnail_list = $this->attachment_thumbnail_list ?? [];
+		if (sizeof($this->attachment_list) > 0)
+		{
+			if (intval($attach_config['show_apcp']))
+			{
+				$template->assign_block_vars('switch_posted_attachments', array());
+			}
 
-if (is_array($this->attachment_list) && count($this->attachment_list) > 0) {
-    if (intval($attach_config['show_apcp'])) {
-        $template->assign_block_vars('switch_posted_attachments', array());
-    }
+			for ($i = 0; $i < sizeof($this->attachment_list); $i++)
+			{
+				$hidden =  '<input type="hidden" name="attachment_list[]" value="' . $this->attachment_list[$i] . '" />';
+				$hidden .= '<input type="hidden" name="filename_list[]" value="' . $this->attachment_filename_list[$i] . '" />';
+				$hidden .= '<input type="hidden" name="extension_list[]" value="' . $this->attachment_extension_list[$i] . '" />';
+				$hidden .= '<input type="hidden" name="mimetype_list[]" value="' . $this->attachment_mimetype_list[$i] . '" />';
+				$hidden .= '<input type="hidden" name="filesize_list[]" value="' . $this->attachment_filesize_list[$i] . '" />';
+				$hidden .= '<input type="hidden" name="filetime_list[]" value="' . $this->attachment_filetime_list[$i] . '" />';
+				$hidden .= '<input type="hidden" name="attach_id_list[]" value="' . $this->attachment_id_list[$i] . '" />';
+				$hidden .= '<input type="hidden" name="attach_thumbnail_list[]" value="' . $this->attachment_thumbnail_list[$i] . '" />';
 
-    for ($i = 0; $i < count($this->attachment_list); $i++) {
-        // Generate hidden inputs
-        $hidden = '<input type="hidden" name="attachment_list[]" value="' . $this->attachment_list[$i] . '" />';
-        $hidden .= '<input type="hidden" name="filename_list[]" value="' . $this->attachment_filename_list[$i] . '" />';
-        $hidden .= '<input type="hidden" name="extension_list[]" value="' . $this->attachment_extension_list[$i] . '" />';
-        $hidden .= '<input type="hidden" name="mimetype_list[]" value="' . $this->attachment_mimetype_list[$i] . '" />';
-        $hidden .= '<input type="hidden" name="filesize_list[]" value="' . $this->attachment_filesize_list[$i] . '" />';
-        $hidden .= '<input type="hidden" name="filetime_list[]" value="' . $this->attachment_filetime_list[$i] . '" />';
-        $hidden .= '<input type="hidden" name="attach_id_list[]" value="' . $this->attachment_id_list[$i] . '" />';
-        $hidden .= '<input type="hidden" name="attach_thumbnail_list[]" value="' . $this->attachment_thumbnail_list[$i] . '" />';
+				if (!$this->posted_attachments_body || sizeof($this->attachment_list) == 0)
+				{
+					$hidden .= '<input type="hidden" name="comment_list[]" value="' . $this->attachment_comment_list[$i] . '" />';
+				}
+				
+				$template->assign_block_vars('hidden_row', array(
+					'S_HIDDEN' => $hidden)
+				);
+			}
+		}
 
-        if (!$this->posted_attachments_body || count($this->attachment_list) == 0) {
-            $hidden .= '<input type="hidden" name="comment_list[]" value="' . $this->attachment_comment_list[$i] . '" />';
-        }
-
-        $template->assign_block_vars('hidden_row', array('S_HIDDEN' => $hidden));
-    }
-}		if ($this->add_attachment_body)
+		if ($this->add_attachment_body)
 		{
 			init_display_template('attachbody', '{ADD_ATTACHMENT_BODY}', 'add_attachment_body.tpl');
 			
@@ -1201,8 +1198,8 @@ if (is_array($this->attachment_list) && count($this->attachment_list) > 0) {
 					$this->attach_filename = delete_extension($this->attach_filename);
 					$this->attach_filename = str_replace(array(' ','-'), array('_','_'), $this->attach_filename);
 					$this->attach_filename = str_replace('__', '_', $this->attach_filename);
-					$this->attach_filename = str_replace(array(',', '.', '!', '?', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', ';', ':', '@', "'", '"', '&'), array('', '', '', '', 'ue', 'ue', 'oe', 'oe', 'ae', 'ae', '', '', '', '', '', 'and'), $this->attach_filename);
-					$this->attach_filename = str_replace(array('$', 'ï¿½', '>','<','ï¿½','%','=','/','(',')','#','*','+',"\\",'{','}','[',']'), array('dollar', 'ss','greater','lower','paragraph','percent','equal','','','','','','','','','','',''), $this->attach_filename);
+					$this->attach_filename = str_replace(array(',', '.', '!', '?', 'ü', 'Ü', 'ö', 'Ö', 'ä', 'Ä', ';', ':', '@', "'", '"', '&'), array('', '', '', '', 'ue', 'ue', 'oe', 'oe', 'ae', 'ae', '', '', '', '', '', 'and'), $this->attach_filename);
+					$this->attach_filename = str_replace(array('$', 'ß', '>','<','§','%','=','/','(',')','#','*','+',"\\",'{','}','[',']'), array('dollar', 'ss','greater','lower','paragraph','percent','equal','','','','','','','','','','',''), $this->attach_filename);
 					// Remove non-latin characters
 					$this->attach_filename = preg_replace_callback(
 						"/([\xC2\xC3])([\x80-\xBF])/",

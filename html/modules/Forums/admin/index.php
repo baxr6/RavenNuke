@@ -20,7 +20,9 @@
  *
  ***************************************************************************/
 
-define('IN_PHPBB', 1);
+if (!defined('IN_PHPBB')) {
+    define('IN_PHPBB', 1);
+}
 
 //
 // Load default header
@@ -372,7 +374,7 @@ $template->set_rootdir('modules/Forums/templates/subSilver/');
         if($count_onlinerow_reg > 0)
         {
                 $registered_users = 0;
-                $hidden_users = 0;
+
                 for($i = 0; $i < $count_onlinerow_reg; $i++)
                 {
                         if( !inarray($onlinerow_reg[$i]['user_id'], $reg_userid_ary) )
@@ -381,18 +383,18 @@ $template->set_rootdir('modules/Forums/templates/subSilver/');
 
                                 $username = $onlinerow_reg[$i]['username'];
 
+                                if( $onlinerow_reg[$i]['user_allow_viewonline'] || $userdata['user_level'] == ADMIN )
+                                {
+                                        $registered_users++;
+                                        $hidden = FALSE;
+                                }
+                                else
+                                {
+                                        $hidden_users++;
+                                        $hidden = TRUE;
+                                }
 
-// Your loop or processing code here
-if (
-    ($onlinerow_reg[$i]['user_allow_viewonline'] ?? false) || 
-    ($userdata['user_level'] ?? 0) === ADMIN
-) {
-    $registered_users++;
-    $hidden = false;
-} else {
-    $hidden_users++;
-    $hidden = true;
-}                                if( $onlinerow_reg[$i]['user_session_page'] < 1 )
+                                if( $onlinerow_reg[$i]['user_session_page'] < 1 )
                                 {
                                         switch($onlinerow_reg[$i]['user_session_page'])
                                         {

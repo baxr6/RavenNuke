@@ -27,7 +27,6 @@ if ( !defined('IN_PHPBB') )
 
 define('HEADER_INC', true);
 
-global $page_title;
 //
 // gzip_compression
 //

@@ -14,12 +14,7 @@
 //@require 'Swift/OutputByteStrean.php';
 //@require 'Swift/SwiftException.php';
 //@require 'Swift/IoException.php';
-// Compatibility function for PHP 8.0+
-if (!function_exists('get_magic_quotes_runtime')) {
-    function get_magic_quotes_runtime() {
-        return false; // Magic quotes were removed in PHP 5.4, always return false
-    }
-}
+
 /**
  * A KeyCache which streams to and from disk.
  * @package Swift

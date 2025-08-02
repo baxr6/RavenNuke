@@ -74,6 +74,8 @@ error_reporting  (E_ERROR | E_WARNING | E_PARSE); // This will NOT report uninit
 // this is a security precaution to prevent someone
 // trying to break out of a SQL statement.
 //
+if( !@get_magic_quotes_gpc() )
+{
 	if( is_array($HTTP_GET_VARS) )
 	{
 		while( list($k, $v) = each($HTTP_GET_VARS) )
@@ -133,6 +135,7 @@ error_reporting  (E_ERROR | E_WARNING | E_PARSE); // This will NOT report uninit
 		}
 		@reset($HTTP_COOKIE_VARS);
 	}
+}
 
 //
 // Define some basic configuration arrays this also prevents

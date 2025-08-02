@@ -937,12 +937,9 @@ function get_var($var_name, $default, $multibyte = false)
 	}
 	else
 	{
-reset($default); // make sure the internal pointer is at the first element
-$key_type = key($default);
-$type = current($default);
-
-$type = gettype($type);
-$key_type = gettype($key_type);
+		list($key_type, $type) = each($default);
+		$type = gettype($type);
+		$key_type = gettype($key_type);
 	}
 
 	if (is_array($var))

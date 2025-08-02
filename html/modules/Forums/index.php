@@ -515,17 +515,16 @@ $unread_topics=check_unread($forum_id);
 															$last_post = $lang['No_Posts'];
 														}
 
-														if (isset($forum_moderators[$forum_id]) && is_array($forum_moderators[$forum_id]) && ($mod_count = count($forum_moderators[$forum_id])) > 0)
-{
-    $l_moderators = ($mod_count === 1) ? $lang['Moderator'] : $lang['Moderators'];
-    $moderator_list = implode(', ', $forum_moderators[$forum_id]);
-}
-else
-{
-    $l_moderators = '&nbsp;';
-    $moderator_list = '';
-}
-
+														if (is_array($forum_moderators[$forum_id]) && count($forum_moderators[$forum_id]) > 0 )
+														{
+															$l_moderators = ( count($forum_moderators[$forum_id]) == 1 ) ? $lang['Moderator'] : $lang['Moderators'];
+																$moderator_list = implode(', ', $forum_moderators[$forum_id]);
+														}
+														else
+														{
+															$l_moderators = '&nbsp;';
+															$moderator_list = '';
+														}
 
 														$row_color = ( !($i % 2) ) ? $theme['td_color1'] : $theme['td_color2'];
 														$row_class = ( !($i % 2) ) ? $theme['td_class1'] : $theme['td_class2'];

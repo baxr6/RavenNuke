@@ -26,41 +26,53 @@ if ( !defined('IN_PHPBB') )
         exit;
 }
 
+   // Added by Attached Forums MOD
+
 function check_unread($forum_id)
 {
-    global $new_topic_data, $tracking_topics, $tracking_forums, $HTTP_COOKIE_VARS, $board_config;
+global $new_topic_data, $tracking_topics, $tracking_forums, $HTTP_COOKIE_VARS, $board_config;
+   if ( !empty($new_topic_data[$forum_id]) )
+   {
+      $forum_last_post_time = 0;
 
-    $unread_topics = false; // Initialize variable to avoid undefined warnings
+      while( list($check_topic_id, $check_post_time) = @each($new_topic_data[$forum_id]) )
+      {
+         if ( empty($tracking_topics[$check_topic_id]) )
+         {
+            $unread_topics = true;
+            $forum_last_post_time = max($check_post_time, $forum_last_post_time);
 
-    if (!empty($new_topic_data[$forum_id])) {
-        $forum_last_post_time = 0;
-
-        foreach ($new_topic_data[$forum_id] as $check_topic_id => $check_post_time) {
-            if (empty($tracking_topics[$check_topic_id])) {
-                $unread_topics = true;
-                $forum_last_post_time = max($check_post_time, $forum_last_post_time);
-            } else {
-                if ($tracking_topics[$check_topic_id] < $check_post_time) {
-                    $unread_topics = true;
-                    $forum_last_post_time = max($check_post_time, $forum_last_post_time);
-                }
+         }
+         else
+         {
+            if ( $tracking_topics[$check_topic_id] < $check_post_time )
+            {
+               $unread_topics = true;
+               $forum_last_post_time = max($check_post_time, $forum_last_post_time);
             }
-        }
+         }
+      }
 
-        if (!empty($tracking_forums[$forum_id])) {
-            if ($tracking_forums[$forum_id] > $forum_last_post_time) {
-                $unread_topics = false;
-            }
-        }
+      if ( !empty($tracking_forums[$forum_id]) )
+      {
+         if ( $tracking_forums[$forum_id] > $forum_last_post_time )
+         {
+            $unread_topics = false;
+         }
+      }
 
-        if (isset($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_f_all'])) {
-            if ($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_f_all'] > $forum_last_post_time) {
-                $unread_topics = false;
-            }
-        }
-    }
+      if ( isset($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_f_all']) )
+      {
+         if ( $HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_f_all'] > $forum_last_post_time )
+         {
+            $unread_topics = false;
+         }
+      }
 
-    return $unread_topics;
+   }
+
+return $unread_topics;
+
 }
 
    // END Added by Attached Forums MOD

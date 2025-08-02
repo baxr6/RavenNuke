@@ -74,64 +74,64 @@ error_reporting  (E_ERROR | E_WARNING | E_PARSE); // This will NOT report uninit
 // this is a security precaution to prevent someone
 // trying to break out of a SQL statement.
 //
-	if( is_array($_GET) )
+	if( is_array($HTTP_GET_VARS) )
 	{
-		while( list($k, $v) = each($_GET) )
+		while( list($k, $v) = each($HTTP_GET_VARS) )
 		{
-			if( is_array($_GET[$k]) )
+			if( is_array($HTTP_GET_VARS[$k]) )
 			{
-				while( list($k2, $v2) = each($_GET[$k]) )
+				while( list($k2, $v2) = each($HTTP_GET_VARS[$k]) )
 				{
-					$_GET[$k][$k2] = addslashes($v2);
+					$HTTP_GET_VARS[$k][$k2] = addslashes($v2);
 				}
-				@reset($_GET[$k]);
+				@reset($HTTP_GET_VARS[$k]);
 			}
 			else
 			{
-				$_GET[$k] = addslashes($v);
+				$HTTP_GET_VARS[$k] = addslashes($v);
 			}
 		}
-		@reset($_GET);
+		@reset($HTTP_GET_VARS);
 	}
 
-	if( is_array($_POST) )
+	if( is_array($HTTP_POST_VARS) )
 	{
-		while( list($k, $v) = each($_POST) )
+		while( list($k, $v) = each($HTTP_POST_VARS) )
 		{
-			if( is_array($_POST[$k]) )
+			if( is_array($HTTP_POST_VARS[$k]) )
 			{
-				while( list($k2, $v2) = each($_POST[$k]) )
+				while( list($k2, $v2) = each($HTTP_POST_VARS[$k]) )
 				{
-					$_POST[$k][$k2] = addslashes($v2);
+					$HTTP_POST_VARS[$k][$k2] = addslashes($v2);
 				}
-				@reset($_POST[$k]);
+				@reset($HTTP_POST_VARS[$k]);
 			}
 			else
 			{
-				$_POST[$k] = addslashes($v);
+				$HTTP_POST_VARS[$k] = addslashes($v);
 			}
 		}
-		@reset($_POST);
+		@reset($HTTP_POST_VARS);
 	}
 
-	if( is_array($_COOKIE) )
+	if( is_array($HTTP_COOKIE_VARS) )
 	{
-		while( list($k, $v) = each($_COOKIE) )
+		while( list($k, $v) = each($HTTP_COOKIE_VARS) )
 		{
-			if( is_array($_COOKIE[$k]) )
+			if( is_array($HTTP_COOKIE_VARS[$k]) )
 			{
-				while( list($k2, $v2) = each($_COOKIE[$k]) )
+				while( list($k2, $v2) = each($HTTP_COOKIE_VARS[$k]) )
 				{
-					$_COOKIE[$k][$k2] = addslashes($v2);
+					$HTTP_COOKIE_VARS[$k][$k2] = addslashes($v2);
 				}
-				@reset($_COOKIE[$k]);
+				@reset($HTTP_COOKIE_VARS[$k]);
 			}
 			else
 			{
-				$_COOKIE[$k] = addslashes($v);
+				$HTTP_COOKIE_VARS[$k] = addslashes($v);
 			}
 		}
-		@reset($_COOKIE);
+		@reset($HTTP_COOKIE_VARS);
 	}
 
 //
@@ -189,7 +189,7 @@ $nav_links['author'] = array (
 //
 if( getenv('HTTP_X_FORWARDED_FOR') != '' )
 {
-	$client_ip = ( !empty($_SERVER['REMOTE_ADDR']) ) ? $_SERVER['REMOTE_ADDR'] : ( ( !empty($_ENV['REMOTE_ADDR']) ) ? $_ENV['REMOTE_ADDR'] : $REMOTE_ADDR );
+	$client_ip = ( !empty($HTTP_SERVER_VARS['REMOTE_ADDR']) ) ? $HTTP_SERVER_VARS['REMOTE_ADDR'] : ( ( !empty($HTTP_ENV_VARS['REMOTE_ADDR']) ) ? $HTTP_ENV_VARS['REMOTE_ADDR'] : $REMOTE_ADDR );
 
 	if ( preg_match("/^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/", getenv('HTTP_X_FORWARDED_FOR'), $ip_list) )
 	{
@@ -199,7 +199,7 @@ if( getenv('HTTP_X_FORWARDED_FOR') != '' )
 }
 else
 {
-	$client_ip = ( !empty($_SERVER['REMOTE_ADDR']) ) ? $_SERVER['REMOTE_ADDR'] : ( ( !empty($_ENV['REMOTE_ADDR']) ) ? $_ENV['REMOTE_ADDR'] : $REMOTE_ADDR );
+	$client_ip = ( !empty($HTTP_SERVER_VARS['REMOTE_ADDR']) ) ? $HTTP_SERVER_VARS['REMOTE_ADDR'] : ( ( !empty($HTTP_ENV_VARS['REMOTE_ADDR']) ) ? $HTTP_ENV_VARS['REMOTE_ADDR'] : $REMOTE_ADDR );
 }
 $user_ip = encode_ip($client_ip);
 

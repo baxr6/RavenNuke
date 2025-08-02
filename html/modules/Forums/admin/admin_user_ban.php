@@ -42,16 +42,16 @@ require_once('./pagestart.' . $phpEx);
 //
 // Start program
 //
-if ( isset($_POST['submit']) )
+if ( isset($HTTP_POST_VARS['submit']) )
 {
         $user_bansql = '';
         $email_bansql = '';
         $ip_bansql = '';
 
         $user_list = array();
-        if ( !empty($_POST['username']) )
+        if ( !empty($HTTP_POST_VARS['username']) )
         {
-                $this_userdata = get_userdata($_POST['username'], true);
+                $this_userdata = get_userdata($HTTP_POST_VARS['username'], true);
                 if( !$this_userdata )
                 {
                         message_die(GENERAL_MESSAGE, $lang['No_user_id_specified'] );
@@ -61,9 +61,9 @@ if ( isset($_POST['submit']) )
         }
 
         $ip_list = array();
-        if ( isset($_POST['ban_ip']) )
+        if ( isset($HTTP_POST_VARS['ban_ip']) )
         {
-                $ip_list_temp = explode(',', $_POST['ban_ip']);
+                $ip_list_temp = explode(',', $HTTP_POST_VARS['ban_ip']);
 
                 for($i = 0; $i < count($ip_list_temp); $i++)
                 {
@@ -146,9 +146,9 @@ if ( isset($_POST['submit']) )
         }
 
         $email_list = array();
-        if ( isset($_POST['ban_email']) )
+        if ( isset($HTTP_POST_VARS['ban_email']) )
         {
-                $email_list_temp = explode(',', $_POST['ban_email']);
+                $email_list_temp = explode(',', $HTTP_POST_VARS['ban_email']);
 
                 for($i = 0; $i < count($email_list_temp); $i++)
                 {
@@ -270,9 +270,9 @@ if ( isset($_POST['submit']) )
 
         $where_sql = '';
 
-        if ( isset($_POST['unban_user']) )
+        if ( isset($HTTP_POST_VARS['unban_user']) )
         {
-                $user_list = $_POST['unban_user'];
+                $user_list = $HTTP_POST_VARS['unban_user'];
 
                 for($i = 0; $i < count($user_list); $i++)
                 {
@@ -283,9 +283,9 @@ if ( isset($_POST['submit']) )
                 }
         }
 
-        if ( isset($_POST['unban_ip']) )
+        if ( isset($HTTP_POST_VARS['unban_ip']) )
         {
-                $ip_list = $_POST['unban_ip'];
+                $ip_list = $HTTP_POST_VARS['unban_ip'];
 
                 for($i = 0; $i < count($ip_list); $i++)
                 {
@@ -296,9 +296,9 @@ if ( isset($_POST['submit']) )
                 }
         }
 
-        if ( isset($_POST['unban_email']) )
+        if ( isset($HTTP_POST_VARS['unban_email']) )
         {
-                $email_list = $_POST['unban_email'];
+                $email_list = $HTTP_POST_VARS['unban_email'];
 
                 for($i = 0; $i < count($email_list); $i++)
                 {

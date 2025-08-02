@@ -29,10 +29,10 @@ class attach_pm extends attach_parent
 	*/
 	function attach_pm()
 	{
-		global $_POST;
+		global $HTTP_POST_VARS;
 
 		$this->attach_parent();
-		$this->pm_delete_attachments = (isset($_POST['pm_delete_attach'])) ? true : false;
+		$this->pm_delete_attachments = (isset($HTTP_POST_VARS['pm_delete_attach'])) ? true : false;
 		$this->page = PAGE_PRIVMSGS;
 	}
 
@@ -56,7 +56,7 @@ class attach_pm extends attach_parent
 	*/
 	function insert_attachment_pm($a_privmsgs_id)
 	{
-		global $db, $mode, $attach_config, $privmsg_sent_id, $userdata, $to_userdata, $_POST;
+		global $db, $mode, $attach_config, $privmsg_sent_id, $userdata, $to_userdata, $HTTP_POST_VARS;
 
 		$a_privmsgs_id = (int) $a_privmsgs_id;
 
@@ -71,7 +71,7 @@ class attach_pm extends attach_parent
 			$this->do_insert_attachment('attach_list', 'pm', $a_privmsgs_id);
 			$this->do_insert_attachment('last_attachment', 'pm', $a_privmsgs_id);
 
-			if ((sizeof($this->attachment_list) > 0 || $this->post_attach) && !isset($_POST['update_attachment']))
+			if ((sizeof($this->attachment_list) > 0 || $this->post_attach) && !isset($HTTP_POST_VARS['update_attachment']))
 			{
 				$sql = 'UPDATE ' . PRIVMSGS_TABLE . '
 					SET privmsgs_attachment = 1
@@ -201,7 +201,7 @@ class attach_pm extends attach_parent
 	*/
 	function privmsgs_attachment_mod($mode)
 	{
-		global $attach_config, $template, $lang, $userdata, $_POST, $phpbb_root_path, $phpEx, $db;
+		global $attach_config, $template, $lang, $userdata, $HTTP_POST_VARS, $phpbb_root_path, $phpEx, $db;
 		global $confirm, $delete, $delete_all, $post_id, $privmsgs_id, $privmsg_id, $submit, $refresh, $mark_list, $folder;
 
 		if ($folder != 'outbox')
@@ -216,8 +216,8 @@ class attach_pm extends attach_parent
 
 		if (!$refresh)
 		{
-			$add_attachment_box = (!empty($_POST['add_attachment_box'])) ? TRUE : FALSE;
-			$posted_attachments_box = (!empty($_POST['posted_attachments_box'])) ? TRUE : FALSE;
+			$add_attachment_box = (!empty($HTTP_POST_VARS['add_attachment_box'])) ? TRUE : FALSE;
+			$posted_attachments_box = (!empty($HTTP_POST_VARS['posted_attachments_box'])) ? TRUE : FALSE;
 
 			$refresh = $add_attachment_box || $posted_attachments_box;
 		}

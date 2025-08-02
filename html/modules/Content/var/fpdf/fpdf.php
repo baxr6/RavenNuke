@@ -2212,7 +2212,7 @@ function _parsepng($file)
 
 function _parsegif($file) //EDITEI - GIF support is now included
 {
-	//Function by Jï¿½rï¿½me Fenal
+	//Function by Jérôme Fenal
 	require_once(RELATIVE_PATH.'gif.php'); //GIF class in pure PHP from Yamasoft (http://www.yamasoft.com/php-gif.zip)
 
 	$h=0;
@@ -2303,7 +2303,7 @@ function _out($s)
 }//End of class
 
 //Handle special IE contype request
-if(isset($_SERVER['HTTP_USER_AGENT']) and $_SERVER['HTTP_USER_AGENT']=='contype')
+if(isset($HTTP_SERVER_VARS['HTTP_USER_AGENT']) and $HTTP_SERVER_VARS['HTTP_USER_AGENT']=='contype')
 {
 	Header('Content-Type: application/pdf');
 	exit;

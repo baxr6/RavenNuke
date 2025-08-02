@@ -27,10 +27,10 @@ if ( !defined('IN_PHPBB') )
 	exit;
 }
 
-if ( isset($_POST['submit']) )
+if ( isset($HTTP_POST_VARS['submit']) )
 {
-	$username = ( !empty($_POST['username']) ) ? phpbb_clean_username($_POST['username']) : '';
-	$email = ( !empty($_POST['email']) ) ? trim(strip_tags(htmlspecialchars($_POST['email'], ENT_COMPAT))) : '';
+	$username = ( !empty($HTTP_POST_VARS['username']) ) ? phpbb_clean_username($HTTP_POST_VARS['username']) : '';
+	$email = ( !empty($HTTP_POST_VARS['email']) ) ? trim(strip_tags(htmlspecialchars($HTTP_POST_VARS['email'], ENT_COMPAT))) : '';
 
         $sql = "SELECT user_id, username, user_email, user_active, user_lang
                 FROM " . USERS_TABLE . "

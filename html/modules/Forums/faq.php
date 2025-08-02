@@ -43,9 +43,9 @@ $faq = array();
 //
 // Load the appropriate faq file
 //
-if( isset($_GET['mode']) )
+if( isset($HTTP_GET_VARS['mode']) )
 {
-        switch( $_GET['mode'] )
+        switch( $HTTP_GET_VARS['mode'] )
         {
                 case 'bbcode':
                         $lang_file = 'lang_bbcode';

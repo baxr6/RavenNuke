@@ -79,10 +79,10 @@ require_once('pagestart.' . $phpEx);
 
 
 // Any mode passed?
-if( isset($_GET['mode']) || isset($_POST['mode']) )
+if( isset($HTTP_GET_VARS['mode']) || isset($HTTP_POST_VARS['mode']) )
 {
-        $mode = ( isset($_GET['mode']) ) ? $_GET['mode'] : $_POST['mode'];
-	$target = ( isset($_GET['target']) ) ? $_GET['target'] : $_POST['target'];
+        $mode = ( isset($HTTP_GET_VARS['mode']) ) ? $HTTP_GET_VARS['mode'] : $HTTP_POST_VARS['mode'];
+	$target = ( isset($HTTP_GET_VARS['target']) ) ? $HTTP_GET_VARS['target'] : $HTTP_POST_VARS['target'];
 }
 else
 {

@@ -68,10 +68,10 @@ $size = get_var('size', '');
 $quota_size = get_var('quota_size', '');
 $pm_size = get_var('pm_size', '');
 
-$submit = (isset($_POST['submit'])) ? TRUE : FALSE;
-$check_upload = (isset($_POST['settings'])) ? TRUE : FALSE;
-$check_image_cat = (isset($_POST['cat_settings'])) ? TRUE : FALSE;
-$search_imagick = (isset($_POST['search_imagick'])) ? TRUE : FALSE;
+$submit = (isset($HTTP_POST_VARS['submit'])) ? TRUE : FALSE;
+$check_upload = (isset($HTTP_POST_VARS['settings'])) ? TRUE : FALSE;
+$check_image_cat = (isset($HTTP_POST_VARS['cat_settings'])) ? TRUE : FALSE;
+$search_imagick = (isset($HTTP_POST_VARS['search_imagick'])) ? TRUE : FALSE;
 
 // Re-evaluate the Attachment Configuration
 $sql = 'SELECT *
@@ -1211,7 +1211,7 @@ if ($submit && $mode == 'quota')
 	$quota_desc = get_var('quota_description', '');
 	$filesize = get_var('add_max_filesize', 0);
 	$size_select = get_var('add_size_select', '');
-	$add = ( isset($_POST['add_quota_check']) ) ? TRUE : FALSE;
+	$add = ( isset($HTTP_POST_VARS['add_quota_check']) ) ? TRUE : FALSE;
 
 	if ($quota_desc != '' && $add)
 	{

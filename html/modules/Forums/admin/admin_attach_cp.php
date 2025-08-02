@@ -60,9 +60,9 @@ $sort_order = get_var('order', 'ASC');
 $sort_order = ($sort_order == 'ASC') ? 'ASC' : 'DESC';
 $mode = get_var('mode', '');
 $view = get_var('view', '');
-$uid = (isset($_POST['u_id'])) ? get_var('u_id', 0) : get_var('uid', 0);
+$uid = (isset($HTTP_POST_VARS['u_id'])) ? get_var('u_id', 0) : get_var('uid', 0);
 
-$view = (isset($_POST['search']) && $_POST['search']) ? 'attachments' : $view;
+$view = (isset($HTTP_POST_VARS['search']) && $HTTP_POST_VARS['search']) ? 'attachments' : $view;
 
 // process modes based on view
 if ($view == 'username')
@@ -203,8 +203,8 @@ else
 }
 $select_sort_order .= '</select>';
 
-$submit_change = (isset($_POST['submit_change'])) ? TRUE : FALSE;
-$delete = (isset($_POST['delete'])) ? TRUE : FALSE;
+$submit_change = (isset($HTTP_POST_VARS['submit_change'])) ? TRUE : FALSE;
+$delete = (isset($HTTP_POST_VARS['delete'])) ? TRUE : FALSE;
 $delete_id_list = get_var('delete_id_list', array(0));
 
 $confirm = !empty($_POST['confirm']);
@@ -586,7 +586,7 @@ if ($view == 'username')
 			$row_class = ( !($i % 2) ) ? $theme['td_class1'] : $theme['td_class2'];
 
 			$template->assign_block_vars('memberrow', array(
-				'ROW_NUMBER'		=> $i + ( $_GET['start'] + 1 ),
+				'ROW_NUMBER'		=> $i + ( $HTTP_GET_VARS['start'] + 1 ),
 				'ROW_COLOR'			=> '#' . $row_color,
 				'ROW_CLASS'			=> $row_class,
 				'USERNAME'			=> $username,
@@ -614,7 +614,7 @@ if ($view == 'username')
 if ($view == 'attachments')
 {
 	$user_based = ($uid) ? TRUE : FALSE;
-	$search_based = (isset($_POST['search']) && $_POST['search']) ? TRUE : FALSE;
+	$search_based = (isset($HTTP_POST_VARS['search']) && $HTTP_POST_VARS['search']) ? TRUE : FALSE;
 	
 	$hidden_fields = '';
 	
@@ -803,7 +803,7 @@ if ($view == 'attachments')
 			$hidden_field = '<input type="hidden" name="attach_id_list[]" value="' . intval($attachments[$i]['attach_id']) . '" />';
 
 			$template->assign_block_vars('attachrow', array(
-				'ROW_NUMBER'	=> $i + ( $_GET['start'] + 1 ),
+				'ROW_NUMBER'	=> $i + ( $HTTP_GET_VARS['start'] + 1 ),
 				'ROW_COLOR'		=> '#' . $row_color,
 				'ROW_CLASS'		=> $row_class,
 

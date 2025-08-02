@@ -525,13 +525,13 @@ if( $ab_config['track_active'] == 1 AND !is_excluded($nsnst_const['remote_ip']))
 /*******************************/
 
 function get_env($st_var) {
-	global $_SERVER;
+	global $HTTP_SERVER_VARS;
 	if(isset($_SERVER[$st_var])) {
 		return $_SERVER[$st_var];
 	} elseif(isset($_ENV[$st_var])) {
 		return $_ENV[$st_var];
-	} elseif(isset($_SERVER[$st_var])) {
-		return $_SERVER[$st_var];
+	} elseif(isset($HTTP_SERVER_VARS[$st_var])) {
+		return $HTTP_SERVER_VARS[$st_var];
 	} elseif(getenv($st_var)) {
 		return getenv($st_var);
 	} elseif(function_exists('apache_getenv') && apache_getenv($st_var, true)) {
@@ -587,12 +587,12 @@ function st_clean_string($cleanstring) {
 }
 
 function get_get_string() {
-	global $_GET;
+	global $HTTP_GET_VARS;
 	$getstring = '';
 	if(isset($_GET)) {
 		$ST_GET = $_GET;
-	} elseif(isset($_GET)) {
-		$ST_GET = $_GET;
+	} elseif(isset($HTTP_GET_VARS)) {
+		$ST_GET = $HTTP_GET_VARS;
 	} elseif(getenv('GET')) {
 		$ST_GET = getenv('GET');
 	} elseif(function_exists('apache_getenv') && apache_getenv('GET', true)) {
@@ -608,12 +608,12 @@ function get_get_string() {
 }
 
 function get_post_string() {
-	global $_POST;
+	global $HTTP_POST_VARS;
 	$poststring = '';
 	if(isset($_POST)) {
 		$ST_POST = $_POST;
-	} elseif(isset($_POST)) {
-		$ST_POST = $_POST;
+	} elseif(isset($HTTP_POST_VARS)) {
+		$ST_POST = $HTTP_POST_VARS;
 	} elseif(getenv('POST')) {
 		$ST_POST = getenv('POST');
 	} elseif(function_exists('apache_getenv') && apache_getenv('POST', true)) {

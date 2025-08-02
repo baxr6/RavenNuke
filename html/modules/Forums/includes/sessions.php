@@ -27,23 +27,23 @@
 function session_begin($user_id, $user_ip, $page_id, $auto_create = 0, $enable_autologin = 0, $admin = 0)
 {
 	global $db, $board_config;
-	global $_COOKIE, $_GET, $SID;
+	global $HTTP_COOKIE_VARS, $HTTP_GET_VARS, $SID;
 
 	$cookiename = $board_config['cookie_name'];
 	$cookiepath = $board_config['cookie_path'];
 	$cookiedomain = $board_config['cookie_domain'];
 	$cookiesecure = $board_config['cookie_secure'];
 
-	if ( isset($_COOKIE[$cookiename . '_sid']) || isset($_COOKIE[$cookiename . '_data']) )
+	if ( isset($HTTP_COOKIE_VARS[$cookiename . '_sid']) || isset($HTTP_COOKIE_VARS[$cookiename . '_data']) )
 	{
-		$session_id = isset($_COOKIE[$cookiename . '_sid']) ? $_COOKIE[$cookiename . '_sid'] : '';
-		$sessiondata = isset($_COOKIE[$cookiename . '_data']) ? unserialize(stripslashes($_COOKIE[$cookiename . '_data'])) : array();
+		$session_id = isset($HTTP_COOKIE_VARS[$cookiename . '_sid']) ? $HTTP_COOKIE_VARS[$cookiename . '_sid'] : '';
+		$sessiondata = isset($HTTP_COOKIE_VARS[$cookiename . '_data']) ? unserialize(stripslashes($HTTP_COOKIE_VARS[$cookiename . '_data'])) : array();
 		$sessionmethod = SESSION_METHOD_COOKIE;
 	}
 	else
 	{
 		$sessiondata = array();
-		$session_id = ( isset($_GET['sid']) ) ? $_GET['sid'] : '';
+		$session_id = ( isset($HTTP_GET_VARS['sid']) ) ? $HTTP_GET_VARS['sid'] : '';
 		$sessionmethod = SESSION_METHOD_GET;
 	}
 
@@ -262,7 +262,7 @@ function session_begin($user_id, $user_ip, $page_id, $auto_create = 0, $enable_a
 function session_pagestart($user_ip, $thispage_id, $nukeuser)
 {
 	global $db, $lang, $board_config, $session_id;
-	global $_COOKIE, $_GET, $SID;
+	global $HTTP_COOKIE_VARS, $HTTP_GET_VARS, $SID;
 
 	$cookiename = $board_config['cookie_name'];
 	$cookiepath = $board_config['cookie_path'];
@@ -272,16 +272,16 @@ function session_pagestart($user_ip, $thispage_id, $nukeuser)
 	$current_time = time();
 	unset($userdata);
 
-	if ( isset($_COOKIE[$cookiename . '_sid']) || isset($_COOKIE[$cookiename . '_data']) )
+	if ( isset($HTTP_COOKIE_VARS[$cookiename . '_sid']) || isset($HTTP_COOKIE_VARS[$cookiename . '_data']) )
 	{
-		$sessiondata = isset( $_COOKIE[$cookiename . '_data'] ) ? unserialize(stripslashes($_COOKIE[$cookiename . '_data'])) : array();
-		$session_id = isset( $_COOKIE[$cookiename . '_sid'] ) ? $_COOKIE[$cookiename . '_sid'] : '';
+		$sessiondata = isset( $HTTP_COOKIE_VARS[$cookiename . '_data'] ) ? unserialize(stripslashes($HTTP_COOKIE_VARS[$cookiename . '_data'])) : array();
+		$session_id = isset( $HTTP_COOKIE_VARS[$cookiename . '_sid'] ) ? $HTTP_COOKIE_VARS[$cookiename . '_sid'] : '';
 		$sessionmethod = SESSION_METHOD_COOKIE;
 	}
 	else
 	{
 		$sessiondata = array();
-		$session_id = ( isset($_GET['sid']) ) ? $_GET['sid'] : '';
+		$session_id = ( isset($HTTP_GET_VARS['sid']) ) ? $HTTP_GET_VARS['sid'] : '';
 		$sessionmethod = SESSION_METHOD_GET;
 	}
 
@@ -400,7 +400,7 @@ if (!empty($nukeuser) && (empty($userdata['session_logged_in'] ?? true))) {
 function session_end($session_id, $user_id)
 {
 	global $db, $lang, $board_config, $userdata;
-	global $_COOKIE, $_GET, $SID;
+	global $HTTP_COOKIE_VARS, $HTTP_GET_VARS, $SID;
 
 	$cookiename = $board_config['cookie_name'];
 	$cookiepath = $board_config['cookie_path'];

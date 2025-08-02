@@ -134,9 +134,9 @@ function ShowCookies() {
 	include_once 'header.php';
 	Show_YA_menu();
 	OpenTable();
-	// $_COOKIE was deprecated by $_COOKIE in PHP 4.1.0
-	//$CookieArray	= $_COOKIE;
-	//if (!is_array($_COOKIE)) {
+	// $HTTP_COOKIE_VARS was deprecated by $_COOKIE in PHP 4.1.0
+	//$CookieArray	= $HTTP_COOKIE_VARS;
+	//if (!is_array($HTTP_COOKIE_VARS)) {
 	$CookieArray = $_COOKIE;
 	//}
 	echo '<form action="modules.php?name=' . $module_name . '&amp;op=DeleteCookies" method="post">';
@@ -183,8 +183,8 @@ function DeleteCookies() {
 		$db->sql_query('OPTIMIZE TABLE ' . $prefix . '_bbsessions');
 	}
 	echo $username;
-	//$CookieArray	= $_COOKIE;
-	//if (!is_array($_COOKIE)) {
+	//$CookieArray	= $HTTP_COOKIE_VARS;
+	//if (!is_array($HTTP_COOKIE_VARS)) {
 	$CookieArray = $_COOKIE;
 	//}
 	echo '<form action="modules.php?name=' . $module_name . '&amp;op=ShowCookies" method="post">';

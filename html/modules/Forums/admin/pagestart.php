@@ -80,7 +80,7 @@ if( !$userdata['session_logged_in'] ) {
 	message_die(GENERAL_MESSAGE, $lang['Not_admin']);
 }
 
-if ($_GET['sid'] != $userdata['session_id']) {
+if ($HTTP_GET_VARS['sid'] != $userdata['session_id']) {
 	redirect('index.' . $phpEx . '?sid=' . $userdata['session_id']);
 }
 

@@ -39,11 +39,11 @@ $phpbb_root_path = "./../";
 require_once($phpbb_root_path . 'extension.inc');
 require_once('./pagestart.' . $phpEx);
 
-if( isset($_POST['add_name']) )
+if( isset($HTTP_POST_VARS['add_name']) )
 {
         include_once("../includes/functions_validate.php");
 
-        $disallowed_user = ( isset($_POST['disallowed_user']) ) ? trim($_POST['disallowed_user']) : trim($_GET['disallowed_user']);
+        $disallowed_user = ( isset($HTTP_POST_VARS['disallowed_user']) ) ? trim($HTTP_POST_VARS['disallowed_user']) : trim($HTTP_GET_VARS['disallowed_user']);
 
         if ($disallowed_user == '')
         {
@@ -69,9 +69,9 @@ if( isset($_POST['add_name']) )
 
         message_die(GENERAL_MESSAGE, $message);
 }
-else if( isset($_POST['delete_name']) )
+else if( isset($HTTP_POST_VARS['delete_name']) )
 {
-        $disallowed_id = ( isset($_POST['disallowed_id']) ) ? intval( $_POST['disallowed_id'] ) : intval( $_GET['disallowed_id'] );
+        $disallowed_id = ( isset($HTTP_POST_VARS['disallowed_id']) ) ? intval( $HTTP_POST_VARS['disallowed_id'] ) : intval( $HTTP_GET_VARS['disallowed_id'] );
 
         $sql = "DELETE FROM " . DISALLOW_TABLE . "
                 WHERE disallow_id = $disallowed_id";

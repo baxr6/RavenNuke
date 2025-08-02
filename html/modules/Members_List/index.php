@@ -38,25 +38,25 @@ init_userprefs($userdata);
 // End session management
 //
 
-$start = ( isset($_GET['start']) ) ? intval($_GET['start']) : 0;
+$start = ( isset($HTTP_GET_VARS['start']) ) ? intval($HTTP_GET_VARS['start']) : 0;
 $start = ($start < 0) ? 0 : $start;
 
-if ( isset($_GET['mode']) || isset($_POST['mode']) )
+if ( isset($HTTP_GET_VARS['mode']) || isset($HTTP_POST_VARS['mode']) )
 {
-	$mode = ( isset($_POST['mode']) ) ? htmlspecialchars($_POST['mode']) : htmlspecialchars($_GET['mode']);
+	$mode = ( isset($HTTP_POST_VARS['mode']) ) ? htmlspecialchars($HTTP_POST_VARS['mode']) : htmlspecialchars($HTTP_GET_VARS['mode']);
 }
 else
 {
 	$mode = 'joined';
 }
 
-if(isset($_POST['order']))
+if(isset($HTTP_POST_VARS['order']))
 {
-	$sort_order = ($_POST['order'] == 'ASC') ? 'ASC' : 'DESC';
+	$sort_order = ($HTTP_POST_VARS['order'] == 'ASC') ? 'ASC' : 'DESC';
 }
-else if(isset($_GET['order']))
+else if(isset($HTTP_GET_VARS['order']))
 {
-	$sort_order = ($_GET['order'] == 'ASC') ? 'ASC' : 'DESC';
+	$sort_order = ($HTTP_GET_VARS['order'] == 'ASC') ? 'ASC' : 'DESC';
 }
 else
 {

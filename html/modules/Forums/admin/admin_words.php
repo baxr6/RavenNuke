@@ -37,7 +37,7 @@ if (!defined('IN_PHPBB')) {
 $phpbb_root_path = "./../";
 require_once($phpbb_root_path . 'extension.inc');
 
-$cancel = (isset($_POST['cancel']) || isset($_POST['cancel'])) ? true : false;
+$cancel = (isset($HTTP_POST_VARS['cancel']) || isset($_POST['cancel'])) ? true : false;
 $no_page_header = $cancel;
 
 require_once('./pagestart.' . $phpEx);
@@ -47,9 +47,9 @@ if ($cancel)
 	redirect('admin/' . append_sid("admin_words.$phpEx", true));
 }
 
-if( isset($_GET['mode']) || isset($_POST['mode']) )
+if( isset($HTTP_GET_VARS['mode']) || isset($HTTP_POST_VARS['mode']) )
 {
-	$mode = (isset($_GET['mode'])) ? $_GET['mode'] : $_POST['mode'];
+	$mode = (isset($HTTP_GET_VARS['mode'])) ? $HTTP_GET_VARS['mode'] : $HTTP_POST_VARS['mode'];
         $mode = htmlspecialchars($mode, ENT_COMPAT);
 }
 else
@@ -57,11 +57,11 @@ else
         //
         // These could be entered via a form button
         //
-        if( isset($_POST['add']) )
+        if( isset($HTTP_POST_VARS['add']) )
         {
                 $mode = "add";
         }
-        else if( isset($_POST['save']) )
+        else if( isset($HTTP_POST_VARS['save']) )
         {
                 $mode = "save";
         }
@@ -78,7 +78,7 @@ if( $mode != "" )
 {
         if( $mode == "edit" || $mode == "add" )
         {
-                $word_id = ( isset($_GET['id']) ) ? intval($_GET['id']) : 0;
+                $word_id = ( isset($HTTP_GET_VARS['id']) ) ? intval($HTTP_GET_VARS['id']) : 0;
 
                 $template->set_filenames(array(
                         "body" => "admin/words_edit_body.tpl")
@@ -129,9 +129,9 @@ if( $mode != "" )
         }
         else if( $mode == "save" )
         {
-                $word_id = ( isset($_POST['id']) ) ? intval($_POST['id']) : 0;
-                $word = ( isset($_POST['word']) ) ? trim($_POST['word']) : "";
-                $replacement = ( isset($_POST['replacement']) ) ? trim($_POST['replacement']) : "";
+                $word_id = ( isset($HTTP_POST_VARS['id']) ) ? intval($HTTP_POST_VARS['id']) : 0;
+                $word = ( isset($HTTP_POST_VARS['word']) ) ? trim($HTTP_POST_VARS['word']) : "";
+                $replacement = ( isset($HTTP_POST_VARS['replacement']) ) ? trim($HTTP_POST_VARS['replacement']) : "";
 
                 if($word == "" || $replacement == "")
                 {
@@ -163,9 +163,9 @@ if( $mode != "" )
         }
         else if( $mode == "delete" )
         {
-                if( isset($_POST['id']) ||  isset($_GET['id']) )
+                if( isset($HTTP_POST_VARS['id']) ||  isset($HTTP_GET_VARS['id']) )
                 {
-                        $word_id = ( isset($_POST['id']) ) ? $_POST['id'] : $_GET['id'];
+                        $word_id = ( isset($HTTP_POST_VARS['id']) ) ? $HTTP_POST_VARS['id'] : $HTTP_GET_VARS['id'];
                         $word_id = intval($word_id);
                 }
                 else
@@ -173,7 +173,7 @@ if( $mode != "" )
                         $word_id = 0;
                 }
 
-		$confirm = isset($_POST['confirm']);
+		$confirm = isset($HTTP_POST_VARS['confirm']);
 
 		if( $word_id && $confirm )
                 {

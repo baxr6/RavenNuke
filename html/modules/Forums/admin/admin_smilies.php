@@ -41,13 +41,13 @@ if( !empty($setmodules) )
 $phpbb_root_path = "./../";
 require_once($phpbb_root_path . 'extension.inc');
 
-$cancel = ( isset($_POST['cancel']) || isset($_POST['cancel']) ) ? true : false;
+$cancel = ( isset($HTTP_POST_VARS['cancel']) || isset($_POST['cancel']) ) ? true : false;
 $no_page_header = $cancel;
 
 //
 // Load default header
 //
-if ((!empty($_GET['export_pack']) && $_GET['export_pack'] == 'send') || (!empty($_GET['export_pack']) && $_GET['export_pack'] == 'send'))
+if ((!empty($HTTP_GET_VARS['export_pack']) && $HTTP_GET_VARS['export_pack'] == 'send') || (!empty($_GET['export_pack']) && $_GET['export_pack'] == 'send'))
 {
 	$no_page_header = true;
 }
@@ -64,9 +64,9 @@ $board_config['smilies_path'] = str_replace("modules/Forums/", "", "$smilie_tmp"
 //
 // Check to see what mode we should operate in.
 //
-if( isset($_POST['mode']) || isset($_GET['mode']) )
+if( isset($HTTP_POST_VARS['mode']) || isset($HTTP_GET_VARS['mode']) )
 {
-	$mode = ( isset($_POST['mode']) ) ? $_POST['mode'] : $_GET['mode'];
+	$mode = ( isset($HTTP_POST_VARS['mode']) ) ? $HTTP_POST_VARS['mode'] : $HTTP_GET_VARS['mode'];
 	$mode = htmlspecialchars($mode, ENT_COMPAT);
 }
 else
@@ -103,14 +103,14 @@ while($file = @readdir($dir))
 //
 // Select main mode
 //
-if( isset($_GET['import_pack']) || isset($_POST['import_pack']) )
+if( isset($HTTP_GET_VARS['import_pack']) || isset($HTTP_POST_VARS['import_pack']) )
 {
 	//
 	// Import a list a "Smiley Pack"
 	//
-	$smile_pak = ( isset($_POST['smile_pak']) ) ? $_POST['smile_pak'] : $_GET['smile_pak'];
-	$clear_current = ( isset($_POST['clear_current']) ) ? $_POST['clear_current'] : $_GET['clear_current'];
-	$replace_existing = ( isset($_POST['replace']) ) ? $_POST['replace'] : $_GET['replace'];
+	$smile_pak = ( isset($HTTP_POST_VARS['smile_pak']) ) ? $HTTP_POST_VARS['smile_pak'] : $HTTP_GET_VARS['smile_pak'];
+	$clear_current = ( isset($HTTP_POST_VARS['clear_current']) ) ? $HTTP_POST_VARS['clear_current'] : $HTTP_GET_VARS['clear_current'];
+	$replace_existing = ( isset($HTTP_POST_VARS['replace']) ) ? $HTTP_POST_VARS['replace'] : $HTTP_GET_VARS['replace'];
 
 	if ( !empty($smile_pak) )
 	{
@@ -239,12 +239,12 @@ if( isset($_GET['import_pack']) || isset($_POST['import_pack']) )
 		$template->pparse("body");
 	}
 }
-else if( isset($_POST['export_pack']) || isset($_GET['export_pack']) )
+else if( isset($HTTP_POST_VARS['export_pack']) || isset($HTTP_GET_VARS['export_pack']) )
 {
 	//
 	// Export our smiley config as a smiley pak...
 	//
-	if ( $_GET['export_pack'] == "send" )
+	if ( $HTTP_GET_VARS['export_pack'] == "send" )
 	{
 		$sql = "SELECT *
 			FROM " . SMILIES_TABLE;
@@ -276,7 +276,7 @@ else if( isset($_POST['export_pack']) || isset($_GET['export_pack']) )
 	message_die(GENERAL_MESSAGE, $message);
 
 }
-else if( isset($_POST['add']) || isset($_GET['add']) )
+else if( isset($HTTP_POST_VARS['add']) || isset($HTTP_GET_VARS['add']) )
 {
 	//
 	// Admin has selected to add a smiley.
@@ -323,10 +323,10 @@ else if ( $mode != "" )
 			// Admin has selected to delete a smiley.
 			//
 
-			$smiley_id = ( !empty($_POST['id']) ) ? $_POST['id'] : $_GET['id'];
+			$smiley_id = ( !empty($HTTP_POST_VARS['id']) ) ? $HTTP_POST_VARS['id'] : $HTTP_GET_VARS['id'];
 			$smiley_id = intval($smiley_id);
 
-			$confirm = isset($_POST['confirm']);
+			$confirm = isset($HTTP_POST_VARS['confirm']);
 
 			if( $confirm )
 			{
@@ -370,7 +370,7 @@ else if ( $mode != "" )
 			// Admin has selected to edit a smiley.
 			//
 
-			$smiley_id = ( !empty($_POST['id']) ) ? $_POST['id'] : $_GET['id'];
+			$smiley_id = ( !empty($HTTP_POST_VARS['id']) ) ? $HTTP_POST_VARS['id'] : $HTTP_GET_VARS['id'];
 			$smiley_id = intval($smiley_id);
 
 			$sql = "SELECT *
@@ -438,11 +438,11 @@ else if ( $mode != "" )
 			// Get the submitted data, being careful to ensure that we only
 			// accept the data we are looking for.
 			//
-			$smile_code = ( isset($_POST['smile_code']) ) ? trim($_POST['smile_code']) : '';
-			$smile_url = ( isset($_POST['smile_url']) ) ? trim($_POST['smile_url']) : '';
+			$smile_code = ( isset($HTTP_POST_VARS['smile_code']) ) ? trim($HTTP_POST_VARS['smile_code']) : '';
+			$smile_url = ( isset($HTTP_POST_VARS['smile_url']) ) ? trim($HTTP_POST_VARS['smile_url']) : '';
 			$smile_url = phpbb_ltrim(basename($smile_url), "'");
-			$smile_emotion = ( isset($_POST['smile_emotion']) ) ? htmlspecialchars(trim($_POST['smile_emotion'])) : '';
-			$smile_id = ( isset($_POST['smile_id']) ) ? intval($_POST['smile_id']) : 0;
+			$smile_emotion = ( isset($HTTP_POST_VARS['smile_emotion']) ) ? htmlspecialchars(trim($HTTP_POST_VARS['smile_emotion'])) : '';
+			$smile_id = ( isset($HTTP_POST_VARS['smile_id']) ) ? intval($HTTP_POST_VARS['smile_id']) : 0;
 			$smile_code = trim($smile_code);
 			$smile_url = trim($smile_url);
 
@@ -483,10 +483,10 @@ else if ( $mode != "" )
 			// Get the submitted data being careful to ensure the the data
 			// we recieve and process is only the data we are looking for.
 			//
-			$smile_code = ( isset($_POST['smile_code']) ) ? $_POST['smile_code'] : '';
-			$smile_url = ( isset($_POST['smile_url']) ) ? $_POST['smile_url'] : '';
+			$smile_code = ( isset($HTTP_POST_VARS['smile_code']) ) ? $HTTP_POST_VARS['smile_code'] : '';
+			$smile_url = ( isset($HTTP_POST_VARS['smile_url']) ) ? $HTTP_POST_VARS['smile_url'] : '';
 			$smile_url = phpbb_ltrim(basename($smile_url), "'");
-			$smile_emotion = ( isset($_POST['smile_emotion']) ) ? htmlspecialchars(trim($_POST['smile_emotion'])) : '';
+			$smile_emotion = ( isset($HTTP_POST_VARS['smile_emotion']) ) ? htmlspecialchars(trim($HTTP_POST_VARS['smile_emotion'])) : '';
 			$smile_code = trim($smile_code);
 			$smile_url = trim($smile_url);
 

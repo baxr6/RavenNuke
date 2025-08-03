@@ -107,20 +107,54 @@ if (@ini_get('register_globals') == '1' || strtolower(@ini_get('register_globals
 	unset($input);
 }
 
-//
-// addslashes to vars if magic_quotes_gpc is off
-// this is a security precaution to prevent someone
-// trying to break out of a SQL statement.
-//
-
-// Strip slashes from GET/POST/COOKIE manually (since magic_quotes_gpc is gone in PHP 8+)
-function stripslashes_deep($value) {
-    return is_array($value) ? array_map('stripslashes_deep', $value) : stripslashes($value);
+// Define get_magic_quotes_gpc() if it doesn't exist (PHP 8+)
+if (!function_exists('get_magic_quotes_gpc')) {
+    function get_magic_quotes_gpc() {
+        return false;
+    }
 }
 
-$HTTP_GET_VARS = isset($HTTP_GET_VARS) ? stripslashes_deep($HTTP_GET_VARS) : array();
-$HTTP_POST_VARS = isset($HTTP_POST_VARS) ? stripslashes_deep($HTTP_POST_VARS) : array();
-$HTTP_COOKIE_VARS = isset($HTTP_COOKIE_VARS) ? stripslashes_deep($HTTP_COOKIE_VARS) : array();
+// Legacy variables fallback to superglobals if needed
+$http_get_vars = isset($HTTP_GET_VARS) ? $HTTP_GET_VARS : $_GET;
+$http_post_vars = isset($HTTP_POST_VARS) ? $HTTP_POST_VARS : $_POST;
+$http_cookie_vars = isset($HTTP_COOKIE_VARS) ? $HTTP_COOKIE_VARS : $_COOKIE;
+
+// Function to recursively add slashes
+function addslashes_deep(&$value) {
+    if (is_array($value)) {
+        foreach ($value as &$v) {
+            addslashes_deep($v);
+        }
+    } elseif (is_string($value)) {
+        $value = addslashes($value);
+    }
+}
+
+// Only add slashes if magic quotes are off
+if (!get_magic_quotes_gpc()) {
+    addslashes_deep($http_get_vars);
+    addslashes_deep($http_post_vars);
+    addslashes_deep($http_cookie_vars);
+}
+
+// If you want to keep the legacy variables in sync, assign back
+if (isset($HTTP_GET_VARS)) {
+    $HTTP_GET_VARS = $http_get_vars;
+} else {
+    $_GET = $http_get_vars;
+}
+
+if (isset($HTTP_POST_VARS)) {
+    $HTTP_POST_VARS = $http_post_vars;
+} else {
+    $_POST = $http_post_vars;
+}
+
+if (isset($HTTP_COOKIE_VARS)) {
+    $HTTP_COOKIE_VARS = $http_cookie_vars;
+} else {
+    $_COOKIE = $http_cookie_vars;
+}
 
 //
 // Define some basic configuration arrays this also prevents

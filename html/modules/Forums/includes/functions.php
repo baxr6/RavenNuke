@@ -572,22 +572,27 @@ function setup_style($style)
     $img_lang = ( file_exists(@phpbb_realpath($phpbb_root_path . $current_template_path . '/images/lang_' . $board_config['default_lang'])) ) ? $board_config['default_lang'] : 'english';
     }
 
-    while( list($key, $value) = @each($images) )
-    {
-      if ( !is_array($value) )
-      {
+foreach ($images as $key => $value) {
+    if (!is_array($value)) {
         $images[$key] = str_replace('{LANG}', 'lang_' . $img_lang, $value);
-      }
     }
+}
   }
 
   return $row;
 }
 
-function encode_ip($dotquad_ip)
-{
-  $ip_sep = explode('.', $dotquad_ip);
-  return sprintf('%02x%02x%02x%02x', $ip_sep[0], $ip_sep[1], $ip_sep[2], $ip_sep[3]);
+function encode_ip($dotquad_ip) {
+	if (strpos($dotquad_ip, '.') !== false) {
+		$ip_sep = explode('.', $dotquad_ip);
+		return sprintf('%02x%02x%02x%02x', $ip_sep[0], $ip_sep[1], $ip_sep[2], $ip_sep[3]);
+	} elseif ($dotquad_ip === '::1' || $dotquad_ip === '0:0:0:0:0:0:0:1') {
+		// Fallback for IPv6 localhost
+		return '00000001';
+	} else {
+		// Unknown IP format
+		return '00000000';
+	}
 }
 
 function decode_ip($int_ip)

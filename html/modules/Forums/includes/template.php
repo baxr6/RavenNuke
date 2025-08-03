@@ -90,21 +90,23 @@ class Template {
          * Sets the template filenames for handles. $filename_array
          * should be a hash of handle => filename pairs.
          */
-        function set_filenames($filename_array)
-        {
-                if (!is_array($filename_array))
-                {
-                        return false;
-                }
+/**
+ * Sets the template filenames for handles. $filename_array
+ * should be a hash of handle => filename pairs.
+ */
+function set_filenames($filename_array)
+{
+    if (!is_array($filename_array)) {
+        return false;
+    }
 
-                reset($filename_array);
-                while(list($handle, $filename) = each($filename_array))
-                {
-                        $this->files[$handle] = $this->make_filename($filename);
-                }
+    foreach ($filename_array as $handle => $filename) {
 
-                return true;
-        }
+        $this->files[$handle] = $this->make_filename($filename);
+    }
+
+    return true;
+}
 
 
         /**
@@ -200,16 +202,14 @@ class Template {
          * Root-level variable assignment. Adds to current assignments, overriding
          * any existing variable assignment with the same name.
          */
-        function assign_vars($vararray)
-        {
-                reset ($vararray);
-                while (list($key, $val) = each($vararray))
-                {
-                        $this->_tpldata['.'][0][$key] = $val;
-                }
+function assign_vars($vararray)
+{
+    foreach ($vararray as $key => $val) {
+        $this->_tpldata['.'][0][$key] = $val;
+    }
 
-                return true;
-        }
+    return true;
+}
 
         /**
          * Root-level variable assignment. Adds to current assignments, overriding
@@ -239,6 +239,7 @@ class Template {
                 if (!file_exists($filename))
                 {
                         die("Template->make_filename(): Error - file $filename does not exist");
+                        
                 }
 
                 return $filename;

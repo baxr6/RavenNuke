@@ -34,6 +34,7 @@ $phpbb_root_path = PHPBB_ROOT_PATH;
 $phpEx = PHPBB_PHPEX;
 include_once $phpbb_root_path . 'common.' . $phpEx;
 
+
 //added for RN 2.4 - Palbin
 //CSRF protect has a frame breaker that disables iframes
 //This is a problem for the phpbb admin page so lets disable it
@@ -94,4 +95,5 @@ if (empty($no_page_header)) {
 	include_once './page_header_admin.' . $phpEx;
 }
 
+    
 ?>

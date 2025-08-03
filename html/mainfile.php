@@ -1484,45 +1484,41 @@ function get_theme($refresh = false) {
 		}
 	//}
 
+	// Admin preview via cookie
 	if (is_admin($admin)) {
-		if (isset($_COOKIE['Theme_Preview'])) {
-			$theme = check_html($_COOKIE['Theme_Preview'], 'nohtml');
-			if(!file_exists('themes/' . $theme . '/theme.php')) {
-				$theme = $Default_Theme;
+		if (!empty($_COOKIE['Theme_Preview'])) {
+			$preview = check_html($_COOKIE['Theme_Preview'], 'nohtml');
+			if (file_exists("themes/$preview/theme.php")) {
+				return $theme = $preview;
 			}
-			return $theme;
+			return $theme = $Default_Theme;
 		} elseif (!is_user($user)) {
-			$theme = $Default_Theme;
-			return $theme;
+			return $theme = $Default_Theme;
 		}
 	}
 
+	// Guest user
 	if (!is_user($user)) {
-		$results = $db->sql_query('SELECT `theme` FROM `' . $prefix . '_themes` WHERE `guest`=1');
-		if ($results) {
-			$row = $db->sql_fetchrow($results);
-			$theme = $row['theme'];
-			if(!file_exists('themes/' . $theme . '/theme.php')) {
-				$theme = $Default_Theme;
+		$result = $db->sql_query("SELECT `theme` FROM `{$prefix}_themes` WHERE `guest`=1");
+		if ($result && $row = $db->sql_fetchrow($result)) {
+			$guest_theme = basename($row['theme']); // Safety: prevent directory traversal
+			if (file_exists("themes/$guest_theme/theme.php")) {
+				return $theme = $guest_theme;
 			}
-		} else {
-			$theme = $Default_Theme;
 		}
-		return $theme;
+		return $theme = $Default_Theme;
 	}
 
-	$user2 = explode(':', base64_decode(addslashes($user)));
-	$user_id = intval($user2[0]);
-	if($user2[9]) {
-		if(!file_exists('themes/' . $user2[9] . '/theme.php')) {
-			$theme = $Default_Theme;
-		} else {
-			$theme = $user2[9];
-		}
-	} else {
-		$theme = $Default_Theme;
+	// Logged-in user
+	$user_decoded = base64_decode(addslashes($user));
+	$user_parts = explode(':', $user_decoded);
+	$user_theme = $user_parts[9] ?? '';
+
+	if (!empty($user_theme) && file_exists("themes/$user_theme/theme.php")) {
+		return $theme = basename($user_theme);
 	}
-	return $theme;
+
+	return $theme = $Default_Theme;
 }
 
 function removecrlf($str) {

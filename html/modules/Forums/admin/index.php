@@ -74,6 +74,7 @@ if( isset($HTTP_GET_VARS['pane']) && $HTTP_GET_VARS['pane'] == 'left' )
                 "body" => "admin/index_navigate.tpl")
         );
 
+
         $template->assign_vars(array(
                 "U_FORUM_INDEX" => append_sid("index.$phpEx"),
                 "U_FORUM_PREINDEX" => append_sid("modules.$phpEx?name=Forums&amp;file=index"),
@@ -584,7 +585,7 @@ else
         // Generate frameset
         //
         $template->set_filenames(array(
-                "body" => "admin/index_frameset.tpl")
+                "body" => "index_frameset.tpl")
         );
 
         $template->assign_vars(array(

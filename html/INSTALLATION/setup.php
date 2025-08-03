@@ -76,7 +76,7 @@ function validateInput(formName) {
 	}
 	if (!nameCheck('*GOD* Administrator UserName',formName.authors_aid.value,rnAdminNameContent)) return false;
 	if (!nameCheck('Regular Member UserName',formName.users_username.value,rnUserNameContent)) return false;
-	if (!nameCheck('*GOD* Administrator NukeSentinel™ UserName',formName.nsnst_admins_login.value,rnNsAdminNameContent)) return false;
+	if (!nameCheck('*GOD* Administrator NukeSentinelï¿½ UserName',formName.nsnst_admins_login.value,rnNsAdminNameContent)) return false;
 	/* Password length enforced */
 	var minPwdLength=<?php echo _rnMINIMUM_PASSWORD_LENGTH;?>;
 	var maxPwdLength=<?php echo _rnMAXIMUM_PASSWORD_LENGTH;?>;
@@ -138,7 +138,7 @@ echo '<span class="msg">Database '.$dbname.' found!</span><br />';
 ?>
 <form name="mysql" method="post" action="<?php $_SERVER['PHP_SELF'];?>">
 	<p class="c3">
-		<input type="button"  name="btnCheckMysqlUserPermissions" class="button2" id="btnCheckMysqlUserPermissions" readonly="readonly" size="75" onfocus="blur()" onclick="browserWindowSize(1.07,.7);dhtmlmodal.open('mysqlCheck', 'iframe', 'serverMysqlUserPermissionsCheck.php', 'Ravenstaller™ MySQL User Permissions Check', 'width='+bwW+',height='+bwH+',center=1,resize=1,scrolling=1');" value="Run Ravenstaller™ MySQL User Permissions Check" />
+		<input type="button"  name="btnCheckMysqlUserPermissions" class="button2" id="btnCheckMysqlUserPermissions" readonly="readonly" size="75" onfocus="blur()" onclick="browserWindowSize(1.07,.7);dhtmlmodal.open('mysqlCheck', 'iframe', 'serverMysqlUserPermissionsCheck.php', 'Ravenstallerï¿½ MySQL User Permissions Check', 'width='+bwW+',height='+bwH+',center=1,resize=1,scrolling=1');" value="Run Ravenstallerï¿½ MySQL User Permissions Check" />
 	</p>
 </form>
 <?php

@@ -39,6 +39,7 @@ if(!defined('SQL_LAYER')) {
 *
 */
 class sql_db extends mysqli {
+	public $db_version = '';
 	/**
 	* Class variables
 	*/

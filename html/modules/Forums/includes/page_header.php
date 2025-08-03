@@ -77,6 +77,7 @@ if ( $board_config['gzip_compress'] )
 //
 // Parse and show the overall header.
 //
+
 $template->set_filenames(array(
         'overall_header' => ( empty($gen_simple_header) ) ? 'overall_header.tpl' : 'simple_header.tpl')
 );
@@ -332,20 +333,15 @@ if (!isset($nav_links))
 
 $nav_links_html = '';
 $nav_link_proto = '<link rel="%s" href="%s" title="%s" />' . "\n";
-while( list($nav_item, $nav_array) = @each($nav_links) )
-{
-        if ( !empty($nav_array['url']) )
-        {
-                $nav_links_html .= sprintf($nav_link_proto, $nav_item, append_sid($nav_array['url']), $nav_array['title']);
+foreach ($nav_links as $nav_item => $nav_array) {
+    if (!empty($nav_array['url'])) {
+        $nav_links_html .= sprintf($nav_link_proto, $nav_item, append_sid($nav_array['url']), $nav_array['title']);
+    } else {
+        // Nested array, e.g. multiple <link rel='chapter'>
+        foreach ($nav_array as $nested_array) {
+            $nav_links_html .= sprintf($nav_link_proto, $nav_item, $nested_array['url'], $nested_array['title']);
         }
-        else
-        {
-                // We have a nested array, used for items like <link rel='chapter'> that can occur more than once.
-                while( list(,$nested_array) = each($nav_array) )
-                {
-                        $nav_links_html .= sprintf($nav_link_proto, $nav_item, $nested_array['url'], $nested_array['title']);
-                }
-        }
+    }
 }
 
 // Format Timezone. We are unable to use array_pop here, because of PHP3 compatibility

@@ -420,7 +420,8 @@ class attach_parent
 			}
 		}
 
-		$this->num_attachments = sizeof($this->attachment_list);
+		$this->num_attachments = count((array) $this->attachment_list);
+
 		
 		if ($submit && $mode != 'vote')
 		{
@@ -978,7 +979,8 @@ class attach_parent
 
 		$attachments = array();
 
-		if (sizeof($this->attachment_list) > 0)
+		if (count((array) $this->attachment_list) > 0)
+
 		{
 			if (intval($attach_config['show_apcp']))
 			{
@@ -1026,7 +1028,9 @@ class attach_parent
 			);
 		}
 
-		if ($this->posted_attachments_body && sizeof($this->attachment_list) > 0)
+		//if ($this->posted_attachments_body && sizeof($this->attachment_list) > 0)
+		if ($this->posted_attachments_body && count((array) $this->attachment_list) > 0)
+
 		{
 			init_display_template('attachbody', '{POSTED_ATTACHMENTS_BODY}', 'posted_attachments_body.tpl');
 
@@ -1198,8 +1202,8 @@ class attach_parent
 					$this->attach_filename = delete_extension($this->attach_filename);
 					$this->attach_filename = str_replace(array(' ','-'), array('_','_'), $this->attach_filename);
 					$this->attach_filename = str_replace('__', '_', $this->attach_filename);
-					$this->attach_filename = str_replace(array(',', '.', '!', '?', 'ü', 'Ü', 'ö', 'Ö', 'ä', 'Ä', ';', ':', '@', "'", '"', '&'), array('', '', '', '', 'ue', 'ue', 'oe', 'oe', 'ae', 'ae', '', '', '', '', '', 'and'), $this->attach_filename);
-					$this->attach_filename = str_replace(array('$', 'ß', '>','<','§','%','=','/','(',')','#','*','+',"\\",'{','}','[',']'), array('dollar', 'ss','greater','lower','paragraph','percent','equal','','','','','','','','','','',''), $this->attach_filename);
+					$this->attach_filename = str_replace(array(',', '.', '!', '?', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', 'ï¿½', ';', ':', '@', "'", '"', '&'), array('', '', '', '', 'ue', 'ue', 'oe', 'oe', 'ae', 'ae', '', '', '', '', '', 'and'), $this->attach_filename);
+					$this->attach_filename = str_replace(array('$', 'ï¿½', '>','<','ï¿½','%','=','/','(',')','#','*','+',"\\",'{','}','[',']'), array('dollar', 'ss','greater','lower','paragraph','percent','equal','','','','','','','','','','',''), $this->attach_filename);
 					// Remove non-latin characters
 					$this->attach_filename = preg_replace_callback(
 						"/([\xC2\xC3])([\x80-\xBF])/",

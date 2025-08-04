@@ -28,6 +28,72 @@ if ($debugSetupScriptShowAllErors) {
 	ini_set('display_errors',1);
 	error_reporting(E_ALL);
 }
+/**
+
+ * Create a new password hash using a strong one-way hashing algorithm.
+
+ *
+
+ * @author Lonestar
+
+ * @author coRpSE
+
+ *
+
+ * @link          https://www.php.net/manual/en/function.password-hash.php
+
+ *
+
+ * @param string  $password   - The user's password.
+
+ * @param mixed   $algo       - Optional. A password algorithm constant denoting the algorithm to use when hashing the password.
+
+ * @param array   $options    - Optional. An associative array containing options.
+
+ *                              See the password algorithm constants for documentation on the supported options for each algorithm.
+
+ * @return string   Returns the hashed password.
+
+ */
+
+function rn_password_hash( $password, $algo = null, $options = array( PASSWORD_DEFAULT ) ) {
+
+	return password_hash( $password, $algo, $options );
+
+}
+
+
+
+/**
+
+ * Verifies that a password matches a hash.
+
+ *
+
+ * @author Lonestar
+
+ * @author coRpSE
+
+ *
+
+ * @link          https://www.php.net/manual/en/function.password-verify.php
+
+ *
+
+ * @param string  $password   - The user's password.
+
+ * @param string  $hash       - A hash created by rn_password_hash().
+
+ * @return bool   Returns true if the password and hash match, or false otherwise.
+
+ */
+
+function rn_password_verify( $password, $hash ) {
+
+	return password_verify( $password, $hash );
+
+}
+
 ?>
 <meta name="rating" content="general" />
 <meta name="generator" content="PHP Web Host - Quality Web Hosting For All PHP Applications - Copyright (c) 2002-2013 by http://www.ravenphpscripts.com" />
@@ -264,7 +330,7 @@ if (isset($_POST['updateconfig']) AND $_POST['updateconfig']=='Save Settings') {
 	$sql = 'TRUNCATE TABLE '.$prefix.'_authors';
 	$rc = @mysqli_query($conn, $sql);
 	if (!$rc) die('Unable to truncate '.$prefix.'_authors table. MySQL reported: '.mysqli_error($conn));
-	$sql = "INSERT INTO ".$prefix."_authors (name,aid,pwd,email,radminsuper) values('God','$authors_aid','".md5($authors_pwd)."','$authors_email','$authors_radminsuper')";
+	$sql = "INSERT INTO ".$prefix."_authors (name,aid,pwd,email,radminsuper) values('God','$authors_aid','".rn_password_hash($authors_pwd)."','$authors_email','$authors_radminsuper')";
 	$rc = @mysqli_query($conn, $sql);
 	if (!$rc) die('Unable to Insert into '.$prefix.'_authors table. MySQL reported: '.mysqli_error($conn)."<br />$sql");
 
@@ -302,7 +368,7 @@ if (isset($_POST['updateconfig']) AND $_POST['updateconfig']=='Save Settings') {
 	$sql = 'TRUNCATE TABLE '.$prefix.'_nsnst_admins';
 	$rc = @mysqli_query($conn, $sql);
 	if (!$rc) die('Unable to truncate '.$prefix.'_nsnst_admins table. MySQL reported: '.mysqli_error($conn));
-	$sql = "INSERT INTO ".$prefix."_nsnst_admins (login, password, protected, aid, password_md5, password_crypt) values('$nsnst_admins_login','$nsnst_admins_password','$nsnst_admins_protected','$nsnst_admins_aid','".md5($nsnst_admins_password)."', '".crypt($nsnst_admins_password, '')."')";
+	$sql = "INSERT INTO ".$prefix."_nsnst_admins (login, password, protected, aid, password_md5, password_crypt) values('$nsnst_admins_login','$nsnst_admins_password','$nsnst_admins_protected','$nsnst_admins_aid','".rn_password_hash($nsnst_admins_password)."', '".crypt($nsnst_admins_password, '')."')";
 	$rc = @mysqli_query($conn, $sql);
 	if (!$rc) die('Unable to Insert into '.$prefix.'_nsnst_admins table. MySQL reported: '.mysqli_error($conn)."<br />$sql");
 
@@ -332,7 +398,7 @@ if (isset($_POST['updateconfig']) AND $_POST['updateconfig']=='Save Settings') {
 	if (!$rc) die('Unable to Insert into '.$user_prefix.'_users table. MySQL reported: '.mysqli_error($conn)."<br />$sql");
 
 	/* Raven added user_level=2 per Mantis 0001175 */
-	$sql = "INSERT INTO ".$user_prefix."_users (user_id, user_avatar, user_regdate, username, user_email, user_password, name, user_level) values(2, '$users_user_avatar', '$users_user_regdate', '".mysqli_real_escape_string($conn, stripslashes($users_username))."','$users_user_email','".md5($users_user_password)."', '".mysqli_real_escape_string($conn, stripslashes($users_username))."', 2)";
+	$sql = "INSERT INTO ".$user_prefix."_users (user_id, user_avatar, user_regdate, username, user_email, user_password, name, user_level) values(2, '$users_user_avatar', '$users_user_regdate', '".mysqli_real_escape_string($conn, stripslashes($users_username))."','$users_user_email','".rn_password_hash($users_user_password)."', '".mysqli_real_escape_string($conn, stripslashes($users_username))."', 2)";
 	$rc = @mysqli_query($conn, $sql);
 	if (!$rc) die('Unable to Insert into '.$user_prefix.'_users table. MySQL reported: '.mysqli_error($conn)."<br />$sql");
 

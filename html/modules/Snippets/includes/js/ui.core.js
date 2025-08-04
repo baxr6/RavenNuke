@@ -10,7 +10,11 @@
 ;jQuery.ui || (function($) {
 
 var _remove = $.fn.remove,
-	isFF2 = $.browser.mozilla && (parseFloat($.browser.version) < 1.9);
+// Old line (causing error):
+// isFF2 = $.browser.mozilla && (parseFloat($.browser.version) < 1.9);
+
+// New line (fixed):
+isFF2 = false; // Just assume it's not Firefox 2 (which is ancient anyway)
 
 //Helper functions and ui object
 $.ui = {

@@ -26,6 +26,7 @@ global $tnsl_bUseShortLinks, $tnsl_bAutoTapBlocks, $tnsl_bAutoTapLinks, $tnsl_bD
 if (defined('TNSL_USE_SHORTLINKS')) {
 	$GLOBALS['tnsl_asGTFilePath'] = tnsl_fPageTapStart();
 }
+
 /*
  * Include some common header for HTML generation
  */

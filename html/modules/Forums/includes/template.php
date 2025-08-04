@@ -58,10 +58,11 @@ class Template {
          * Constructor. Simply sets the root dir.
          *
          */
-        function Template($root = ".")
-        {
-                $this->set_rootdir($root);
-        }
+        public function __construct($root = ".")
+{
+    $this->set_rootdir($root);
+}
+
 
         /**
          * Destroys this template object. Should be called when you're done with it, in order
@@ -72,19 +73,18 @@ class Template {
                 $this->_tpldata = array();
         }
 
-        /**
-         * Sets the template root directory for this Template object.
-         */
-        function set_rootdir($dir)
-        {
-                if (!is_dir($dir))
-                {
-                        return false;
-                }
+       /**
+ * Sets the template root directory for this Template object.
+ */
+public function set_rootdir(string $dir): bool
+{
+    if (!is_dir($dir)) {
+        return false;
+    }
 
-                $this->root = $dir;
-                return true;
-        }
+    $this->root = $dir;
+    return true;
+}
 
         /**
          * Sets the template filenames for handles. $filename_array

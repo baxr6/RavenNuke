@@ -31,7 +31,8 @@ $phpbb_root_path = './../';
 $root_path = './../../../';
 require($phpbb_root_path . 'extension.inc');
 require('pagestart.' . $phpEx);
-
+$error = false; // or $error = ''; depending on how it's used
+global $hidden;
 @include_once($phpbb_root_path . 'attach_mod/includes/constants.'.$phpEx);
 include_once($phpbb_root_path .'/includes/functions_admin.'.$phpEx);
 @include_once($phpbb_root_path . 'attach_mod/includes/functions_attach.'.$phpEx);
@@ -682,28 +683,32 @@ if ($mode == 'shadow')
 		}
 	}
 
-	if (!is_array($table_attachments['attach_id'])) {
-		$table_attachments['attach_id'] = array();
-	}
+if (!isset($table_attachments['attach_id']) || !is_array($table_attachments['attach_id'])) {
+    $table_attachments['attach_id'] = array();
+}
 
-	// Go through the Database and get those Files not stored at the Filespace
-	for ($i = 0; $i < $count_attach_ids; $i++)
-	{
-		if ($table_attachments['physical_filename'][$i] != '')
-		{
-			if ( !in_array(trim($table_attachments['physical_filename'][$i]), $file_attachments))
-			{
-				$shadow_row['attach_id'][] = $table_attachments['attach_id'][$i];
-				$shadow_row['physical_filename'][] = trim($table_attachments['physical_filename'][$i]);
-				$shadow_row['comment'][] = $table_attachments['comment'][$i];
+// Go through the Database and get those Files not stored at the Filespace
+$count_attach_ids = is_array($table_attachments['attach_id']) ? count($table_attachments['attach_id']) : 0;
 
-				// Delete this entry from the table_attachments, to not interfere with the next step
-				$table_attachments['attach_id'][$i] = 0;
-				$table_attachments['physical_filename'][$i] = '';
-				$table_attachments['comment'][$i] = '';
-			}
-		}
-	}
+for ($i = 0; $i < $count_attach_ids; $i++)
+{
+    // Ensure the physical filename exists and is not empty
+    if (!empty($table_attachments['physical_filename'][$i])) {
+        $filename = trim($table_attachments['physical_filename'][$i]);
+
+        // If the file is not already in the filesystem, mark it as a shadow
+        if (!in_array($filename, $file_attachments)) {
+            $shadow_row['attach_id'][] = $table_attachments['attach_id'][$i] ?? 0;
+            $shadow_row['physical_filename'][] = $filename;
+            $shadow_row['comment'][] = $table_attachments['comment'][$i] ?? '';
+
+            // Clear the processed attachment entry
+            $table_attachments['attach_id'][$i] = 0;
+            $table_attachments['physical_filename'][$i] = '';
+            $table_attachments['comment'][$i] = '';
+        }
+    }
+}
 
 	// Now look at the missing posts and PM's
 	for ($i = 0; $i < count($table_attachments['attach_id']); $i++)
@@ -728,19 +733,28 @@ if ($mode == 'shadow')
 			'U_ATTACHMENT'		=> $upload_dir . '/' . basename($shadow_attachments[$i]))
 		);
 	}
+if (!isset($shadow_row['attach_id']) || !is_array($shadow_row['attach_id'])) {
+    $shadow_row['attach_id'] = array();
+}
 
-	if (!is_array($shadow_row['attach_id'])) {
-		$shadow_row['attach_id'] = array();
-	}
+for ($i = 0; $i < count($shadow_row['attach_id']); $i++)
+{
+    $attach_id = $shadow_row['attach_id'][$i] ?? 0;
 
-	for ($i = 0; $i < count($shadow_row['attach_id']); $i++)
-	{
-		$template->assign_block_vars('table_shadow_row', array(
-			'ATTACH_ID'			=> $shadow_row['attach_id'][$i],
-			'ATTACH_FILENAME'	=> basename($shadow_row['physical_filename'][$i]),
-			'ATTACH_COMMENT'	=> (trim($shadow_row['comment'][$i]) == '') ? $lang['No_file_comment_available'] : trim($shadow_row['comment'][$i]))
-		);
-	}
+    $filename = isset($shadow_row['physical_filename'][$i]) 
+        ? basename($shadow_row['physical_filename'][$i]) 
+        : '';
+
+    $comment = (isset($shadow_row['comment'][$i]) && trim($shadow_row['comment'][$i]) !== '') 
+        ? trim($shadow_row['comment'][$i]) 
+        : $lang['No_file_comment_available'];
+
+    $template->assign_block_vars('table_shadow_row', array(
+        'ATTACH_ID'       => $attach_id,
+        'ATTACH_FILENAME' => $filename,
+        'ATTACH_COMMENT'  => $comment,
+    ));
+}
 }
 
 if ($submit && $mode == 'cats')
@@ -1456,8 +1470,8 @@ if ($error)
 	);
 
 	$template->assign_vars(array(
-		'ERROR_MESSAGE' => $error_msg)
-	);
+		'ERROR_MESSAGE' => $error_msg
+	)); // <-- Fixed parenthesis here
 
 	$template->assign_var_from_handle('ERROR_BOX', 'reg_header');
 }

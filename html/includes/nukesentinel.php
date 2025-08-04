@@ -734,11 +734,14 @@ function clear_session(){
 	$db->sql_query('DELETE FROM `' . $prefix . '_session` WHERE `host_addr`="' . $x_forwarded . '" OR `host_addr`="' . $client_ip . '" OR `host_addr`="' . $remote_addr . '"');
 	// Clear nuke_bbsessions location
 	$x_f = explode('.', $x_forwarded);
-	$x_forwarded = @str_pad(dechex($x_f[0]), 2, '0', STR_PAD_LEFT) . @str_pad(dechex($x_f[1]), 2, '0', STR_PAD_LEFT) . @str_pad(dechex($x_f[2]), 2, '0', STR_PAD_LEFT)
-				. @str_pad(dechex($x_f[3]), 2, '0', STR_PAD_LEFT);
+$x_forwarded = implode('', array_map(function($n) {
+    return str_pad(dechex((int)$n), 2, '0', STR_PAD_LEFT);
+}, array_slice($x_f, 0, 4)));
 	$c_p = explode('.', $client_ip);
-	$client_ip = @str_pad(dechex($c_p[0]), 2, '0', STR_PAD_LEFT) . @str_pad(dechex($c_p[1]), 2, '0', STR_PAD_LEFT) . @str_pad(dechex($c_p[2]), 2, '0', STR_PAD_LEFT)
-				. @str_pad(dechex($c_p[3]), 2, '0', STR_PAD_LEFT);
+$client_ip = '';
+for ($i = 0; $i < 4; $i++) {
+    $client_ip .= str_pad(dechex(isset($c_p[$i]) ? (int)$c_p[$i] : 0), 2, '0', STR_PAD_LEFT);
+}
 	$r_a = explode('.', $remote_addr);
 	$remote_addr = str_pad(dechex($r_a[0]), 2, '0', STR_PAD_LEFT) . str_pad(dechex($r_a[1]), 2, '0', STR_PAD_LEFT) . str_pad(dechex($r_a[2]), 2, '0', STR_PAD_LEFT)
 				. str_pad(dechex($r_a[3]), 2, '0', STR_PAD_LEFT);

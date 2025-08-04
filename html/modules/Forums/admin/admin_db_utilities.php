@@ -428,35 +428,23 @@ function get_table_def_mysql($table, $crlf)
                 $index[$kname][] = $row['Column_name'];
         }
 
-        //while(list($x, $columns) = @each($index))
-        foreach($index as $x => $columns)
-        {
-                $schema_create .= ", $crlf";
+foreach ($index as $x => $columns) {
+    $schema_create .= ", $crlf";
 
-                if($x == 'PRIMARY')
-                {
-                        $schema_create .= '        PRIMARY KEY (' . implode($columns, ', ') . ')';
-                }
-                elseif (substr($x,0,6) == 'UNIQUE')
-                {
-                        $schema_create .= '        UNIQUE ' . substr($x,7) . ' (' . implode($columns, ', ') . ')';
-                }
-                else
-                {
-                        $schema_create .= "        KEY $x (" . implode($columns, ', ') . ')';
-                }
-        }
+    if ($x == 'PRIMARY') {
+        $schema_create .= '        PRIMARY KEY (' . implode(', ', $columns) . ')';
+    }
+    elseif (substr($x, 0, 6) == 'UNIQUE') {
+        $schema_create .= '        UNIQUE ' . substr($x, 7) . ' (' . implode(', ', $columns) . ')';
+    }
+    else {
+        $schema_create .= "        KEY $x (" . implode(', ', $columns) . ')';
+    }
+}
 
         $schema_create .= "$crlf);";
 
-        if(@get_magic_quotes_runtime())
-        {
-                return(stripslashes($schema_create));
-        }
-        else
-        {
                 return($schema_create);
-        }
 
 } // End get_table_def_mysql
 

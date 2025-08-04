@@ -42,7 +42,8 @@ require_once('./pagestart.' . $phpEx);
 
 $params = array('mode' => 'mode', 'user_id' => POST_USERS_URL, 'group_id' => POST_GROUPS_URL, 'adv' => 'adv');
 
-while( list($var, $param) = @each($params) )
+//while( list($var, $param) = @each($params) )
+foreach($params as $var => $param)
 {
         if ( !empty($HTTP_POST_VARS[$param]) || !empty($HTTP_GET_VARS[$param]) )
         {
@@ -261,16 +262,18 @@ if ( isset($HTTP_POST_VARS['submit']) && ( ( $mode == 'user' && $user_id ) || ( 
                         		}
                         	}
 
-                        	while( list($forum_id, $value) = @each($HTTP_POST_VARS['private']) )
-                        	{
-                        		while( list($auth_field, $exists) = @each($forum_auth_level_fields[$forum_id]) )
-                        		{
-                        			if ($exists)
-                        			{
-                        				$change_acl_list[$forum_id][$auth_field] = $value;
-                        			}
-                        		}
-                        	}
+                        	foreach ($_POST['private'] as $forum_id => $value) {
+	if (!isset($forum_auth_level_fields[$forum_id])) {
+		continue;
+	}
+
+	foreach ($forum_auth_level_fields[$forum_id] as $auth_field => $exists) {
+		if ($exists) {
+			$change_acl_list[$forum_id][$auth_field] = $value;
+		}
+	}
+}
+
 			            }
                         else
                         {
@@ -382,7 +385,8 @@ if ( isset($HTTP_POST_VARS['submit']) && ( ( $mode == 'user' && $user_id ) || ( 
                         // Checks complete, make updates to DB
                         //
                         $delete_sql = '';
-                        while( list($forum_id, $action) = @each($forum_auth_action) )
+                        //while( list($forum_id, $action) = @each($forum_auth_action) )
+                        foreach($forum_auth_action as $forum_id => $action)
                         {
                                 if ( $action == 'delete' )
                                 {
@@ -394,7 +398,8 @@ if ( isset($HTTP_POST_VARS['submit']) && ( ( $mode == 'user' && $user_id ) || ( 
                                         {
                                                 $sql_field = '';
                                                 $sql_value = '';
-                                                while ( list($auth_type, $value) = @each($update_acl_status[$forum_id]) )
+                                                //while ( list($auth_type, $value) = @each($update_acl_status[$forum_id]) )
+                                                foreach($update_acl_status[$forum_id] as $auth_type => $value)
                                                 {
                                                         $sql_field .= ( ( $sql_field != '' ) ? ', ' : '' ) . $auth_type;
                                                         $sql_value .= ( ( $sql_value != '' ) ? ', ' : '' ) . $value;
@@ -408,7 +413,8 @@ if ( isset($HTTP_POST_VARS['submit']) && ( ( $mode == 'user' && $user_id ) || ( 
                                         else
                                         {
                                                 $sql_values = '';
-                                                while ( list($auth_type, $value) = @each($update_acl_status[$forum_id]) )
+                                                //while ( list($auth_type, $value) = @each($update_acl_status[$forum_id]) )
+                                                foreach($update_acl_status[$forum_id] as $auth_type => $value)
                                                 {
                                                         $sql_values .= ( ( $sql_values != '' ) ? ', ' : '' ) . $auth_type . ' = ' . $value;
                                                 }
@@ -752,7 +758,8 @@ else if ( ( $mode == 'user' && ( isset($HTTP_POST_VARS['username']) || $user_id 
 
         $i = 0;
         @reset($auth_ug);
-        while( list($forum_id, $user_ary) = @each($auth_ug) )
+        //while( list($forum_id, $user_ary) = @each($auth_ug) )
+        foreach($auth_ug as $forum_id => $user_ary)
         {
                 if ( empty($adv) )
                 {

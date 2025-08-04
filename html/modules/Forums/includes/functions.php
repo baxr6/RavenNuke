@@ -35,7 +35,8 @@ global $new_topic_data, $tracking_topics, $tracking_forums, $HTTP_COOKIE_VARS, $
    {
       $forum_last_post_time = 0;
 
-      while( list($check_topic_id, $check_post_time) = @each($new_topic_data[$forum_id]) )
+      //while( list($check_topic_id, $check_post_time) = @each($new_topic_data[$forum_id]) )
+      foreach($new_topic_data[$forum_id] as $check_topic_id => $check_post_time)
       {
          if ( empty($tracking_topics[$check_topic_id]) )
          {
@@ -612,7 +613,8 @@ function create_date($format, $gmepoch, $tz)
   if ( empty($translate) && $board_config['default_lang'] != 'english' )
   {
     @reset($lang['datetime']);
-    while ( list($match, $replace) = @each($lang['datetime']) )
+    //while ( list($match, $replace) = @each($lang['datetime']) )
+    foreach($lang['datetime'] as $match => $replace)
     {
       $translate[$match] = $replace;
     }

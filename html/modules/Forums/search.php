@@ -371,7 +371,8 @@ else if ( $search_keywords != '' || $search_author != '' || $search_id )
 						if ( $current_match_type == 'and' && $word_count )
 						{
 							@reset($result_list);
-							while( list($post_id, $match_count) = @each($result_list) )
+							//while( list($post_id, $match_count) = @each($result_list) )
+							foreach($result_list as $post_id => $match_count)
 							{
 								if ( !$row[$post_id] )
 								{
@@ -1353,7 +1354,8 @@ else if ( $search_keywords != '' || $search_author != '' || $search_id )
 		// Category to search
 		//
 		$s_categories = '<option value="-1">' . $lang['All_available'] . '</option>';
-		while( list($cat_id, $cat_title) = @each($list_cat))
+		//while( list($cat_id, $cat_title) = @each($list_cat))
+		foreach($list_cat as $cat_id => $cat_title)
 		{
 			$s_categories .= '<option value="' . $cat_id . '">' . $cat_title . '</option>';
 		}

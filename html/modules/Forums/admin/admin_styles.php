@@ -511,7 +511,8 @@ switch( $mode )
 
 				if ( $selected_values = $db->sql_fetchrow($result) )
 				{
-					while(list($key, $val) = @each($selected_values))
+					//while(list($key, $val) = @each($selected_values))
+					foreach($selected_values as $key => $val)
 					{
 						$selected[$key] = $val;
 					}
@@ -530,7 +531,8 @@ switch( $mode )
 
 				if ( $selected_names = $db->sql_fetchrow($result) )
 				{
-					while(list($key, $val) = @each($selected_names))
+					//while(list($key, $val) = @each($selected_names))
+					foreach($selected_names as $key => $val)
 					{
 						$selected[$key] = $val;
 					}

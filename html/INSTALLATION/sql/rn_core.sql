@@ -1696,6 +1696,6 @@ CREATE TABLE IF NOT EXISTS $prefix.`_nsnst_strings` ( `sid` int(2) NOT NULL auto
 DROP TABLE IF EXISTS $prefix.`_nsnst_tracked_ips`;
 CREATE TABLE IF NOT EXISTS $prefix.`_nsnst_tracked_ips` ( `tid` int(10) NOT NULL auto_increment, `ip_addr` varchar(15) NOT NULL default '', `ip_long` int(10) unsigned NOT NULL default '0', `user_id` int(11) NOT NULL default '1', `username` varchar(60) NOT NULL default '', `user_agent` text NOT NULL, `refered_from` text NOT NULL, `date` int(20) NOT NULL default '0', `page` text NOT NULL, `x_forward_for` varchar(32) NOT NULL default '',  `client_ip` varchar(32) NOT NULL default '', `remote_addr` varchar(32) NOT NULL default '', `remote_port` varchar(11) NOT NULL default '', `request_method` varchar(10) NOT NULL default '',  `c2c` char(2) NOT NULL default '00', PRIMARY KEY  (`tid`), KEY `ip_addr` (`ip_addr`), KEY `ip_long` (`ip_long`), KEY `user_id` (`user_id`), KEY `username` (`username`), KEY `user_agent` (`user_agent`(255)), KEY `refered_from` (`refered_from`(255)), KEY `date` (`date`), KEY `page` (`page`(255)), KEY `c2c` (`c2c`)) ENGINE=InnoDB;
 
-// New Password UPDATE
+/* New Password UPDATE */
 ALTER TABLE `nuke_authors` CHANGE `pwd` `pwd` VARCHAR(255) NULL DEFAULT NULL;
 ALTER TABLE `nuke_users` CHANGE `user_password` `user_password` VARCHAR(255) NOT NULL;

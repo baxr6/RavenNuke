@@ -32,7 +32,10 @@ require_once("modules/".$module_name."/nukebb.php");
 //
 define('IN_LOGIN', true);
 
-define('IN_PHPBB', true);
+if (!defined('IN_PHPBB')) {
+    define('IN_PHPBB', true);
+}
+
 include_once($phpbb_root_path . 'extension.inc');
 include_once($phpbb_root_path . 'common.'.$phpEx);
 

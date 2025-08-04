@@ -30,7 +30,10 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-define('IN_PHPBB', true);     // to fake out functions_post.php
+if (!defined('IN_PHPBB')) {
+    define('IN_PHPBB', true);
+}
+     // to fake out functions_post.php
 include_once 'modules/Forums/includes/functions_post.php';
 
 

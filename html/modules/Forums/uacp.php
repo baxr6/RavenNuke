@@ -15,7 +15,10 @@ if ( !defined('MODULE_FILE') )
 	die("You can't access this file directly...");
 }
 
-define('IN_PHPBB', true);
+if (!defined('IN_PHPBB')) {
+    define('IN_PHPBB', true);
+}
+
 $phpbb_root_path = 'modules/Forums/';
 include($phpbb_root_path . 'extension.inc');
 include($phpbb_root_path . 'common.'.$phpEx);

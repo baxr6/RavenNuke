@@ -33,7 +33,10 @@ if (!(isset($popup)) OR ($popup != "1"))
         $phpbb_root_path = 'modules/Forums/';
     }
 
-define('IN_PHPBB', true);
+if (!defined('IN_PHPBB')) {
+    define('IN_PHPBB', true);
+}
+
 include_once($phpbb_root_path . 'extension.inc');
 include_once($phpbb_root_path . 'common.'.$phpEx);
 include_once("modules/$module_name/includes/bbcode.php");

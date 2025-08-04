@@ -64,7 +64,10 @@ if (!isset($popup) OR ($popup != "1")) {
 	$nuke_file_path = 'modules.php?name=Forums&file=';
 }
 
-define('IN_PHPBB', true);
+if (!defined('IN_PHPBB')) {
+    define('IN_PHPBB', true);
+}
+
 include_once($phpbb_root_path . 'extension.inc');
 include_once($phpbb_root_path . 'common.'.$phpEx);
 include_once($phpbb_root_path . 'includes/bbcode.'.$phpEx);

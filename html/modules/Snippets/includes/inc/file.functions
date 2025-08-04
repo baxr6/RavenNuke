@@ -1,0 +1,37 @@
+<?php
+
+function valid_extension($file)
+{
+  $errors = array();
+  $extensions = array('jpg', 'jpeg', 'gif', 'png', 'txt', 'html', 'doc', 'xls', 'pdf');
+  $regex = '/\.(' . preg_replace('/ +/', '|', preg_quote($extensions)) . ')$/i';
+  if (!preg_match($regex, $file->filename)) {
+    $errors[] = 'Only the following extensions are allowed: ' . $extensions . '';
+  }
+  return $errors;
+}
+
+function validate_is_image($file)
+{
+  $errors = array();
+  if (!is_file($file)) {
+    return false;
+  } else {
+    $details = false;
+    $data = @getimagesize($file);
+    $file_size = @filesize($file);
+
+    if (isset($data) && is_array($data)) {
+      $extensions = array('1' => 'gif', '2' => 'jpg', '3' => 'png');
+      $extension = array_key_exists($data[2], $extensions) ? $extensions[$data[2]] : '';
+      $details = array('width' => $data[0], 'height' => $data[1], 'extension' => $extension, 'file_size' => $file_size, 'mime_type' => $data['mime']);
+    }
+    if (!$data || empty($data['extension'])) {
+      $errors[] = 'Only JPG, JPEG, PNG and GIF images are allowed . ';
+    }
+
+  }
+
+  return $errors;
+
+}

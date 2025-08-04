@@ -162,4 +162,45 @@ $(document).ready(function() {
 ';
 	addJSToHead($JStoHeadHTML, 'inline');
 }
+if ($name == 'Snippets' || $_GET['op'] == 'snippets') {
+
+	addCSSToHead('modules/Snippets/includes/css/Base.css', 'file');
+	addCSSToHead('modules/Snippets/includes/css/BreadCrumb.css', 'file');
+	addCSSToHead('modules/Snippets/includes/css/ui.tabs.css', 'file');
+	addCSSToHead('modules/Snippets/includes/css/tabs.css', 'file');
+	addJSToHead('modules/Snippets/includes/js/jquery.easing.1.3.js', 'file');
+	addJSToHead('modules/Snippets/includes/js/jquery.jBreadCrumb.js', 'file');
+	addJSToHead('modules/Snippets/includes/js/ui.core.js', 'file');
+	addJSToHead('modules/Snippets/includes/js/ui.tabs.js', 'file');
+	addJSToHead('modules/Snippets/includes/js/ui.core.js', 'file');
+	
+	$JStoHeadHTML = '<script type="text/javascript">
+  jQuery(document).ready(function() {
+		jQuery("#breadCrumb0").jBreadCrumb();
+		jQuery("#breadCrumb1").jBreadCrumb();
+	})
+</script>
+';
+$JStoHeadHTML = '<script type="text/javascript">
+/*<![CDATA[*/
+$(function()
+{
+
+$("div.trigger span a").click(function(event)
+{
+event.preventDefault();
+$(this).parent().parent().children("div").slideToggle();
+});
+
+$("div.trigger div a").click(function(event) {
+event.preventDefault();
+
+$(this).parent().slideUp();
+});
+});
+/*]]>*/
+</script>';
+	addJSToHead($JStoHeadHTML, 'inline');
+	include_once('modules/Snippets/includes/css/recipes.css.php');
+}
 ?>

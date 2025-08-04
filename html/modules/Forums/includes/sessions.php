@@ -290,11 +290,15 @@ function session_pagestart($user_ip, $thispage_id, $nukeuser)
 	{
 		$session_id = '';
 	}
-        if ( ($nukeuser != "") && ($userdata['session_logged_in'] == "" )) {
-                bblogin($nukeuser, $session_id);
-        } else {
-	$thispage_id = (int) $thispage_id;
-        }
+if (!isset($userdata) || !is_array($userdata)) {
+    $userdata = [];
+}
+
+if (($nukeuser != "") && empty($userdata['session_logged_in'])) {
+    bblogin($nukeuser, $session_id);
+} else {
+    $thispage_id = (int) $thispage_id;
+}
 
 	//
 	// Does a session exist?

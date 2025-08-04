@@ -1145,19 +1145,28 @@ function filter($what, $strip = '', $save = '', $type = '') {
 function formatTimestamp($time) {
 	global $datetime, $locale;
 
-	static $localeSet;     // setlocale() can be expensive to call; only need to call it once
-	if (!isset($localeSet)) {
-		setlocale(LC_TIME, $locale);
-		$localeSet = 1;
+	if (!is_numeric($time)) {
+		if (preg_match('/(\d{4})-(\d{1,2})-(\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})/', $time, $dtMatches)) {
+			$time = gmmktime($dtMatches[4], $dtMatches[5], $dtMatches[6], $dtMatches[2], $dtMatches[3], $dtMatches[1]);
+		} else {
+			$datetime = ''; // Invalid datetime string
+			return $datetime;
+		}
 	}
 
-	if (!is_numeric($time)) {
-		preg_match('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetime);
-		$time = gmmktime($datetime[4], $datetime[5], $datetime[6], $datetime[2], $datetime[3], $datetime[1]);
-	}
+	// Adjust for local timezone
 	$time -= date('Z');
-	$datetime = strftime(_DATESTRING, $time);
-	$datetime = ucfirst($datetime);
+
+	$formatter = new IntlDateFormatter(
+		$locale ?? 'en_US',
+		IntlDateFormatter::FULL,
+		IntlDateFormatter::NONE,
+		date_default_timezone_get(),
+		IntlDateFormatter::GREGORIAN
+	);
+	$formatter->setPattern('EEEE, dd MMMM yyyy');
+
+	$datetime = ucfirst($formatter->format($time));
 	return $datetime;
 }
 

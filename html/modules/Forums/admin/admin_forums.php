@@ -227,19 +227,18 @@ function renumber_order($mode, $cat = 0)
 //
 // Begin program proper
 //
-if( isset($HTTP_POST_VARS['addforum']) || isset($HTTP_POST_VARS['addcategory']) )
-{
-        $mode = ( isset($HTTP_POST_VARS['addforum']) ) ? "addforum" : "addcat";
+if (isset($_POST['addforum']) || isset($_POST['addcategory'])) {
+    $mode = isset($_POST['addforum']) ? "addforum" : "addcat";
 
-        if( $mode == "addforum" )
-        {
-                list($cat_id) = each($HTTP_POST_VARS['addforum']);
-				$cat_id = intval($cat_id);
-                //
-                // stripslashes needs to be run on this because slashes are added when the forum name is posted
-                //
-                $forumname = stripslashes($HTTP_POST_VARS['forumname'][$cat_id]);
-        }
+    if ($mode === "addforum") {
+        // Get first key from the 'addforum' array
+        $keys = array_keys($_POST['addforum']);
+        $cat_id = intval($keys[0] ?? 0);
+
+        // stripslashes is usually not needed unless magic quotes was on,
+        // but if you still need it, keep it here
+        $forumname = isset($_POST['forumname'][$cat_id]) ? stripslashes($_POST['forumname'][$cat_id]) : '';
+    }
 }
 
 if( !empty($mode) )
@@ -460,7 +459,8 @@ if( !empty($mode) )
                         //
                         $field_sql = "";
                         $value_sql = "";
-                        while( list($field, $value) = each($forum_auth_ary) )
+                        //while( list($field, $value) = each($forum_auth_ary) )
+                        foreach($forum_auth_ary as $field => $value)
                         {
                                 $field_sql .= ", $field";
                                 $value_sql .= ", $value";

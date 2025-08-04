@@ -92,68 +92,52 @@ else
         unset($adv);
 }
 
-//
-// Start program proper
-//
-if( isset($HTTP_POST_VARS['submit']) )
-{
-        $sql = '';
+if (isset($_POST['submit'])) {
+    $sql = '';
+    $forum_id = intval($forum_id);
 
-        if(!empty($forum_id))
-        {
-                if(isset($HTTP_POST_VARS['simpleauth']))
-                {
-         $simple_ary = $simple_auth_ary[intval($HTTP_POST_VARS['simpleauth'])];
+    if (!empty($forum_id)) {
+        if (isset($_POST['simpleauth'])) {
+            $auth_index = intval($_POST['simpleauth']);
+            $simple_ary = $simple_auth_ary[$auth_index];
 
-         for($i = 0; $i < count($simple_ary); $i++)
-         {
-            $sql .= ( ( $sql != '' ) ? ', ' : '' ) . $forum_auth_fields[$i] . ' = ' . $simple_ary[$i];
-         }
+            $updates = [];
+            foreach ($forum_auth_fields as $i => $field) {
+                $updates[] = "$field = " . intval($simple_ary[$i]);
+            }
 
-         if (is_array($simple_ary))
-         {
-            $sql = "UPDATE " . FORUMS_TABLE . " SET $sql WHERE forum_id = $forum_id";
-         }
-      }
-      else
-      {
-         for($i = 0; $i < count($forum_auth_fields); $i++)
-         {
-            $value = intval($HTTP_POST_VARS[$forum_auth_fields[$i]]);
+            if (is_array($simple_ary)) {
+                $sql = "UPDATE " . FORUMS_TABLE . " SET " . implode(', ', $updates) . " WHERE forum_id = $forum_id";
+            }
+        } else {
+            $updates = [];
+            foreach ($forum_auth_fields as $field) {
+                $value = intval($_POST[$field]);
 
-                                if ( $forum_auth_fields[$i] == 'auth_vote' )
-                                {
-                                        if ( $HTTP_POST_VARS['auth_vote'] == AUTH_ALL )
-                                        {
-                                                $value = AUTH_REG;
-                                        }
-                                }
-
-                                $sql .= ( ( $sql != '' ) ? ', ' : '' ) .$forum_auth_fields[$i] . ' = ' . $value;
-                        }
-
-                        $sql = "UPDATE " . FORUMS_TABLE . " SET $sql WHERE forum_id = $forum_id";
+                if ($field === 'auth_vote' && $_POST['auth_vote'] == AUTH_ALL) {
+                    $value = AUTH_REG;
                 }
 
-                if ( $sql != '' )
-                {
-                        if ( !$db->sql_query($sql) )
-                        {
-                                message_die(GENERAL_ERROR, 'Could not update auth table', '', __LINE__, __FILE__, $sql);
-                        }
-                }
+                $updates[] = "$field = $value";
+            }
 
-                $forum_sql = '';
-                $adv = 0;
+            $sql = "UPDATE " . FORUMS_TABLE . " SET " . implode(', ', $updates) . " WHERE forum_id = $forum_id";
         }
 
-        $template->assign_vars(array(
-                'META' => '<meta http-equiv="refresh" content="3;url=' . append_sid("admin_forumauth.$phpEx?" . POST_FORUM_URL . "=$forum_id") . '">')
-        );
-        $message = $lang['Forum_auth_updated'] . '<br /><br />' . sprintf($lang['Click_return_forumauth'],  '<a href="' . append_sid("admin_forumauth.$phpEx") . '">', "</a>");
-        message_die(GENERAL_MESSAGE, $message);
+        if ($sql !== '') {
+            if (!$db->sql_query($sql)) {
+                message_die(GENERAL_ERROR, 'Could not update auth table', '', __LINE__, __FILE__, $sql);
+            }
+        }
 
-} // End of submit
+        $template->assign_vars([
+            'META' => '<meta http-equiv="refresh" content="3;url=' . append_sid("admin_forumauth.$phpEx?" . POST_FORUM_URL . "=$forum_id") . '">'
+        ]);
+
+        $message = $lang['Forum_auth_updated'] . '<br /><br />' . sprintf($lang['Click_return_forumauth'], '<a href="' . append_sid("admin_forumauth.$phpEx") . '">', "</a>");
+        message_die(GENERAL_MESSAGE, $message);
+    }
+}
 
 //
 // Get required information, either all forums if
@@ -213,7 +197,8 @@ else
         $forum_name = $forum_rows[0]['forum_name'];
 
         @reset($simple_auth_ary);
-        while( list($key, $auth_levels) = each($simple_auth_ary))
+        //while( list($key, $auth_levels) = each($simple_auth_ary))
+        foreach($simple_auth_ary as $key => $auth_levels)
         {
                 $matched = 1;
                 for($k = 0; $k < count($auth_levels); $k++)

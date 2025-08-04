@@ -187,28 +187,41 @@ function login() {
 * @param string $image image name of icon in images/admin/ or themes/your_theme/images/admin/
 */
 function adminmenu($url, $title, $image) {
-	global $counter, $nuke_config;
-	$ThemeSel = get_theme();
-	if (file_exists(NUKE_THEMES_DIR . $ThemeSel . '/images/admin/' . $image)) {
-		$image = 'themes/' . $ThemeSel . '/images/admin/' . $image;
-	} else {
-		$image = 'images/admin/' . $image;
-	}
-	if ($nuke_config['admingraphic']) {
-		$img = '<img src="' . $image . '" alt="' . $title . '" title="' . $title . '" /></a><br />';
-		$close = '';
-	} else {
-		$img = '';
-		$close = '</a>';
-	}
-	echo '<td class="text-center content" style="width: 16%; vertical-align: top;"><a href="' , $url , '">' , $img
-		, '<span class="thick">' , $title , '</span>' , $close , '<br /><br /></td>';
-	if ($counter == 5) {
-		echo '</tr><tr>';
-		$counter = 0;
-	} else {
-		$counter++;
-	}
+    global $counter, $nuke_config;
+
+    // Initialize counter as integer if not set
+    if (!isset($counter) || !is_int($counter)) {
+        $counter = 0;
+    }
+
+    $ThemeSel = get_theme();
+
+    if (file_exists(NUKE_THEMES_DIR . $ThemeSel . '/images/admin/' . $image)) {
+        $image = 'themes/' . $ThemeSel . '/images/admin/' . $image;
+    } else {
+        $image = 'images/admin/' . $image;
+    }
+
+    if ($nuke_config['admingraphic']) {
+        $img = '<img src="' . htmlspecialchars($image) . '" alt="' . htmlspecialchars($title) . '" title="' . htmlspecialchars($title) . '" /><br />';
+        $close = '';
+    } else {
+        $img = '';
+        $close = '</a>';
+    }
+
+    echo '<td class="text-center content" style="width: 16%; vertical-align: top;">'
+        . '<a href="' . htmlspecialchars($url) . '">'
+        . $img
+        . '<span class="thick">' . htmlspecialchars($title) . '</span>'
+        . $close
+        . '<br /><br /></td>';
+
+    $counter++;
+    if ($counter > 5) {
+        echo '</tr><tr>';
+        $counter = 0;
+    }
 }
 
 /**

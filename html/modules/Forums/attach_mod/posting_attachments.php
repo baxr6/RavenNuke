@@ -784,8 +784,7 @@ class attach_parent
 
 		if ($mode == 'attach_list')
 		{
-			for ($i = 0; $i < sizeof($this->attachment_list); $i++)
-			{
+			foreach ((array) $this->attachment_list as $i => $attachment) {
 				if ($this->attachment_id_list[$i])
 				{
 					// Check if the attachment id is connected to the message
@@ -1680,7 +1679,7 @@ class attach_posting extends attach_parent
 			$this->do_insert_attachment('attach_list', 'post', $post_id);
 			$this->do_insert_attachment('last_attachment', 'post', $post_id);
 
-			if ((sizeof($this->attachment_list) > 0 || $this->post_attach) && !isset($HTTP_POST_VARS['update_attachment']))
+        if ((count((array) $this->attachment_list) > 0 || $this->post_attach) && !isset($_POST['update_attachment']))
 			{
 				$sql = 'UPDATE ' . POSTS_TABLE . '
 					SET post_attachment = 1

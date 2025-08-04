@@ -559,6 +559,7 @@ else if ( $submit || $confirm )
    $return_message = '';
    $return_meta = '';
    // session id check introduced v2.0.22
+   var_dump($sid);
    if ($sid == '' || $sid != $userdata['session_id'])
    {
       $error_msg .= (!empty($error_msg)) ? '<br />' . $lang['Session_invalid'] : $lang['Session_invalid'];

@@ -404,7 +404,8 @@ function display_attachments_preview($attachment_list, $attachment_filesize_list
 {
 	global $attach_config, $is_auth, $allowed_extensions, $lang, $userdata, $display_categories, $upload_dir, $upload_icons, $template, $db, $theme;
 
-	if (sizeof($attachment_list) != 0)
+	if (!empty($attachment_list))
+
 	{
 		init_display_template('preview', '{ATTACHMENTS}');
 			
@@ -418,7 +419,7 @@ function display_attachments_preview($attachment_list, $attachment_filesize_list
 			'T_TR_COLOR3' => '#'.$theme['tr_color3'])
 		);
 
-		for ($i = 0, $size = sizeof($attachment_list); $i < $size; $i++)
+for ($i = 0, $size = count($attachment_list); $i < $size; $i++)
 		{
 			$filename = $upload_dir . '/' . basename($attachment_list[$i]);
 			$thumb_filename = $upload_dir . '/' . THUMB_DIR . '/t_' . basename($attachment_list[$i]);

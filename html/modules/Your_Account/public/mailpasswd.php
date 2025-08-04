@@ -68,7 +68,7 @@ if ($db->sql_numrows($result) == 0) {
 					$subject .= ' \'' . $user_email . '\'';
 				}
 				ya_mail($user_email, $subject, $message, '');
-				$cryptpass = md5($newpass);
+				$cryptpass = rn_password_hash($newpass);
 				if ($username != '') {
 					$query = 'UPDATE ' . $user_prefix . '_users SET user_password=\'' . $cryptpass . '\' WHERE username=\'' . addslashes($username) . '\'';
 				} elseif ($user_email != '') {

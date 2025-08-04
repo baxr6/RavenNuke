@@ -169,13 +169,15 @@ switch ($op) {
 			$dbpass = $setinfo['user_password'];
 			$non_crypt_pass = $user_password;
 			$old_crypt_pass = crypt($user_password, substr($dbpass, 0, 2));
-			$new_pass = md5($user_password);
-			if (($dbpass == $non_crypt_pass) OR ($dbpass == $old_crypt_pass)) {
+		    $md5_pass = md5($user_password);
+			$new_pass = rn_password_hash($user_password);
+
+			if (($dbpass == $non_crypt_pass) || ($dbpass == $old_crypt_pass) || ($md5_pass == $dbpass)) {	
 				$db->sql_query('UPDATE ' . $user_prefix . '_users SET user_password=\'' . $new_pass . '\'	WHERE username=\'' . addslashes($username) . '\'');
 				$result = $db->sql_query('SELECT user_password FROM ' . $user_prefix . '_users	WHERE username=\'' . addslashes($username) . '\'');
 				list($dbpass) = $db->sql_fetchrow($result);
 			}
-			if ($dbpass != $new_pass) {
+			if (false === rn_password_verify( $non_crypt_pass, $dbpass )) {
 				Header('Location: modules.php?name=' . $module_name . '&stop=1');
 				die();
 			}
@@ -203,7 +205,7 @@ switch ($op) {
 				die();
 			} else {
 				// menelaos: show a member the current TOS if he has not agreed yet
-				yacookie($setinfo['user_id'], $setinfo['username'], $new_pass, $setinfo['storynum'], $setinfo['umode'], $setinfo['uorder'], $setinfo['thold'], $setinfo['noscore'], $setinfo['ublockon'], $setinfo['theme'], $setinfo['commentmax']);
+				yacookie($setinfo['user_id'], $setinfo['username'], $dbpass, $setinfo['storynum'], $setinfo['umode'], $setinfo['uorder'], $setinfo['thold'], $setinfo['noscore'], $setinfo['ublockon'], $setinfo['theme'], $setinfo['commentmax']);
 				if (!defined('NUKESENTINEL_IS_LOADED')) {
 					$uname = $_SERVER['REMOTE_ADDR'];
 				} else {

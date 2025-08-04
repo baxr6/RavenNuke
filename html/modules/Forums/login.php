@@ -92,7 +92,7 @@ if( isset($HTTP_POST_VARS['login']) || isset($HTTP_GET_VARS['login']) || isset($
 					message_die(GENERAL_MESSAGE, sprintf($lang['Login_attempts_exceeded'], $board_config['max_login_attempts'], $board_config['login_reset_time']));
 				}
 
-				if( md5($password) == $row['user_password'] && $row['user_active'] )
+				if ( rn_password_verify($password, $row['user_password']) && $row['user_active'] )
 				{
 					$autologin = ( isset($HTTP_POST_VARS['autologin']) ) ? TRUE : 0;
 

@@ -21,6 +21,7 @@
  *
 */
 
+
 /**
  * End the transaction
 */
@@ -1959,5 +1960,69 @@ function readDIRtoArray($dir, $filter) {
 	closedir($handle);
 	return $files;
 }
+/**
 
+ * Create a new password hash using a strong one-way hashing algorithm.
+
+ *
+
+ * @author Lonestar
+
+ * @author coRpSE
+
+ *
+
+ * @link          https://www.php.net/manual/en/function.password-hash.php
+
+ *
+
+ * @param string  $password   - The user's password.
+
+ * @param mixed   $algo       - Optional. A password algorithm constant denoting the algorithm to use when hashing the password.
+
+ * @param array   $options    - Optional. An associative array containing options.
+
+ *                              See the password algorithm constants for documentation on the supported options for each algorithm.
+
+ * @return string   Returns the hashed password.
+
+ */
+
+function rn_password_hash( $password, $algo = null, $options = array( PASSWORD_DEFAULT ) ) {
+
+	return password_hash( $password, $algo, $options );
+
+}
+
+
+
+/**
+
+ * Verifies that a password matches a hash.
+
+ *
+
+ * @author Lonestar
+
+ * @author coRpSE
+
+ *
+
+ * @link          https://www.php.net/manual/en/function.password-verify.php
+
+ *
+
+ * @param string  $password   - The user's password.
+
+ * @param string  $hash       - A hash created by rn_password_hash().
+
+ * @return bool   Returns true if the password and hash match, or false otherwise.
+
+ */
+
+function rn_password_verify( $password, $hash ) {
+
+	return password_verify( $password, $hash );
+
+}
 ?>

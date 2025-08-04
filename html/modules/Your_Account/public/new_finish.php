@@ -62,7 +62,7 @@ if (empty($stop)) {
 	$check_num = md5($check_num);
 	$time = time();
 	$user_password = htmlspecialchars(stripslashes($user_password)); // from RN
-	$hashed_pass = md5($user_password);
+	$hashed_pass = rn_password_hash($user_password);
 	if ($ya_config['userealname'] > 1) $ya_realname = check_html($ya_realname, 'nohtml');
 	else $ya_realname = '';
 	if (defined('NUKESENTINEL_IS_LOADED')) {

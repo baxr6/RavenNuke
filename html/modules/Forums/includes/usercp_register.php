@@ -364,7 +364,7 @@ if ( isset($HTTP_POST_VARS['submit']) )
 
                                 $row = $db->sql_fetchrow($result);
 
-                                if ( $row['user_password'] != md5($cur_password) )
+                                if ( !rn_password_verify($cur_password, $row['user_password']) )
                                 {
                                         $error = TRUE;
                                         $error_msg .= ( ( isset($error_msg) ) ? '<br />' : '' ) . $lang['Current_password_mismatch'];
@@ -373,7 +373,7 @@ if ( isset($HTTP_POST_VARS['submit']) )
 
                         if ( !$error )
                         {
-                                $new_password = md5($new_password);
+                                $new_password = rn_password_hash($new_password);
                                 $passwd_sql = "user_password = '$new_password', ";
                         }
                 }
@@ -410,7 +410,7 @@ if ( isset($HTTP_POST_VARS['submit']) )
 
                         $row = $db->sql_fetchrow($result);
 
-                        if ( $row['user_password'] != md5($cur_password) )
+                        if ( !rn_password_verify($cur_password, $row['user_password']) )
                         {
                                 $email = $userdata['user_email'];
 

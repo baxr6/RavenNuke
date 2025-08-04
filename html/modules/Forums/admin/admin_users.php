@@ -342,7 +342,7 @@ if ( $mode == 'edit' || $mode == 'save' && ( isset($HTTP_POST_VARS['username']) 
                         }
                         else
                         {
-                                $password = md5($password);
+                                $password = rn_password_hash($password);
                                 $passwd_sql = "user_password = '$password', ";
                         }
                 }

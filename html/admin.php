@@ -58,12 +58,27 @@ if (isset($_POST['aid']) && isset($_POST['pwd']) && $op == 'login') {
 		die();
 	}
 	if(!empty($aid) && !empty($pwd)) {
+		$txt_pwd = $pwd;
 		$pwd = md5($pwd);
+		$admin_password_hash = rn_password_hash( $txt_pwd );
 		$result = $db->sql_query('SELECT `pwd`, `admlanguage` FROM `' . $prefix . '_authors` WHERE `aid`=\'' . addslashes($aid) . '\'');
 		list($rpwd, $admlanguage) = $db->sql_fetchrow($result, SQL_NUM);
 
-		if($rpwd == $pwd) {
-			$admin = base64_encode($aid . ':' . $pwd . ':' . $admlanguage);
+		if ( $pwd === $rpwd && $admin_password_hash !== $rpwd ) {
+
+			$db->sql_query( "UPDATE `" . $prefix . "_authors` SET pwd = '" . $admin_password_hash . "' WHERE aid = '" . $aid . "'" );
+
+			$result = $db->sql_query('SELECT `pwd` FROM `' . $prefix . '_authors` WHERE `aid`=\'' . addslashes($aid) . '\'');
+
+			list($rpwd) = $db->sql_fetchrow($result);
+
+		}
+
+
+
+		if (true === rn_password_verify( $txt_pwd, $rpwd )) {
+
+			$admin = base64_encode($aid . ':' . $rpwd . ':' . $admlanguage);
 			setcookie('admin', $admin, time() + 2592000);
 			$op = 'adminMain';
 		}

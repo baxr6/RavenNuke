@@ -36,7 +36,7 @@ if ($radminsuper == 1) {
 		CloseTable();
 		include('footer.php');
 	} else {
-		$add_pwd = md5($add_pwd);
+		$add_pwd = $add_pwd = rn_password_hash($add_pwd);
           if (isset($auth_modules)) {
             for ($i=0; $i < sizeof($auth_modules); $i++) { 
               $row = $db->sql_fetchrow($db->sql_query("SELECT admins FROM ".$prefix."_modules WHERE mid='$auth_modules[$i]'")); 

@@ -68,7 +68,7 @@ if (($row['radminsuper'] == 1) && ($row['name'] == 'God')) {
 			} else {
 				$auth_modules = '';
 			}
-			$add_pwd = md5($add_pwd);
+			$add_pwd = rn_password_hash($add_pwd);
 			if (isset($_POST['add_radminsuper'])) {
 				$add_radminsuper = '1';
 			} else {
@@ -401,7 +401,7 @@ function updateadmin() {
 			include_once 'footer.php';
 			exit;
 		}
-		$chng_pwd = md5($chng_pwd);
+		$chng_pwd = rn_password_hash($chng_pwd);
 		$chng_pwd_sql = 'pwd = \'' . $chng_pwd . '\',';
 	} else {
 		$chng_pwd_sql = '';

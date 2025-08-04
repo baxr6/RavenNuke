@@ -79,7 +79,7 @@ if (($radminsuper==1) OR ($radminuser==1)) {
 	$add_points = intval($add_points);
 	if ($stop == '') {
 		$user_password = $add_pass;
-		$add_pass = md5($add_pass);
+		$add_pass = rn_password_hash($add_pass);
 		$user_regdate = date('M d, Y');
 		list($newest_uid) = $db->sql_fetchrow($db->sql_query('SELECT max(user_id) AS newest_uid FROM '.$user_prefix.'_users'));
 		if ($newest_uid == '-1') $new_uid = 1;

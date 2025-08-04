@@ -1023,52 +1023,75 @@ function redirect($url)
   exit;
 }
 function bblogin($nukeuser, $session_id) {
-        global $nukeuser, $userdata, $user_ip, $session_length, $session_id, $db, $nuke_file_path;
-        define('IN_LOGIN', true);
-        $cookie = explode(":", $nukeuser);
-        $nuid = $cookie[0];
-        $sql = "SELECT s.*
-                FROM " . SESSIONS_TABLE . " s
-                WHERE s.session_id = '$session_id'
-                AND s.session_ip = '$user_ip'";
-        if ( !($result = $db->sql_query($sql)) )
-        {
-                message_die(CRITICAL_ERROR, 'Error doing DB query userdata row fetch : session_pagestar');
+    global $nukeuser, $userdata, $user_ip, $session_length, $session_id, $db, $nuke_file_path;
+    define('IN_LOGIN', true);
+
+    echo "<pre>Nuke User Data: $nukeuser</pre><br />\n";
+
+    $cookie = explode(":", $nukeuser);
+    echo "<pre>Cookie Data:\n";
+    var_dump($cookie);
+    echo "</pre><br />\n";
+
+    $nuid = $cookie[0];
+    $sql = "SELECT s.*
+            FROM " . SESSIONS_TABLE . " s
+            WHERE s.session_id = '$session_id'
+            AND s.session_ip = '$user_ip'";
+    if (!($result = $db->sql_query($sql))) {
+        message_die(CRITICAL_ERROR, 'Error doing DB query userdata row fetch : session_pagestar');
+    }
+
+    $logindata = $db->sql_fetchrow($result);
+    /* DEBUG */
+    echo "<pre>Login Data:\n";
+    var_dump($logindata);
+    echo "</pre><br />\n";
+
+    echo "<pre>nuid Data: $nuid</pre><br />\n";
+    
+    // Avoid warning by checking if $logindata is valid and has expected key
+    if (!$logindata || !isset($logindata['session_user_id']) || $nuid != $logindata['session_user_id']) {
+        $nusername = $cookie[1];
+        $sql = "SELECT user_id, username, user_password, user_active, user_level
+                FROM " . USERS_TABLE . "
+                WHERE username = '" . str_replace("'", "''", $nusername) . "'";
+        $result = $db->sql_query($sql);
+        if (!$result) {
+            message_die(GENERAL_ERROR, "Error in obtaining userdata : login", "", __LINE__, __FILE__, $sql);
         }
-        $logindata = $db->sql_fetchrow($result);
-        if( $nuid != $logindata['session_user_id'] ) {
-            $nusername = $cookie[1];
-            $sql = "SELECT user_id, username, user_password, user_active, user_level
-                    FROM ".USERS_TABLE."
-                    WHERE username = '" . str_replace("\'", "''", $nusername) . "'";
-            $result = $db->sql_query($sql);
-            if(!$result) {
-                message_die(GENERAL_ERROR, "Error in obtaining userdata : login", "", __LINE__, __FILE__, $sql);
-            }
-            $rowresult = $db->sql_fetchrow($result);
-            $password = $cookie[2];
-            if(count($rowresult) ) {
-                if( $rowresult['user_level'] != ADMIN && $board_config['board_disable'] ) {
-                    header("Location: " . append_sid("index.php", true));
-                } else {
-                    if( $password == $rowresult['user_password'] && $rowresult['user_active'] ) {
-                        $autologin = 0;
-                        $userdata = session_begin($rowresult['user_id'], $user_ip, PAGE_INDEX, $session_length, FALSE, $autologin);
-                        $session_id = $userdata['session_id'];
-                        if(!$session_id ) {
-                            message_die(CRITICAL_ERROR, "Couldn't start session : login", "", __LINE__, __FILE__);
-                        } else {
-                        }
-                    } else {
-                        $message = $lang['Error_login'] . "<br /><br />" . sprintf($lang['Click_return_login'], "<a href=\"" . append_sid("modules.php?name=Forums&file=login&$redirect") . "\">", "</a> ") . "<br /><br />" .  sprintf($lang['Click_return_index'], "<a href=\"" . append_sid("index.php") . "\">", "</a> ");
-                        message_die(GENERAL_MESSAGE, $message);
-                    }
-                }
+
+        $rowresult = $db->sql_fetchrow($result);
+        $password = $cookie[2];
+
+        if (is_array($rowresult) && count($rowresult)) {
+            if ($rowresult['user_level'] != ADMIN && ($board_config['board_disable'] ?? false)) {
+                header("Location: " . append_sid("index.php", true));
+                exit;
             } else {
-                $message = $lang['Error_login'] . "<br /><br />" . sprintf($lang['Click_return_login'], "<a href=\"" . append_sid("modules.php?name=Forums&file=login&$redirect") . "\">", "</a> ") . "<br /><br />" .  sprintf($lang['Click_return_index'], "<a href=\"" . append_sid("index.php") . "\">", "</a> ");
-                message_die(GENERAL_MESSAGE, $message);
+                if ($password == $rowresult['user_password'] && $rowresult['user_active']) {
+                    $autologin = 0;
+                    $userdata = session_begin($rowresult['user_id'], $user_ip, PAGE_INDEX, $session_length, false, $autologin);
+                    $session_id = $userdata['session_id'] ?? '';
+                    if (!$session_id) {
+                        message_die(CRITICAL_ERROR, "Couldn't start session : login", "", __LINE__, __FILE__);
+                    }
+                } else {
+                    $message = $lang['Error_login'] . "<br /><br />" . 
+                               sprintf($lang['Click_return_login'], "<a href=\"" . append_sid("modules.php?name=Forums&file=login&$redirect") . "\">", "</a> ") . 
+                               "<br /><br />" .  
+                               sprintf($lang['Click_return_index'], "<a href=\"" . append_sid("index.php") . "\">", "</a> ");
+                    message_die(GENERAL_MESSAGE, $message);
+                }
             }
+        } else {
+            $message = $lang['Error_login'] . "<br /><br />" . 
+                       sprintf($lang['Click_return_login'], "<a href=\"" . append_sid("modules.php?name=Forums&file=login&$redirect") . "\">", "</a> ") . 
+                       "<br /><br />" .  
+                       sprintf($lang['Click_return_index'], "<a href=\"" . append_sid("index.php") . "\">", "</a> ");
+            message_die(GENERAL_MESSAGE, $message);
         }
+    }
 }
 
 ?>

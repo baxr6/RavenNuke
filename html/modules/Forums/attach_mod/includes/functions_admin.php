@@ -117,56 +117,47 @@ function process_quota_settings($mode, $id, $quota_type, $quota_limit_id = 0)
 }
 
 /**
-* sort multi-dimensional Array
-*/
-function sort_multi_array ($sort_array, $key, $sort_order, $pre_string_sort = 0) 
+ * Sort a multi-dimensional array by a specified key.
+ *
+ * @param array  $array           The array to sort.
+ * @param string $key             The key to sort by.
+ * @param string $sort_order      'ASC' for ascending, 'DESC' for descending.
+ * @param bool   $pre_string_sort Optional. Force string comparison if true. Default false (auto-detect).
+ *
+ * @return array The sorted array.
+ */
+function sort_multi_array(array $array, string $key, string $sort_order = 'ASC', bool $pre_string_sort = false): array
 {
-	$last_element = sizeof($sort_array) - 1;
+    // Determine if sorting should be string or numeric
+    if (!$pre_string_sort && count($array) > 0) {
+        // Try to auto-detect from first non-empty key value
+        foreach ($array as $item) {
+            if (isset($item[$key])) {
+                $pre_string_sort = !is_numeric($item[$key]);
+                break;
+            }
+        }
+    }
 
-	if (!$pre_string_sort)
-	{
-		$string_sort = (!is_numeric($sort_array[$last_element-1][$key]) ) ? true : false;
-	}
-	else
-	{
-		$string_sort = $pre_string_sort;
-	}
+    $sort_order = strtoupper($sort_order);
+    if (!in_array($sort_order, ['ASC', 'DESC'], true)) {
+        $sort_order = 'ASC'; // default
+    }
 
-	for ($i = 0; $i < $last_element; $i++) 
-	{
-		$num_iterations = $last_element - $i;
+    usort($array, function ($a, $b) use ($key, $sort_order, $pre_string_sort) {
+        $valA = $a[$key] ?? '';
+        $valB = $b[$key] ?? '';
 
-		for ($j = 0; $j < $num_iterations; $j++) 
-		{
-			$next = 0;
+        if ($pre_string_sort) {
+            $cmp = strcasecmp((string)$valA, (string)$valB);
+        } else {
+            $cmp = ((float)$valA < (float)$valB) ? -1 : (((float)$valA > (float)$valB) ? 1 : 0);
+        }
 
-			// do checks based on key
-			$switch = false;
-			if (!$string_sort)
-			{
-				if (($sort_order == 'DESC' && intval($sort_array[$j][$key]) < intval($sort_array[$j + 1][$key])) || ($sort_order == 'ASC' && intval($sort_array[$j][$key]) > intval($sort_array[$j + 1][$key])))
-				{
-					$switch = true;
-				}
-			}
-			else
-			{
-				if (($sort_order == 'DESC' && strcasecmp($sort_array[$j][$key], $sort_array[$j + 1][$key]) < 0) || ($sort_order == 'ASC' && strcasecmp($sort_array[$j][$key], $sort_array[$j + 1][$key]) > 0))
-				{
-					$switch = true;
-				}
-			}
+        return ($sort_order === 'ASC') ? $cmp : -$cmp;
+    });
 
-			if ($switch)
-			{
-				$temp = $sort_array[$j];
-				$sort_array[$j] = $sort_array[$j + 1];
-				$sort_array[$j + 1] = $temp;
-			}
-		}
-	}
-
-	return $sort_array;
+    return $array;
 }
 
 /**

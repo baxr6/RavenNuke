@@ -584,8 +584,9 @@ else
         //
         // Generate frameset
         //
+        // Patched for now so template works :()
         $template->set_filenames(array(
-                "body" => "index_frameset.tpl")
+                "body" => "admin/index_frameset.tpl")
         );
 
         $template->assign_vars(array(

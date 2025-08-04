@@ -292,7 +292,8 @@ switch( $mode )
 				$sql = "UPDATE " . THEMES_TABLE . " SET ";
 				$count = 0;
 
-				while(list($key, $val) = each($updated))
+				//while(list($key, $val) = each($updated))
+				foreach($updated as $key => $val)
 				{
 					if($count != 0)
 					{
@@ -331,7 +332,8 @@ switch( $mode )
                                         $sql = "UPDATE " . THEMES_NAME_TABLE . "
 						SET ";
 					$count = 0;
-					while(list($key, $val) = each($updated_name))
+					//while(list($key, $val) = each($updated_name))
+					foreach($updated_name as $key => $val)
 					{
 						if($count != 0)
 						{
@@ -351,7 +353,8 @@ switch( $mode )
 					// Nope, no names entry so we create a new one.
 					//
 					$sql = "INSERT INTO " . THEMES_NAME_TABLE . " (themes_id, ";
-					while(list($key, $val) = each($updated_name))
+					//while(list($key, $val) = each($updated_name))
+					foreach($updated_name as $key => $val)
 					{
 						$fields[] = $key;
 						$vals[] = str_replace("\'", "''", $val);
@@ -406,7 +409,8 @@ switch( $mode )
 					message_die(GENERAL_ERROR, $lang['Style_exists'], $lang['Error']);
                                 }
 
-				while(list($key, $val) = each($updated))
+				//while(list($key, $val) = each($updated))
+				foreach($updated as $key => $val)
 				{
 					$field_names[] = $key;
 
@@ -733,7 +737,8 @@ switch( $mode )
 
 			for($i = 0; $i < count($theme_rowset); $i++)
 			{
-				while(list($key, $val) = each($theme_rowset[$i]))
+				//while(list($key, $val) = each($theme_rowset[$i]))
+				foreach($theme_rowset[$i] as $key => $val)
 				{
 					if(!intval($key) && $key != "0" && $key != "themes_id")
 					{
@@ -940,7 +945,7 @@ switch( $mode )
 		break;
 }
 
-if (empty($HTTP_POST_VARS['send_file']))
+if (empty($_POST['send_file']))
 {
 	include_once('./page_footer_admin.'.$phpEx);
 }

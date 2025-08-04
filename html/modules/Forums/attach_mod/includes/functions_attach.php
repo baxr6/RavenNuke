@@ -937,9 +937,12 @@ function get_var($var_name, $default, $multibyte = false)
 	}
 	else
 	{
-		list($key_type, $type) = each($default);
-		$type = gettype($type);
-		$key_type = gettype($key_type);
+reset($default); // optional, ensures pointer is at the start
+$first_key = array_key_first($default);
+$first_value = $default[$first_key];
+
+$key_type = gettype($first_key);
+$type = gettype($first_value);
 	}
 
 	if (is_array($var))

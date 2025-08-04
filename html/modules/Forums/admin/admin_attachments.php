@@ -1254,18 +1254,22 @@ if ($submit && $mode == 'quota')
 			}
 		}
 
-		if (!$error)
-		{
-			$filesize = ($size_select == 'kb' ) ? round($filesize * 1024) : ( ($size_select == 'mb') ? round($filesize * 1048576) : $filesize );
+$error = false;  // No error initially
 
-			$sql = "INSERT INTO " . QUOTA_LIMITS_TABLE . " (quota_desc, quota_limit)
-			VALUES ('" . attach_mod_sql_escape($quota_desc) . "', " . (int) $filesize . ")";
+if (!$error)
+{
+    $filesize = ($size_select == 'kb' ) 
+        ? round($filesize * 1024) 
+        : (($size_select == 'mb') ? round($filesize * 1048576) : $filesize);
 
-			if (!($db->sql_query($sql)))
-			{
-				message_die(GENERAL_ERROR, 'Could not add Quota Limit', '', __LINE__, __FILE__, $sql);
-			}
-		}
+    $sql = "INSERT INTO " . QUOTA_LIMITS_TABLE . " (quota_desc, quota_limit)
+            VALUES ('" . attach_mod_sql_escape($quota_desc) . "', " . (int) $filesize . ")";
+
+    if (!$db->sql_query($sql))
+    {
+        message_die(GENERAL_ERROR, 'Could not add Quota Limit', '', __LINE__, __FILE__, $sql);
+    }
+}
 
 	}
 

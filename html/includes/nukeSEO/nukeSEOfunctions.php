@@ -234,15 +234,14 @@ if ( !function_exists('seoCheckCreateTable') )
 }
 
 if (!function_exists('seoCheckUpdateTable')) {
-    function seoCheckUpdateTable(string $getValueSQL = '', mixed $newValue, array $updateSQL = []) : bool {
+    function seoCheckUpdateTable(mixed $newValue, string $getValueSQL = '', array $updateSQL = []) : bool {
         global $db;
 
         $result = $db->sql_query($getValueSQL);
         $existing = $db->sql_fetchrow($result);
 
-        // Check if 'value' exists in result
         if (!$existing || !array_key_exists('value', $existing)) {
-            return false; // or true, depending on logic preference
+            return false;
         }
 
         if ($existing['value'] == $newValue) {
@@ -258,6 +257,7 @@ if (!function_exists('seoCheckUpdateTable')) {
         return true;
     }
 }
+
 
 if ( !function_exists('seoGetConfig') )
 {

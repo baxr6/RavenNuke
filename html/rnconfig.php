@@ -11,7 +11,7 @@ if (realpath(__FILE__) == realpath($_SERVER['SCRIPT_FILENAME'])) {
 //
 // Version define added by montego - can be used by scripts to identify RN CMS and version
 // Do not change this for your site as it might mess up future features and add-ons
-define('RAVENNUKE_VERSION', '025200');
+define('RAVENNUKE_VERSION', '025300');
 // Version Friendly define added by montego and modified by raven - can be used by scripts to identify RN CMS and version
 // Scripts are required to add prefixes, such as v (version) - example: echo 'v' . RAVENNUKE_VERSION_FRIENDLY would print as v02.30.01
 // Do not change this for your site as it might mess up future features and add-ons

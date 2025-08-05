@@ -57,7 +57,7 @@ if (realpath(__FILE__) == realpath($_SERVER['SCRIPT_FILENAME'])) {
 //#####################################################################
 $dbhost = 'localhost';
 $dbuname = 'deano';
-$dbpass = 'D3@n2277';
+$dbpass = 'password';
 $dbname = 'raven';
 $prefix = 'nuke';
 $user_prefix = 'nuke';

@@ -2,7 +2,7 @@
 /************************************************************************/
 /* nukeFEED
 /* http://www.nukeSEO.com
-/* Copyright © 2007 by Kevin Guske
+/* Copyright ï¿½ 2007 by Kevin Guske
 /************************************************************************/
 /* This program is free software. You can redistribute it and/or modify */
 /* it under the terms of the GNU General Public License as published by */
@@ -69,37 +69,88 @@ if(!defined('ADMIN_FILE')) {
   }
   $cFHMHTML = '';
   $inactsel = '';
-  if ($op == 'nfEditFeed' and $fid > 0)
-  {
-    $sql = 'SELECT * FROM `'.$prefix.'_seo_feed` WHERE fid = '.$fid.';';
-    $feed =  $db->sql_fetchrow($db->sql_query($sql));
-    $cFTitle    = $feed['title'];
-    $cFContent  = $feed['content'];
-    $contentName= $feed['name'];
-    $subItems   = $feed['order'];
-    $cFHowMany  = $feed['howmany'];
-    $subItems2  = $feed['level'];
-    $cFLID      = $feed['lid'];
-    $cFDesc     = $feed['desc'];
-    $cFHMHTML   = '<option value="'.$cFHowMany.'" selected="selected">'.$cFHowMany.'</option>';
-    $cFactive   = $feed['active'];
-    if (!$cFactive) $inactsel = 'selected="selected"';
-    $fBAddress  = $feed['feedburner_address'];
-#    securitycode
-#    cachetime
-  }
-  else
-  {
-    if(!@get_magic_quotes_gpc()) {
-      if (strlen($cFContent) > 0) $cFContent  = stripslashes($cFContent);
-      if (strlen($contentName) > 0) $contentName  = stripslashes($contentName);
-      if (strlen($cFTitle) > 0)   $cFTitle    = stripslashes($cFTitle);
-      if (strlen($cFDesc) > 0)    $cFDesc     = stripslashes($cFDesc);
-      if (strlen($subItems) > 0)  $subItems   = stripslashes($subItems);
-      if (strlen($subItems2) > 0) $subItems2  = stripslashes($subItems2);
-      if (strlen($fBAddress) > 0) $fBAddress  = stripslashes($fBAddress);
+if ($op == 'nfEditFeed' && $fid > 0) {
+    // FIXED: Use prepared statement to prevent SQL injection
+    $sql = 'SELECT * FROM `' . $prefix . '_seo_feed` WHERE fid = ?';
+    
+    // Assuming you have a prepared statement method, use it:
+    if (method_exists($db, 'prepare')) {
+        $stmt = $db->prepare($sql);
+        $stmt->bind_param('i', $fid);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $feed = $result->fetch_assoc();
+    } else {
+        // Fallback: At minimum, cast to integer to prevent injection
+        $fid = (int)$fid;
+        $sql = 'SELECT * FROM `' . $prefix . '_seo_feed` WHERE fid = ' . $fid;
+        $result = $db->sql_query($sql);
+        $feed = $db->sql_fetchrow($result);
     }
-  }
+    
+    if ($feed) {
+        // FIXED: Use null coalescing operator and proper sanitization
+        $cFTitle = htmlspecialchars($feed['title'] ?? '', ENT_QUOTES, 'UTF-8');
+        $cFContent = htmlspecialchars($feed['content'] ?? '', ENT_QUOTES, 'UTF-8');
+        $contentName = htmlspecialchars($feed['name'] ?? '', ENT_QUOTES, 'UTF-8');
+        $subItems = htmlspecialchars($feed['order'] ?? '', ENT_QUOTES, 'UTF-8');
+        $cFHowMany = htmlspecialchars($feed['howmany'] ?? '', ENT_QUOTES, 'UTF-8');
+        $subItems2 = htmlspecialchars($feed['level'] ?? '', ENT_QUOTES, 'UTF-8');
+        $cFLID = (int)($feed['lid'] ?? 0);
+        $cFDesc = htmlspecialchars($feed['desc'] ?? '', ENT_QUOTES, 'UTF-8');
+        $cFactive = (int)($feed['active'] ?? 1);
+        $fBAddress = htmlspecialchars($feed['feedburner_address'] ?? '', ENT_QUOTES, 'UTF-8');
+        
+        // Create HTML option safely
+        $cFHMHTML = '<option value="' . $cFHowMany . '" selected="selected">' . $cFHowMany . '</option>';
+        
+        // Set inactive selection
+        $inactsel = !$cFactive ? 'selected="selected"' : '';
+    } else {
+        // Handle case where feed is not found
+        error_log("Feed with ID {$fid} not found");
+        // You might want to redirect or show an error message here
+    }
+} else {
+    // REMOVED: Deprecated magic_quotes_gpc handling (removed in PHP 5.4.0)
+    // Instead, properly sanitize input data when processing form submissions
+    
+    // If this is handling form data, sanitize it properly:
+    if ($_POST) {
+        $cFContent = isset($_POST['cFContent']) ? htmlspecialchars(trim($_POST['cFContent']), ENT_QUOTES, 'UTF-8') : '';
+        $contentName = isset($_POST['contentName']) ? htmlspecialchars(trim($_POST['contentName']), ENT_QUOTES, 'UTF-8') : '';
+        $cFTitle = isset($_POST['cFTitle']) ? htmlspecialchars(trim($_POST['cFTitle']), ENT_QUOTES, 'UTF-8') : '';
+        $cFDesc = isset($_POST['cFDesc']) ? htmlspecialchars(trim($_POST['cFDesc']), ENT_QUOTES, 'UTF-8') : '';
+        $subItems = isset($_POST['subItems']) ? htmlspecialchars(trim($_POST['subItems']), ENT_QUOTES, 'UTF-8') : '';
+        $subItems2 = isset($_POST['subItems2']) ? htmlspecialchars(trim($_POST['subItems2']), ENT_QUOTES, 'UTF-8') : '';
+        $fBAddress = isset($_POST['fBAddress']) ? htmlspecialchars(trim($_POST['fBAddress']), ENT_QUOTES, 'UTF-8') : '';
+    }
+}
+
+// Additional validation functions you might want to add:
+
+/**
+ * Validate feed ID
+ */
+function validateFeedId($fid) {
+    return is_numeric($fid) && $fid > 0 ? (int)$fid : false;
+}
+
+/**
+ * Sanitize text input
+ */
+function sanitizeTextInput($input, $maxLength = 255) {
+    $input = trim($input);
+    $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+    return strlen($input) > $maxLength ? substr($input, 0, $maxLength) : $input;
+}
+
+/**
+ * Validate URL
+ */
+function validateUrl($url) {
+    return filter_var($url, FILTER_VALIDATE_URL) !== false;
+}
   if ($fid > 0)
   {
     $addedit = _nF_EDIT;

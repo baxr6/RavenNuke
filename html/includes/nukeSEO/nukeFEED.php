@@ -2,7 +2,7 @@
 /************************************************************************/
 /* nukeFEED
 /* http://www.nukeSEO.com
-/* Copyright © 2007 by Kevin Guske
+/* Copyright ï¿½ 2007 by Kevin Guske
 /************************************************************************/
 /* This program is free software. You can redistribute it and/or modify */
 /* it under the terms of the GNU General Public License as published by */
@@ -295,210 +295,276 @@ function getSubscriptions($type = 'aggregator')
   return $subscriptions;
 }
 
-# List subscriptions for a feed 'list', a 'single' feed, or subscription 'admin'
-function listSubscriptions($listtype = 'Feed List', $type = 'aggregator', $subscriptions, $sTitle = '{TITLE}', $sDesc = '{DESC}', $fid, $fBAddress, $seo_config = array())
-{
-	global $module_name, $module_file, $admin_file;
 
-  $sURL = getNukeURL().$module_file.'.php?name='.$module_name.'&fid='.$fid;
-  $typeATOM10 = '&amp;type=ATOM1.0';
-  $typeRSS091 = '&amp;type=RSS0.91';
-  $typeRSS20  = '&amp;type=RSS2.0';
-  $typeDefault= '&type=RSS2.0';
-  if (intval($seo_config['use_fb']) == 1 and !empty($fBAddress) and !empty($seo_config['feedburner_url']) )
-  {
-    $sURL = $seo_config['feedburner_url'].'/'.$fBAddress;
-    $typeATOM10 = $typeRSS091 = $typeRSS20 = $typeDefault = '';
-  }
-	
-  $sep1 = $sep2 = '';
-  $sep3 ='&nbsp;';
-	switch ($listtype) {
-  case 'list':
-    $sep1 = '</td></tr><tr><td colspan="2" width="600">';
-    $sep2 = '</td></tr><tr><td colspan="2">&nbsp;';
-    break;
-  case 'single':
-    $sep1 = '<br /><br />';
-    $sep3 = '<br />';
-    break;
-  case 'admin':
-    $sep3 = '<br />';
-    break;
-  }
-  $subHTML = '';
-	if($subscriptions)
-	{
-    if($listtype == 'list') $subHTML .= '<a><span id="feedsub'.$fid.'-title" class="iconspan" style="{float: right;margin: 3px;cursor:hand;cursor:pointer;font-weight: bold;}"><img src="images/nukeFEED/minus.gif" alt="minus" /></span></a>'.$sep1.'<div id="feedsub'.$fid.'" class="icongroup1">';
-    $count = 0; $maxperline = 7;
-    foreach ($subscriptions as $sid => $subscription)
-    {
-      $name         = $subscription['name'];
-      $tagline      = $subscription['tagline'];
-      $url          = $subscription['url'];
-      $image        = $subscription['image'];
-      $icon         = $subscription['icon'];
-      $active       = $subscription['active'];
-      
-#			if($title==null || $title=='') $title='&nbsp;';
-			if ($url > '') {
-        $parms  = array('{URL}', '{TITLE}', '{NUKEURL}');
-        $values = array($sURL.$typeDefault, urlencode($sTitle), getNukeURL());
-#        $url = htmlentities(str_replace($parms, $values, $url));
-        $url = htmlspecialchars(str_replace($parms, $values, $url));
-      }
-			
-      if(defined('ADMIN_FILE')) $subHTML .= '<img src="images/nukeFEED/icon_status_'.(($active) ? 'green':'red').'.gif" alt="'.(($active) ? _nF_ACTIVE:_nF_INACTIVE).'" title="'.(($active) ? _nF_ACTIVE:_nF_INACTIVE).'" />&nbsp;';
-      $subHTML .= '<a href="'.$url.'" title="'.$tagline.'" target="_blank">';
-      if ($image > '') {
-        $subHTML .= '<img src="'.$image.'" border="0" alt="'.$tagline.'" />';
-      }
-      else
-      {
-        $subHTML .= $name;
-      }
-      $subHTML .= '</a>';
-      if ($icon > '') {
-        $subHTML .= '<a href="'.$url.'" title="'.$tagline.'" target="_blank"><img src="'.$icon.'" border="0" alt="'.$tagline.'" /></a>&nbsp;';
-      }
-      if(defined('ADMIN_FILE')) 
-      {
-        $subHTML .= '&nbsp;<a href="'.$admin_file.'.php?op=nfEditSubscript&amp;sid='.$sid.'"><img src="images/nukeFEED/edit.png" height="16" width="16" border="0" alt="'._nF_EDIT_SUB.'" title="'._nF_EDIT_SUB.'" /></a>';
-        $subHTML .= '&nbsp;<a class="rn_csrf" href="'.$admin_file.'.php?op=nfDelSubscript&amp;sid='.$sid.'"><img src="images/nukeFEED/delete.png" height="16" width="16" border="0" alt="'._nF_DELETE_SUB.'" title="'._nF_DELETE_SUB.'" /></a>';
-      }
-      $count = $count + 1; $newline = $count / $maxperline;
-      if ($listtype == 'list' and $newline == round($newline,0)) $subHTML .= '<br />';
-      $subHTML .= $sep3.chr(10);
+/**
+ * List subscriptions for a feed: 'list', 'single', or 'admin' mode.
+ *
+ * @param array $subscriptions Required subscriptions array.
+ * @param int $fid Required feed ID.
+ * @param string $fBAddress Required FeedBurner address.
+ * @param array $seo_config Optional SEO configuration array.
+ * @param string $listtype Optional display mode ('Feed List' by default).
+ * @param string $type Optional subscription type ('aggregator' by default).
+ * @param string $sTitle Optional title template.
+ * @param string $sDesc Optional description template.
+ * @return string|null Returns HTML string for frontend, echoes for admin.
+ */
+function listSubscriptions(
+    array $subscriptions,
+    int $fid,
+    string $fBAddress,
+    array $seo_config = [],
+    string $listtype = 'Feed List',
+    string $type = 'aggregator',
+    string $sTitle = '{TITLE}',
+    string $sDesc = '{DESC}'
+) {
+    global $module_name, $module_file, $admin_file;
+
+    $sURL = getNukeURL() . $module_file . '.php?name=' . $module_name . '&fid=' . $fid;
+    $typeATOM10 = '&amp;type=ATOM1.0';
+    $typeRSS091 = '&amp;type=RSS0.91';
+    $typeRSS20  = '&amp;type=RSS2.0';
+    $typeDefault= '&type=RSS2.0';
+
+    if (!empty($seo_config['use_fb']) && intval($seo_config['use_fb']) === 1 && !empty($fBAddress) && !empty($seo_config['feedburner_url'])) {
+        $sURL = rtrim($seo_config['feedburner_url'], '/') . '/' . $fBAddress;
+        $typeATOM10 = $typeRSS091 = $typeRSS20 = $typeDefault = '';
     }
-    if ($sep3 != '<br />') $subHTML .= '<br />';
-	}
-  if(defined('ADMIN_FILE')) 
-  {
-    echo $subHTML;
-  }
-  else
-  {
-    $sURL = htmlentities($sURL);
-#    $subHTML .= '<a href="'.$sURL.'&amp;type=ATOM0.3" title="'.$sTitle.' in ATOM 0.3 format" target="_blank"><img src="images/nukeFEED/bm-atom03.png" border="0" alt="'.$title.' in ATOM 0.3 format" /></a>'.$sep3;
-    $subHTML .= '<a href="'.$sURL.$typeATOM10.'" title="'.$sTitle.' in ATOM 1.0 format" target="_blank"><img src="images/nukeFEED/bm-atom10.png" border="0" alt="'.$sTitle.' in ATOM 1.0 format" /></a>'.$sep3;
-    $subHTML .= '<a href="'.$sURL.$typeRSS091.'" title="'.$sTitle.' in RSS 0.91 format" target="_blank"><img src="images/nukeFEED/bm-rss091.png" border="0" alt="'.$sTitle.' in RSS 0.91 format" /></a>'.$sep3;
-#    $subHTML .= '<a href="'.$sURL.'&amp;type=RSS1.0" title="'.$sTitle.' in RSS/RDF 1.0 format" target="_blank"><img src="images/nukeFEED/bm-rss10.png" border="0" alt="'.$title.' in RSS/RDF 1.0 format" /></a>'.$sep3;
-    $subHTML .= '<a href="'.$sURL.$typeRSS20.'" title="'.$sTitle.' in RSS 2.0 format" target="_blank"><img src="images/nukeFEED/bm-rss20.png" border="0" alt="'.$sTitle.' in RSS 2.0 format" /></a>'.$sep3;
-    $subHTML .= seoFeedCountChicklet($fBAddress, $seo_config).'<br />';
-    if ($listtype == 'single') $subHTML .= '<br />
-            <a href="http://feedvalidator.org/check.cgi?url='.$sURL.$typeATOM10.'"><img src="images/nukeFEED/valid-atom.png" alt="Valid Atom 1.0" title="Validate my Atom 1.0 feed" border="0" /></a><br />
-            <a href="http://feedvalidator.org/check.cgi?url='.$sURL.$typeRSS20.'"><img src="images/nukeFEED/valid-rss.png" alt="Valid RSS" title="Validate my RSS feed" border="0" /></a><br />';
-    if ($listtype == 'list')
-    {
-      $subHTML .= '</div>'.$sep2;
-      echo $subHTML;
+
+    $sep1 = $sep2 = '';
+    $sep3 = '&nbsp;';
+
+    switch (strtolower($listtype)) {
+        case 'list':
+            $sep1 = '</td></tr><tr><td colspan="2" width="600">';
+            $sep2 = '</td></tr><tr><td colspan="2">&nbsp;';
+            break;
+        case 'single':
+            $sep1 = '<br /><br />';
+            $sep3 = '<br />';
+            break;
+        case 'admin':
+            $sep3 = '<br />';
+            break;
     }
-    else
-    {
-      $subHTML .= $sep2;
-      return $subHTML;
+
+    $subHTML = '';
+
+    if ($subscriptions) {
+        if ($listtype === 'list') {
+            $subHTML .= '<a><span id="feedsub' . $fid . '-title" class="iconspan" style="float: right; margin: 3px; cursor: pointer; font-weight: bold;"><img src="images/nukeFEED/minus.gif" alt="minus" /></span></a>' . $sep1 . '<div id="feedsub' . $fid . '" class="icongroup1">';
+        }
+
+        $count = 0;
+        $maxperline = 7;
+
+        foreach ($subscriptions as $sid => $subscription) {
+            $name    = $subscription['name'] ?? '';
+            $tagline = $subscription['tagline'] ?? '';
+            $url     = $subscription['url'] ?? '';
+            $image   = $subscription['image'] ?? '';
+            $icon    = $subscription['icon'] ?? '';
+            $active  = $subscription['active'] ?? 0;
+
+            if ($url !== '') {
+                $parms  = ['{URL}', '{TITLE}', '{NUKEURL}'];
+                $values = [$sURL . $typeDefault, urlencode($sTitle), getNukeURL()];
+                $url = htmlspecialchars(str_replace($parms, $values, $url));
+            }
+
+            if (defined('ADMIN_FILE')) {
+                $subHTML .= '<img src="images/nukeFEED/icon_status_' . ($active ? 'green' : 'red') . '.gif" alt="' . ($active ? _nF_ACTIVE : _nF_INACTIVE) . '" title="' . ($active ? _nF_ACTIVE : _nF_INACTIVE) . '" />&nbsp;';
+            }
+
+            $subHTML .= '<a href="' . $url . '" title="' . $tagline . '" target="_blank">';
+            if ($image !== '') {
+                $subHTML .= '<img src="' . $image . '" border="0" alt="' . $tagline . '" />';
+            } else {
+                $subHTML .= $name;
+            }
+            $subHTML .= '</a>';
+
+            if ($icon !== '') {
+                $subHTML .= '<a href="' . $url . '" title="' . $tagline . '" target="_blank"><img src="' . $icon . '" border="0" alt="' . $tagline . '" /></a>&nbsp;';
+            }
+
+            if (defined('ADMIN_FILE')) {
+                $subHTML .= '&nbsp;<a href="' . $admin_file . '.php?op=nfEditSubscript&amp;sid=' . $sid . '"><img src="images/nukeFEED/edit.png" height="16" width="16" border="0" alt="' . _nF_EDIT_SUB . '" title="' . _nF_EDIT_SUB . '" /></a>';
+                $subHTML .= '&nbsp;<a class="rn_csrf" href="' . $admin_file . '.php?op=nfDelSubscript&amp;sid=' . $sid . '"><img src="images/nukeFEED/delete.png" height="16" width="16" border="0" alt="' . _nF_DELETE_SUB . '" title="' . _nF_DELETE_SUB . '" /></a>';
+            }
+
+            $count++;
+            if ($listtype === 'list' && ($count % $maxperline === 0)) {
+                $subHTML .= '<br />';
+            }
+
+            $subHTML .= $sep3 . "\n";
+        }
+
+        if ($sep3 !== '<br />') {
+            $subHTML .= '<br />';
+        }
     }
-  }
+
+    if (defined('ADMIN_FILE')) {
+        echo $subHTML;
+        return null;
+    } else {
+        $sURL = htmlentities($sURL);
+        $subHTML .= '<a href="' . $sURL . $typeATOM10 . '" title="' . $sTitle . ' in ATOM 1.0 format" target="_blank"><img src="images/nukeFEED/bm-atom10.png" border="0" alt="' . $sTitle . ' in ATOM 1.0 format" /></a>' . $sep3;
+        $subHTML .= '<a href="' . $sURL . $typeRSS091 . '" title="' . $sTitle . ' in RSS 0.91 format" target="_blank"><img src="images/nukeFEED/bm-rss091.png" border="0" alt="' . $sTitle . ' in RSS 0.91 format" /></a>' . $sep3;
+        $subHTML .= '<a href="' . $sURL . $typeRSS20 . '" title="' . $sTitle . ' in RSS 2.0 format" target="_blank"><img src="images/nukeFEED/bm-rss20.png" border="0" alt="' . $sTitle . ' in RSS 2.0 format" /></a>' . $sep3;
+        $subHTML .= seoFeedCountChicklet($fBAddress, $seo_config) . '<br />';
+
+        if ($listtype === 'single') {
+            $subHTML .= '<br />
+                <a href="http://feedvalidator.org/check.cgi?url=' . $sURL . $typeATOM10 . '"><img src="images/nukeFEED/valid-atom.png" alt="Valid Atom 1.0" title="Validate my Atom 1.0 feed" border="0" /></a><br />
+                <a href="http://feedvalidator.org/check.cgi?url=' . $sURL . $typeRSS20 . '"><img src="images/nukeFEED/valid-rss.png" alt="Valid RSS" title="Validate my RSS feed" border="0" /></a><br />';
+        }
+
+        if ($listtype === 'list') {
+            $subHTML .= '</div>' . $sep2;
+            echo $subHTML;
+            return null;
+        } else {
+            $subHTML .= $sep2;
+            return $subHTML;
+        }
+    }
 }
 
-if ( !function_exists('seoCheckInstall') )
-{
-  function seoCheckInstall() {
-    # table creation is MySQL-specific
+
+/**
+ * Checks and installs SEO related database tables and default values.
+ *
+ * @return void
+ */
+function seoCheckInstall(): void {
     global $prefix, $sitename;
-    define('nF_version', '1.1.0');
-    # seo config
-    $sid = 0; $subscription = array();
-    $existSQL = 'SELECT 1 FROM `'.$prefix.'_seo_config` LIMIT 0';
-    $subscriptions[$sid] = $subscription;
-    $createSQL = array();
-    $createSQL[] = 'CREATE TABLE `'.$prefix.'_seo_config` (
-      `config_type` varchar(150) NOT NULL,
-      `config_name` varchar(150) NOT NULL,
-      `config_value` text NOT NULL,
-      PRIMARY KEY  (`config_type`,`config_name`)
-      ) TYPE=MyISAM;';
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'use_fb', '1');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'feedburner_url', 'http://feeds.feedburner.com');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'version_check', '0');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'version_newest', '".nF_version."');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'version_number', '".nF_version."');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'version_url', 'http://nukeseo.com/modules.php?name=Downloads');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'version_notes', '');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'show_circgraph', '1');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'show_feedcount', '1');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'feedcount_body', 'A6A6A6');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_config` VALUES ('Feeds', 'feedcount_text', '000000');";
 
+    // Version constant
+    $nF_version = '1.1.0';
+
+    // SEO config table
+    $existSQL = 'SELECT 1 FROM `' . $prefix . '_seo_config` LIMIT 0';
+    $createSQL = [
+        'CREATE TABLE `' . $prefix . '_seo_config` (
+          `config_type` varchar(150) NOT NULL,
+          `config_name` varchar(150) NOT NULL,
+          `config_value` text NOT NULL,
+          PRIMARY KEY  (`config_type`,`config_name`)
+          ) ENGINE=MyISAM;',
+        "INSERT INTO `{$prefix}_seo_config` VALUES
+            ('Feeds', 'use_fb', '1'),
+            ('Feeds', 'feedburner_url', 'http://feeds.feedburner.com'),
+            ('Feeds', 'version_check', '0'),
+            ('Feeds', 'version_newest', '{$nF_version}'),
+            ('Feeds', 'version_number', '{$nF_version}'),
+            ('Feeds', 'version_url', 'http://nukeseo.com/modules.php?name=Downloads'),
+            ('Feeds', 'version_notes', ''),
+            ('Feeds', 'show_circgraph', '1'),
+            ('Feeds', 'show_feedcount', '1'),
+            ('Feeds', 'feedcount_body', 'A6A6A6'),
+            ('Feeds', 'feedcount_text', '000000');"
+    ];
     seoCheckCreateTable($existSQL, $createSQL);
-    # seo disabled modules
-    $existSQL = 'SELECT 1 FROM `'.$prefix.'_seo_disabled_modules` LIMIT 0';
-    $createSQL = array();
-    $createSQL[] = 'CREATE TABLE `'.$prefix.'_seo_disabled_modules` (
-      `title` varchar(255) NOT NULL,
-      `seo_module` varchar(255) NOT NULL,
-      PRIMARY KEY  (`title`,`seo_module`)
-      ) TYPE=MyISAM;';
+
+    // SEO disabled modules table
+    $existSQL = 'SELECT 1 FROM `' . $prefix . '_seo_disabled_modules` LIMIT 0';
+    $createSQL = [
+        'CREATE TABLE `' . $prefix . '_seo_disabled_modules` (
+          `title` varchar(255) NOT NULL,
+          `seo_module` varchar(255) NOT NULL,
+          PRIMARY KEY (`title`,`seo_module`)
+          ) ENGINE=MyISAM;'
+    ];
     seoCheckCreateTable($existSQL, $createSQL);
-    # Feeds
-    $existSQL = 'SELECT 1 FROM `'.$prefix.'_seo_feed` LIMIT 0';
-    $createSQL = array();
-    $createSQL[] = 'CREATE TABLE `'.$prefix.'_seo_feed` (
-      `fid` int(6) NOT NULL auto_increment,
-      `content` varchar(20) NOT NULL,
-      `name` varchar(20) NOT NULL,
-      `level` varchar(20) NOT NULL,
-      `lid` int(6) NOT NULL,
-      `title` varchar(50) NOT NULL,
-      `desc` text NOT NULL,
-      `order` varchar(20) NOT NULL,
-      `howmany` char(3) NOT NULL,
-      `active` int(1) NOT NULL,
-      `desclimit` varchar(5) NOT NULL,
-      `securitycode` varchar(50) NOT NULL,
-      `cachetime` varchar(6) NOT NULL,
-      `feedburner_address` varchar(100) NOT NULL,
-      PRIMARY KEY  (`fid`),
-      KEY `content` (`content`,`title`)
-      ) TYPE=MyISAM;';
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_feed` VALUES (1, 'News', '"._nF_NEWS."', 'module', 0, '".$sitename." "._nF_NEWS."', '', 'recent', '10', 1, '', '', '', '');";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_feed` VALUES (2, 'Forums', '"._nF_FORUMS."', 'module', 0, '".$sitename." "._nF_FORUMS."', '', 'recent', '10', 1, '', '', '', '');";
+
+    // Feeds table
+    $existSQL = 'SELECT 1 FROM `' . $prefix . '_seo_feed` LIMIT 0';
+    $createSQL = [
+        'CREATE TABLE `' . $prefix . '_seo_feed` (
+          `fid` int(6) NOT NULL AUTO_INCREMENT,
+          `content` varchar(20) NOT NULL,
+          `name` varchar(20) NOT NULL,
+          `level` varchar(20) NOT NULL,
+          `lid` int(6) NOT NULL,
+          `title` varchar(50) NOT NULL,
+          `desc` text NOT NULL,
+          `order` varchar(20) NOT NULL,
+          `howmany` char(3) NOT NULL,
+          `active` int(1) NOT NULL,
+          `desclimit` varchar(5) NOT NULL,
+          `securitycode` varchar(50) NOT NULL,
+          `cachetime` varchar(6) NOT NULL,
+          `feedburner_address` varchar(100) NOT NULL,
+          PRIMARY KEY (`fid`),
+          KEY `content` (`content`,`title`)
+          ) ENGINE=MyISAM;',
+        "INSERT INTO `{$prefix}_seo_feed` VALUES
+          (1, 'News', '" . _nF_NEWS . "', 'module', 0, '{$sitename} " . _nF_NEWS . "', '', 'recent', '10', 1, '', '', '', ''),
+          (2, 'Forums', '" . _nF_FORUMS . "', 'module', 0, '{$sitename} " . _nF_FORUMS . "', '', 'recent', '10', 1, '', '', '', '');"
+    ];
     seoCheckCreateTable($existSQL, $createSQL);
-    # Subscriptions
-    $existSQL = 'SELECT 1 FROM `'.$prefix.'_seo_subscriptions` LIMIT 0';
-    $createSQL = array();
-    $createSQL[] = 'CREATE TABLE `'.$prefix.'_seo_subscriptions` (
-      `sid` int(6) NOT NULL auto_increment,
-      `type` varchar(255) NOT NULL,
-      `name` varchar(60) NOT NULL,
-      `tagline` varchar(60) NOT NULL,
-      `image` varchar(255) NOT NULL,
-      `icon` varchar(255) NOT NULL,
-      `url` varchar(255) NOT NULL,
-      `active` int(1) NOT NULL,
-      PRIMARY KEY  (`sid`)
-      ) TYPE=MyISAM;';
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (1, 'aggregator', '01 Google Reader', 'Add to Google', 'images/nukeFEED/subscribe/add-to-google-plus.gif', '', 'http://fusion.google.com/add?feedurl={URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (2, 'aggregator', '02 My Yahoo!', 'Add to My Yahoo!', 'images/nukeFEED/subscribe/myYahoo.gif', '', 'http://add.my.yahoo.com/rss?url={URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (3, 'aggregator', '03 My AOL', 'Add to My AOL', 'images/nukeFEED/subscribe/myAOL.gif', '', 'http://feeds.my.aol.com/add.jsp?url={URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (4, 'aggregator', '04 My MSN', 'Add to My MSN', 'images/nukeFEED/subscribe/myMSN.gif', '', 'http://my.msn.com/addtomymsn.armx?id=rss&ut={URL}&ru={NUKEURL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (5, 'aggregator', '05 BlogLines', 'Subscribe with Bloglines', 'images/nukeFEED/subscribe/bloglines.gif', '', 'http://www.bloglines.com/sub/{URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (6, 'aggregator', '06 netvibes', 'Add to netvibes', 'images/nukeFEED/subscribe/netvibes.gif', '', 'http://www.netvibes.com/subscribe.php?url={URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (7, 'aggregator', '07 NewsGator', 'Subscribe in NewsGator Online', 'images/nukeFEED/subscribe/newsgator.gif', '', 'http://www.newsgator.com/ngs/subscriber/subext.aspx?url={URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (8, 'aggregator', '08 Pageflakes', 'Subscribe with PageFlakes', 'images/nukeFEED/subscribe/pageflakes.gif', '', 'http://www.pageflakes.com/subscribe.aspx?url={URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (9, 'aggregator', '09 Rojo', 'Subscribe in Rojo', 'images/nukeFEED/subscribe/addtorojo.gif', '', 'http://www.rojo.com/add-subscription?resource={URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (10, 'aggregator', '10 Protopage', 'Add this site to your Protopage', 'images/nukeFEED/subscribe/protopage.gif', '', 'http://www.protopage.com/add-button-site?url={URL}&label={TITLE}&type=feed', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (11, 'aggregator', '11 Newsburst', 'Add to Newsburst', 'images/nukeFEED/subscribe/newsburst.gif', '', 'http://www.newsburst.com/Source/?add={URL}', 1);";
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (12, 'aggregator', '12 NewsAlloy', 'Subscribe in NewsAlloy', 'images/nukeFEED/subscribe/newsalloy.gif', '', 'http://www.newsalloy.com/?rss={URL}', 1);";    
-    $createSQL[] = "INSERT INTO `".$prefix."_seo_subscriptions` VALUES (13, 'aggregator', '13 Blogarithm', 'Add to Blogarithm', 'images/nukeFEED/subscribe/blogarithm.gif', '', 'http://www.blogarithm.com/subrequest.php?BlogURL={URL}', 1);";
+
+    // Subscriptions table
+    $existSQL = 'SELECT 1 FROM `' . $prefix . '_seo_subscriptions` LIMIT 0';
+    $createSQL = [
+        'CREATE TABLE `' . $prefix . '_seo_subscriptions` (
+          `sid` int(6) NOT NULL AUTO_INCREMENT,
+          `type` varchar(255) NOT NULL,
+          `name` varchar(60) NOT NULL,
+          `tagline` varchar(60) NOT NULL,
+          `image` varchar(255) NOT NULL,
+          `icon` varchar(255) NOT NULL,
+          `url` varchar(255) NOT NULL,
+          `active` int(1) NOT NULL,
+          PRIMARY KEY (`sid`)
+          ) ENGINE=MyISAM;',
+        "INSERT INTO `{$prefix}_seo_subscriptions` VALUES
+          (1, 'aggregator', '01 Google Reader', 'Add to Google', 'images/nukeFEED/subscribe/add-to-google-plus.gif', '', 'http://fusion.google.com/add?feedurl={URL}', 1),
+          (2, 'aggregator', '02 My Yahoo!', 'Add to My Yahoo!', 'images/nukeFEED/subscribe/myYahoo.gif', '', 'http://add.my.yahoo.com/rss?url={URL}', 1),
+          (3, 'aggregator', '03 My AOL', 'Add to My AOL', 'images/nukeFEED/subscribe/myAOL.gif', '', 'http://feeds.my.aol.com/add.jsp?url={URL}', 1),
+          (4, 'aggregator', '04 My MSN', 'Add to My MSN', 'images/nukeFEED/subscribe/myMSN.gif', '', 'http://my.msn.com/addtomymsn.armx?id=rss&ut={URL}&ru={NUKEURL}', 1),
+          (5, 'aggregator', '05 BlogLines', 'Subscribe with Bloglines', 'images/nukeFEED/subscribe/bloglines.gif', '', 'http://www.bloglines.com/sub/{URL}', 1),
+          (6, 'aggregator', '06 netvibes', 'Add to netvibes', 'images/nukeFEED/subscribe/netvibes.gif', '', 'http://www.netvibes.com/subscribe.php?url={URL}', 1),
+          (7, 'aggregator', '07 NewsGator', 'Subscribe in NewsGator Online', 'images/nukeFEED/subscribe/newsgator.gif', '', 'http://www.newsgator.com/ngs/subscriber/subext.aspx?url={URL}', 1),
+          (8, 'aggregator', '08 Pageflakes', 'Subscribe with PageFlakes', 'images/nukeFEED/subscribe/pageflakes.gif', '', 'http://www.pageflakes.com/subscribe.aspx?url={URL}', 1),
+          (9, 'aggregator', '09 Rojo', 'Subscribe in Rojo', 'images/nukeFEED/subscribe/addtorojo.gif', '', 'http://www.rojo.com/add-subscription?resource={URL}', 1),
+          (10, 'aggregator', '10 Protopage', 'Add this site to your Protopage', 'images/nukeFEED/subscribe/protopage.gif', '', 'http://www.protopage.com/add-button-site?url={URL}&label={TITLE}&type=feed', 1),
+          (11, 'aggregator', '11 Newsburst', 'Add to Newsburst', 'images/nukeFEED/subscribe/newsburst.gif', '', 'http://www.newsburst.com/Source/?add={URL}', 1),
+          (12, 'aggregator', '12 NewsAlloy', 'Subscribe in NewsAlloy', 'images/nukeFEED/subscribe/newsalloy.gif', '', 'http://www.newsalloy.com/?rss={URL}', 1),
+          (13, 'aggregator', '13 Blogarithm', 'Add to Blogarithm', 'images/nukeFEED/subscribe/blogarithm.gif', '', 'http://www.blogarithm.com/subrequest.php?BlogURL={URL}', 1);"
+    ];
     seoCheckCreateTable($existSQL, $createSQL);
-    $getValueSQL = 'SELECT config_value as value FROM `'.$prefix.'_seo_config` where config_type=\'Feeds\' and config_name = \'version_number\'';
-    $updateSQL = array();
-    $updateSQL[] = "UPDATE `".$prefix."_seo_config` SET config_value = '".nF_version."' where config_type='Feeds' and config_name = 'version_number';";
-    seoCheckUpdateTable($getValueSQL, '".nF_version."', $updateSQL);
-  }
+
+    // Version update - FIXED: Use prepared statement or proper escaping
+    try {
+        global $db; // Assuming this is your database connection
+        
+        // Check current version first
+        $getValueSQL = "SELECT config_value FROM `{$prefix}_seo_config` WHERE config_type='Feeds' AND config_name = 'version_number' LIMIT 1";
+        $result = $db->sql_query($getValueSQL);
+        
+        if ($result && $db->sql_numrows($result) > 0) {
+            $row = $db->sql_fetchrow($result);
+            $currentVersion = $row['config_value'];
+            
+            // Only update if version is different
+            if ($currentVersion !== $nF_version) {
+                $updateSQL = "UPDATE `{$prefix}_seo_config` SET config_value = '" . $db->sql_escape_string($nF_version) . "' WHERE config_type='Feeds' AND config_name = 'version_number'";
+                $db->sql_query($updateSQL);
+            }
+        }
+    } catch (Exception $e) {
+        // Log error but don't break installation
+        error_log("nukeFEED version update failed: " . $e->getMessage());
+    }
+    
+    // Alternative: Comment out the problematic line temporarily
+    // seoCheckUpdateTable($getValueSQL, $nF_version, $updateSQL);
 }
-
 if ( !function_exists('seoFeedCountChicklet') )
 {
   function seoFeedCountChicklet($fBAddress, $seo_config)

@@ -1248,32 +1248,59 @@ function removeStory($sid, $ok=0) {
 
 function changeStory($sid, $subject, $hometext, $bodytext, $tags, $topic, $notes, $catid, $ihome, $alanguage, $acomm, $assotop) {
 	global $aid, $ultramode, $prefix, $db, $admin_file, $radminsuper;
+
 	$associated = '';
-	if ($assotop != '') {
-		$j = sizeof($assotop);
-		for ($i=0; $i<$j; ++$i) {
-			$associated .= "$assotop[$i]-";
+	if (!empty($assotop) && is_array($assotop)) {
+		foreach ($assotop as $topid) {
+			$associated .= "$topid-";
 		}
 	}
-	$result2 = $db->sql_query('select aid from '.$prefix.'_stories where sid=\''.$sid.'\'');
+
+	$result2 = $db->sql_query("SELECT aid FROM {$prefix}_stories WHERE sid='" . (int)$sid . "'");
 	list($aaid) = $db->sql_fetchrow($result2);
-	if ($aaid == $aid OR $radminsuper == 1) {
-		$subject = $db->sql_escape_string(html_entity_decode(check_html($subject, 'nohtml'),ENT_QUOTES));
-		$hometext = $db->sql_escape_string(check_html($hometext, ''));
-		$bodytext = $db->sql_escape_string(check_html($bodytext, ''));
-		$notes = $db->sql_escape_string(check_html($notes, ''));
-		$db->sql_query('update '.$prefix.'_stories set '."catid='$catid', title='$subject', hometext='$hometext', bodytext='$bodytext', topic='$topic', notes='$notes', ihome='$ihome', alanguage='$alanguage', acomm='$acomm', associated='$associated'".' where sid=\''.$sid.'\'');
-		// tag cloud start
-		if ($tags!="") {
-			$db->sql_query("DELETE FROM ".$prefix."_tags WHERE whr=3 AND cid='$sid'");
-			$tags = explode(",",$tags);
+
+	if ($aaid == $aid || $radminsuper == 1) {
+		$subject   = $db->sql_escape_string(html_entity_decode(check_html($subject, 'nohtml'), ENT_QUOTES));
+		$hometext  = $db->sql_escape_string(check_html($hometext, ''));
+		$bodytext  = $db->sql_escape_string(check_html($bodytext, ''));
+		$notes     = $db->sql_escape_string(check_html($notes, ''));
+		$catid     = (int) $catid;
+		$ihome     = (int) $ihome;
+		$acomm     = (int) $acomm;
+		$sid       = (int) $sid;
+
+		// 🛠 Ensure topic is a valid integer (Fix for MySQL strict mode)
+		$topic     = (int) $topic;
+
+		// Optional: reject invalid topic ID (e.g. 0)
+		// if ($topic < 1) {
+		//     die('Invalid topic ID');
+		// }
+
+		$db->sql_query("UPDATE {$prefix}_stories SET 
+			catid='$catid', 
+			title='$subject', 
+			hometext='$hometext', 
+			bodytext='$bodytext', 
+			topic='$topic', 
+			notes='$notes', 
+			ihome='$ihome', 
+			alanguage='$alanguage', 
+			acomm='$acomm', 
+			associated='$associated' 
+			WHERE sid='$sid'");
+
+		// 🏷️ Tag cloud update
+		if (!empty($tags)) {
+			$db->sql_query("DELETE FROM {$prefix}_tags WHERE whr=3 AND cid='$sid'");
+			$tags = explode(",", $tags);
 			foreach ($tags as $tag) {
-				$tag = $db->sql_escape_string(html_entity_decode(check_html($tag, 'nohtml'),ENT_QUOTES));
-				$db->sql_query("INSERT INTO ".$prefix."_tags (tag,cid,whr) VALUES ('".trim($tag)."','$sid','3')");
+				$tag = $db->sql_escape_string(html_entity_decode(check_html($tag, 'nohtml'), ENT_QUOTES));
+				$db->sql_query("INSERT INTO {$prefix}_tags (tag, cid, whr) VALUES ('" . trim($tag) . "', '$sid', '3')");
 			}
 		}
-		// tag cloud end
-		Header('Location: '.$admin_file.'.php?op=adminMain');
+
+		Header("Location: {$admin_file}.php?op=adminMain");
 	}
 }
 

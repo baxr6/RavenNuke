@@ -80,7 +80,7 @@ class dhclass  {
  *	override = override for current content level (used for override maintenance)
  *	generated = exclude override for current content level (for override maintenance) 
  */
-	function getHEAD($mode='META', $name) {
+	function getHEAD($mode='META', $name = '') {
 		global $db, $prefix, $dhTitle, $dhDesc, $dhKeys, $seocatid, $seosubcatid, $sitename, $slogan;
 		$this->setModuleName($name);
 		$dhTitle = $dhDesc = $dhKeys = '';

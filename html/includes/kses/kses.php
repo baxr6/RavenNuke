@@ -318,16 +318,19 @@ $allowedentitynames = array(
  * @return string Filtered content with only allowed HTML elements
  */
 function kses($string, $allowed_html, $allowed_protocols = array()) {
-	if (empty($allowed_protocols))
-		$allowed_protocols = array('http', 'https', 'ftp', 'mailto', 'news', 'irc', 'gopher', 'nntp', 'feed', 'telnet', 'mms', 'rtsp', 'svn');
+    if (empty($allowed_protocols))
+        $allowed_protocols = array('http', 'https', 'ftp', 'mailto', 'news', 'irc', 'gopher', 'nntp', 'feed', 'telnet', 'mms', 'rtsp', 'svn');
 
-	$string = kses_no_null( $string, array( 'slash_zero' => 'keep' ) );
-	$string = kses_js_entities($string);
-	$string = kses_normalize_entities($string);
-	$string = kses_hook($string);
-	$allowed_html_fixed = kses_array_lc($allowed_html);
+    // Ensure $string is always a string
+    $string = (string) $string;
 
-	return kses_split($string, $allowed_html_fixed, $allowed_protocols);
+    $string = kses_no_null( $string, array( 'slash_zero' => 'keep' ) );
+    $string = kses_js_entities($string);
+    $string = kses_normalize_entities($string);
+    $string = kses_hook($string);
+    $allowed_html_fixed = kses_array_lc($allowed_html);
+
+    return kses_split($string, $allowed_html_fixed, $allowed_protocols);
 }
 
 
@@ -919,54 +922,53 @@ function kses_bad_protocol( $string, $allowed_protocols ) {
  * @param array  $options Set 'slash_zero' => 'keep' when '\0' is allowed. Default is 'remove'.
  * @return string Filtered content.
  */
-function kses_no_null( $string, $options = null ) {
-	if ( ! isset( $options['slash_zero'] ) ) {
-		$options = array( 'slash_zero' => 'remove' );
-	}
 
-	$string = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $string );
-	if ( 'remove' == $options['slash_zero'] ) {
-		$string = preg_replace( '/\\\\+0+/', '', $string );
-	}
+function kses_no_null(string $string = '', ?array $options = null): string {
+    if ($options === null) {
+        $options = ['slash_zero' => 'remove'];
+    }
 
-	return $string;
+    $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $string);
+
+    if ($options['slash_zero'] === 'remove') {
+        $string = preg_replace('/\\\\+0+/', '', $string);
+    }
+
+    return $string;
 }
 
 /**
  * Strips slashes from in front of quotes.
  *
- * This function changes the character sequence `\"` to just `"`. It leaves all other
- * slashes alone. The quoting from `preg_replace(//e)` requires this.
+ * This function changes the character sequence `\"` to just `"`.
  *
  * @param string $string String to strip slashes from.
  * @return string Fixed string with quoted slashes.
  */
-function kses_stripslashes( $string ) {
-	return preg_replace( '%\\\\"%', '"', $string );
+function kses_stripslashes(string $string): string {
+    return preg_replace('%\\\\"%', '"', $string) ?? $string;
 }
 
 /**
- * Converts the keys of an array to lowercase.
- *
- * @since 1.0.0
+ * Converts the keys of a two-dimensional array to lowercase.
  *
  * @param array $inarray Unfiltered array.
  * @return array Fixed array with all lowercase keys.
  */
-function kses_array_lc( $inarray ) {
-	$outarray = array();
+function kses_array_lc(array $inarray): array {
+    $outarray = [];
 
-	foreach ( (array) $inarray as $inkey => $inval ) {
-		$outkey              = strtolower( $inkey );
-		$outarray[ $outkey ] = array();
+    foreach ($inarray as $inkey => $inval) {
+        $outkey = strtolower($inkey);
+        $outarray[$outkey] = [];
 
-		foreach ( (array) $inval as $inkey2 => $inval2 ) {
-			$outkey2                         = strtolower( $inkey2 );
-			$outarray[ $outkey ][ $outkey2 ] = $inval2;
-		}
-	}
+        foreach ((array) $inval as $inkey2 => $inval2) {
+            $outkey2 = strtolower((string) $inkey2);
+            $outarray[$outkey][$outkey2] = $inval2;
+        }
+    }
 
-	return $outarray;
+    return $outarray;
 }
 
 

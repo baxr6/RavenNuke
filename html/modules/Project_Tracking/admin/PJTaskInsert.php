@@ -4,7 +4,7 @@
 /* NukeProject(tm)                                      */
 /* By: NukeScripts Network (webmaster@nukescripts.net)  */
 /* http://www.nukescripts.net                           */
-/* Copyright © 2000-2005 by NukeScripts Network         */
+/* Copyright ï¿½ 2000-2005 by NukeScripts Network         */
 /********************************************************/
 
 if(!defined('NSNPJ_ADMIN')) { die("Illegal Access Detected!!!"); }
@@ -24,7 +24,8 @@ $taskresult = $db->sql_query("SELECT `task_id` FROM `".$prefix."_nsnpj_tasks` WH
 list($task_id) = $db->sql_fetchrow($taskresult);
 if (!isset($member_ids)) $member_ids = array();
 if(implode("", $member_ids) > "") {
-  while(list($null, $member_id) = each($member_ids)) {
+  ////while(list($null, $member_id) = each($member_ids)) {
+  foreach($member_ids as $null => $member_id) {
     $numrows = $db->sql_numrows($db->sql_query("SELECT * FROM `".$prefix."_nsnpj_tasks_members` WHERE `task_id`='$task_id' AND `member_id`='$member_id'"));
     if($numrows == 0) {
       $db->sql_query("INSERT INTO `".$prefix."_nsnpj_tasks_members` VALUES ('$task_id', '$member_id', '".$pj_config['new_task_position']."')");        

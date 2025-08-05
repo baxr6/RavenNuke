@@ -49,7 +49,7 @@ if ($num == 1) {
 		 */
 		$usrURI = array('user_website', 'user_avatar');  // Don't override empty URI fields with blank
 		foreach($usrinfo as $key => $value) {
-			$value = trim($value);
+			$value = trim((string) $value);
 			if ($value == '' and !in_array($key, $usrURI)) $usrinfo[$key] = '&nbsp;';
 		}
 		/*

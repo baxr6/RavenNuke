@@ -568,7 +568,7 @@ function msnl_fFixURL($sURL='') {
 	$sImageURL = 'http://';
 	$sImageURL .= (isset($asURL['host'])) ? $asURL['host'] : $domain;
 	$sTmp = (isset($asURL['path'])) ? $asURL['path'] : '';
-	$sImageURL .= (isset($sTmp{0}) && $sTmp{0} != '/') ? '/' : '';
+	$sImageURL .= (isset($sTmp[0]) && $sTmp[0] != '/') ? '/' : '';
 	$sImageURL .= $sTmp;
 	return $sImageURL;
 }

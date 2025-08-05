@@ -233,21 +233,30 @@ if ( !function_exists('seoCheckCreateTable') )
   }
 }
 
-if ( !function_exists('seoCheckUpdateTable') )
-{
-  function seoCheckUpdateTable($getValueSQL = '', $newValue, $updateSQL = array()) {
-    global $db;
-    $existing = $db->sql_fetchrow($db->sql_query($getValueSQL));
-    if ($existing['value'] == $newValue) return true;
-    foreach ($updateSQL as $sql)
-    {
-      if(!$db->sql_query($sql)) 
-      {
-        return false; 
-      }
+if (!function_exists('seoCheckUpdateTable')) {
+    function seoCheckUpdateTable(string $getValueSQL = '', mixed $newValue, array $updateSQL = []) : bool {
+        global $db;
+
+        $result = $db->sql_query($getValueSQL);
+        $existing = $db->sql_fetchrow($result);
+
+        // Check if 'value' exists in result
+        if (!$existing || !array_key_exists('value', $existing)) {
+            return false; // or true, depending on logic preference
+        }
+
+        if ($existing['value'] == $newValue) {
+            return true;
+        }
+
+        foreach ($updateSQL as $sql) {
+            if (!$db->sql_query($sql)) {
+                return false;
+            }
+        }
+
+        return true;
     }
-    return true; 
-  }
 }
 
 if ( !function_exists('seoGetConfig') )

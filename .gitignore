@@ -19,3 +19,4 @@ html/rnconfig.php
 *.sublime-workspace
 nbproject
 Thumbs.db
+html/config.php

@@ -9,6 +9,835 @@
 
 if(!defined('NUKESENTINEL_ADMIN')) { header("Location: ../../../".$admin_file.".php"); }
 
+
+
+/********************************************************/
+/* NukeSentinel(tm) Modern Functions Library           */
+/* By: NukeScripts(tm) (http://www.nukescripts.net)     */
+/* Copyright © 2000-2008 by NukeScripts(tm)             */
+/* Modernized for PHP 8.3+ with backwards compatibility */
+/********************************************************/
+
+// Prevent direct access
+if (!defined('NUKESENTINEL_ADMIN') && !defined('NUKESENTINEL_FUNCTIONS')) {
+    die("You can't access this file directly...");
+}
+
+// Define version constant
+if (!defined('NUKESENTINEL_FUNCTIONS_VERSION')) {
+    define('NUKESENTINEL_FUNCTIONS_VERSION', '3.0.0');
+}
+
+/**
+ * HTML output helper with type safety for PHP 8.3+
+ * Handles all HTML escaping and type conversion needs
+ */
+class HtmlHelper
+{
+    /**
+     * Escape string for HTML output with type safety
+     */
+    public static function escape(mixed $value): string
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+    
+    /**
+     * Escape string for HTML attributes with enhanced flags
+     */
+    public static function escapeAttribute(mixed $value): string
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+    
+    /**
+     * Safe integer conversion
+     */
+    public static function toInt(mixed $value): int
+    {
+        if (is_numeric($value)) {
+            return (int)$value;
+        }
+        return 0;
+    }
+    
+    /**
+     * Safe string conversion
+     */
+    public static function toString(mixed $value): string
+    {
+        return (string)($value ?? '');
+    }
+
+    /**
+     * Safe float conversion
+     */
+    public static function toFloat(mixed $value): float
+    {
+        if (is_numeric($value)) {
+            return (float)$value;
+        }
+        return 0.0;
+    }
+
+    /**
+     * Generate HTML select options
+     */
+    public static function selectOptions(array $options, mixed $selected = null): string
+    {
+        $html = '';
+        $selectedValue = self::toString($selected);
+        
+        foreach ($options as $value => $text) {
+            $isSelected = (self::toString($value) === $selectedValue) ? ' selected="selected"' : '';
+            $html .= '<option value="' . self::escape($value) . '"' . $isSelected . '>';
+            $html .= self::escape($text) . '</option>' . "\n";
+        }
+        
+        return $html;
+    }
+}
+
+/**
+ * Modern database wrapper with backwards compatibility
+ * Supports both MySQLi prepared statements and legacy PHP-Nuke methods
+ */
+class DatabaseWrapper
+{
+    private $db;
+    private string $prefix;
+    private bool $useModernMethods;
+
+    public function __construct($database, string $prefix)
+    {
+        $this->db = $database;
+        $this->prefix = $prefix;
+        $this->useModernMethods = ($this->db instanceof mysqli && method_exists($this->db, 'prepare'));
+    }
+
+    /**
+     * Execute query with parameters and return all results
+     */
+    public function prepareAndExecute(string $query, array $params = [], string $types = ''): array
+    {
+        try {
+            if ($this->useModernMethods) {
+                return $this->executeModernQuery($query, $params, $types);
+            }
+            
+            return $this->executeLegacyQuery($query, $params);
+            
+        } catch (Exception $e) {
+            error_log("Database error in prepareAndExecute: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Execute query and return single row
+     */
+    public function prepareSingle(string $query, array $params = [], string $types = ''): array
+    {
+        $result = $this->prepareAndExecute($query, $params, $types);
+        return $result[0] ?? [];
+    }
+
+    /**
+     * Execute query and return number of affected rows
+     */
+    public function executeUpdate(string $query, array $params = [], string $types = ''): int
+    {
+        try {
+            if ($this->useModernMethods) {
+                $stmt = $this->db->prepare($query);
+                if (!$stmt) {
+                    throw new RuntimeException("Prepare failed: " . $this->db->error);
+                }
+
+                if (!empty($params)) {
+                    if (empty($types)) {
+                        $types = $this->detectTypes($params);
+                    }
+                    $stmt->bind_param($types, ...$params);
+                }
+
+                $stmt->execute();
+                $affectedRows = $stmt->affected_rows;
+                $stmt->close();
+                return $affectedRows;
+            }
+
+            // Legacy method
+            $escapedQuery = $this->buildLegacyQuery($query, $params);
+            $result = $this->db->sql_query($escapedQuery);
+            return $this->db->sql_affectedrows() ?? 0;
+
+        } catch (Exception $e) {
+            error_log("Database error in executeUpdate: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Delete records with prepared statement
+     */
+    public function deleteRecord(string $table, string $whereField, mixed $whereValue): bool
+    {
+        $query = "DELETE FROM `{$this->prefix}_{$table}` WHERE `{$whereField}` = ?";
+        return $this->executeUpdate($query, [$whereValue]) > 0;
+    }
+
+    /**
+     * Optimize table
+     */
+    public function optimizeTable(string $table): bool
+    {
+        try {
+            $query = "OPTIMIZE TABLE `{$this->prefix}_{$table}`";
+            
+            if ($this->useModernMethods) {
+                return (bool)$this->db->query($query);
+            }
+            
+            return (bool)$this->db->sql_query($query);
+            
+        } catch (Exception $e) {
+            error_log("Database error in optimizeTable: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get blocked IP data
+     */
+    public function getBlockedIp(string $ipAddr): array
+    {
+        $query = "SELECT * FROM `{$this->prefix}_nsnst_blocked_ips` WHERE `ip_addr` = ? LIMIT 1";
+        return $this->prepareSingle($query, [$ipAddr], 's');
+    }
+
+    /**
+     * Get blocked IP range data
+     */
+    public function getBlockedRange(int $ipLo, int $ipHi): array
+    {
+        $query = "SELECT * FROM `{$this->prefix}_nsnst_blocked_ranges` WHERE `ip_lo` = ? AND `ip_hi` = ? LIMIT 1";
+        return $this->prepareSingle($query, [$ipLo, $ipHi], 'ii');
+    }
+
+    /**
+     * Get countries list
+     */
+    public function getCountries(): array
+    {
+        $query = "SELECT * FROM `{$this->prefix}_nsnst_countries` ORDER BY `c2c`";
+        return $this->prepareAndExecute($query);
+    }
+
+    /**
+     * Get blockers list
+     */
+    public function getBlockers(): array
+    {
+        $query = "SELECT * FROM `{$this->prefix}_nsnst_blockers` ORDER BY `block_name`";
+        return $this->prepareAndExecute($query);
+    }
+
+    /**
+     * Execute modern MySQLi prepared statement
+     */
+    private function executeModernQuery(string $query, array $params, string $types): array
+    {
+        $stmt = $this->db->prepare($query);
+        if (!$stmt) {
+            throw new RuntimeException("Prepare failed: " . $this->db->error);
+        }
+
+        if (!empty($params)) {
+            if (empty($types)) {
+                $types = $this->detectTypes($params);
+            }
+            $stmt->bind_param($types, ...$params);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $data = [];
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $data[] = $row;
+            }
+        }
+        
+        $stmt->close();
+        return $data;
+    }
+
+    /**
+     * Execute legacy query with parameter escaping
+     */
+    private function executeLegacyQuery(string $query, array $params): array
+    {
+        $escapedQuery = $this->buildLegacyQuery($query, $params);
+        $result = $this->db->sql_query($escapedQuery);
+        
+        $data = [];
+        if ($result) {
+            while ($row = $this->db->sql_fetchrow($result)) {
+                $data[] = $row;
+            }
+        }
+        
+        return $data;
+    }
+
+    /**
+     * Build legacy query with escaped parameters
+     */
+    private function buildLegacyQuery(string $query, array $params): string
+    {
+        $escapedParams = array_map([$this, 'escapeParameter'], $params);
+        
+        $finalQuery = $query;
+        foreach ($escapedParams as $param) {
+            $finalQuery = preg_replace('/\?/', $param, $finalQuery, 1);
+        }
+        
+        return $finalQuery;
+    }
+
+    /**
+     * Escape parameter for legacy queries
+     */
+    private function escapeParameter(mixed $param): string
+    {
+        if ($param === null) {
+            return 'NULL';
+        }
+        
+        if (is_bool($param)) {
+            return $param ? '1' : '0';
+        }
+        
+        if (is_numeric($param)) {
+            return (string)$param;
+        }
+        
+        $escaped = $this->escapeString((string)$param);
+        return "'{$escaped}'";
+    }
+
+    /**
+     * Auto-detect parameter types for prepared statements
+     */
+    private function detectTypes(array $params): string
+    {
+        $types = '';
+        foreach ($params as $param) {
+            if (is_int($param)) {
+                $types .= 'i';
+            } elseif (is_float($param)) {
+                $types .= 'd';
+            } elseif (is_bool($param)) {
+                $types .= 'i';
+            } else {
+                $types .= 's';
+            }
+        }
+        return $types;
+    }
+
+    /**
+     * Escape string for database
+     */
+    private function escapeString(string $string): string
+    {
+        if ($this->db instanceof mysqli) {
+            return $this->db->real_escape_string($string);
+        }
+        return addslashes($string);
+    }
+}
+
+/**
+ * Enhanced input validator with PHP 8.3+ features and security
+ */
+class InputValidator
+{
+    /**
+     * Sanitize string input with default fallback
+     */
+    public static function sanitizeString(mixed $input, string $default = ''): string
+    {
+        if ($input === null) {
+            return $default;
+        }
+        
+        $cleaned = trim((string)$input);
+        
+        // Use filter_var if available for enhanced sanitization
+        if (function_exists('filter_var')) {
+            $filtered = filter_var($cleaned, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            return $filtered !== false ? $filtered : $default;
+        }
+        
+        return htmlspecialchars($cleaned, ENT_QUOTES | ENT_HTML5, 'UTF-8') ?: $default;
+    }
+
+    /**
+     * Validate and convert to integer
+     */
+    public static function validateInt(mixed $input, int $default = 0, int $min = PHP_INT_MIN, int $max = PHP_INT_MAX): int
+    {
+        if (is_numeric($input)) {
+            $value = (int)$input;
+            return max($min, min($max, $value));
+        }
+        
+        if (function_exists('filter_var')) {
+            $filtered = filter_var($input, FILTER_VALIDATE_INT, [
+                'options' => ['min_range' => $min, 'max_range' => $max]
+            ]);
+            return $filtered !== false ? $filtered : $default;
+        }
+        
+        return $default;
+    }
+
+    /**
+     * Validate direction parameter (ASC/DESC)
+     */
+    public static function validateDirection(mixed $direction): string
+    {
+        $clean = strtoupper(trim((string)($direction ?? '')));
+        return in_array($clean, ['ASC', 'DESC'], true) ? $clean : 'ASC';
+    }
+
+    /**
+     * Sanitize database column name
+     */
+    public static function sanitizeColumn(mixed $column): string
+    {
+        if (empty($column)) {
+            return '';
+        }
+        return preg_replace('/[^a-zA-Z0-9_]/', '', (string)$column);
+    }
+
+    /**
+     * Sanitize IP address (allow wildcards)
+     */
+    public static function sanitizeIp(mixed $input): string
+    {
+        $ip = self::sanitizeString($input);
+        
+        // Allow IP addresses with wildcards and dots
+        if (preg_match('/^[0-9.*]+$/', $ip)) {
+            return $ip;
+        }
+        
+        return '';
+    }
+
+    /**
+     * Validate email address
+     */
+    public static function validateEmail(mixed $email): string
+    {
+        $email = self::sanitizeString($email);
+        
+        if (function_exists('filter_var')) {
+            $filtered = filter_var($email, FILTER_VALIDATE_EMAIL);
+            return $filtered !== false ? $filtered : '';
+        }
+        
+        // Basic email validation fallback
+        if (preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $email)) {
+            return $email;
+        }
+        
+        return '';
+    }
+
+    /**
+     * Validate URL
+     */
+    public static function validateUrl(mixed $url): string
+    {
+        $url = self::sanitizeString($url);
+        
+        if (function_exists('filter_var')) {
+            $filtered = filter_var($url, FILTER_VALIDATE_URL);
+            return $filtered !== false ? $filtered : '';
+        }
+        
+        return $url;
+    }
+}
+
+/**
+ * IP address handler with modern PHP features
+ */
+class IpAddressHandler
+{
+    /**
+     * Convert long IP to array of octets
+     */
+    public static function longToIpArray(mixed $longIp): array
+    {
+        $ip = long2ip(HtmlHelper::toInt($longIp));
+        if ($ip === false) {
+            return [0, 0, 0, 0];
+        }
+        
+        $parts = explode('.', $ip);
+        return array_pad($parts, 4, 0);
+    }
+
+    /**
+     * Parse IP string to array
+     */
+    public static function parseIp(string $ip): array
+    {
+        $parts = explode(".", $ip);
+        return array_pad($parts, 4, '');
+    }
+
+    /**
+     * Validate IP octet (0-255 or wildcard)
+     */
+    public static function validateIpOctet(mixed $octet): string
+    {
+        $value = HtmlHelper::toString($octet);
+        
+        // Allow wildcards and empty values
+        if ($value === '*' || $value === '') {
+            return $value;
+        }
+        
+        // Validate numeric range
+        if (is_numeric($value)) {
+            $num = (int)$value;
+            return ($num >= 0 && $num <= 255) ? (string)$num : '';
+        }
+        
+        return '';
+    }
+
+    /**
+     * Convert IP array back to string
+     */
+    public static function arrayToIp(array $ipArray): string
+    {
+        $cleaned = array_map([self::class, 'validateIpOctet'], $ipArray);
+        return implode('.', array_slice($cleaned, 0, 4));
+    }
+
+    /**
+     * Validate complete IP address or pattern
+     */
+    public static function validateIpPattern(string $ip): bool
+    {
+        // Allow individual IP addresses
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+            return true;
+        }
+
+        // Allow partial IP patterns (e.g., "192.168.1.*" or "10.0")
+        $parts = explode('.', $ip);
+        if (count($parts) <= 4) {
+            foreach ($parts as $part) {
+                if ($part !== '*' && $part !== '') {
+                    if (!is_numeric($part) || (int)$part < 0 || (int)$part > 255) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+}
+
+/**
+ * .htaccess file manager with enhanced security
+ */
+class HtaccessManager
+{
+    private string $htaccessPath;
+
+    public function __construct(string $path)
+    {
+        $this->htaccessPath = $path;
+    }
+
+    /**
+     * Remove IP from .htaccess file
+     */
+    public function removeIpFromHtaccess(string $ip): bool
+    {
+        if (!$this->validatePath()) {
+            return false;
+        }
+
+        try {
+            $cleanIp = $this->cleanIpFormat($ip);
+            
+            if (!IpAddressHandler::validateIpPattern($cleanIp)) {
+                error_log("Invalid IP pattern provided: " . $ip);
+                return false;
+            }
+
+            $content = file_get_contents($this->htaccessPath);
+            if ($content === false) {
+                throw new RuntimeException("Failed to read htaccess file");
+            }
+
+            $updatedContent = $this->removeDenyDirectives($content, $cleanIp);
+            return $this->atomicFileWrite($this->htaccessPath, $updatedContent);
+
+        } catch (Exception $e) {
+            error_log("Htaccess update error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Add IP to .htaccess file
+     */
+    public function addIpToHtaccess(string $ip): bool
+    {
+        if (!$this->validatePath()) {
+            return false;
+        }
+
+        try {
+            $cleanIp = $this->cleanIpFormat($ip);
+            
+            if (!IpAddressHandler::validateIpPattern($cleanIp)) {
+                error_log("Invalid IP pattern provided: " . $ip);
+                return false;
+            }
+
+            $content = file_get_contents($this->htaccessPath);
+            if ($content === false) {
+                throw new RuntimeException("Failed to read htaccess file");
+            }
+
+            $denyDirective = "deny from " . $cleanIp . "\n";
+            
+            // Check if already exists
+            if (strpos($content, $denyDirective) === false) {
+                $content .= $denyDirective;
+                return $this->atomicFileWrite($this->htaccessPath, $content);
+            }
+
+            return true; // Already exists
+
+        } catch (Exception $e) {
+            error_log("Htaccess add error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Validate htaccess path
+     */
+    private function validatePath(): bool
+    {
+        if (empty($this->htaccessPath) || !file_exists($this->htaccessPath)) {
+            error_log("Htaccess file not found: " . $this->htaccessPath);
+            return false;
+        }
+
+        if (!is_writable($this->htaccessPath)) {
+            error_log("Htaccess file not writable: " . $this->htaccessPath);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Clean IP format (remove trailing .* patterns)
+     */
+    private function cleanIpFormat(string $ip): string
+    {
+        $cleanIp = $ip;
+        
+        // Remove up to 3 trailing .* patterns (as per original logic)
+        for ($i = 1; $i <= 3; $i++) {
+            if (str_ends_with($cleanIp, ".*")) {
+                $cleanIp = substr($cleanIp, 0, -2);
+            }
+        }
+
+        return $cleanIp;
+    }
+
+    /**
+     * Remove deny directives from content
+     */
+    private function removeDenyDirectives(string $content, string $ip): string
+    {
+        $denyPattern = "deny from " . $ip . "\n";
+        $updatedContent = str_replace($denyPattern, "", $content);
+
+        // Also try to remove without newline (in case it's at the end)
+        $denyPatternNoNewline = "deny from " . $ip;
+        $updatedContent = str_replace($denyPatternNoNewline, "", $updatedContent);
+
+        return $updatedContent;
+    }
+
+    /**
+     * Atomic file write operation
+     */
+    private function atomicFileWrite(string $filename, string $content): bool
+    {
+        $tempFile = $filename . '.tmp.' . uniqid();
+        
+        try {
+            if (file_put_contents($tempFile, $content, LOCK_EX) === false) {
+                throw new RuntimeException("Failed to write temporary file");
+            }
+
+            if (!rename($tempFile, $filename)) {
+                throw new RuntimeException("Failed to rename temporary file");
+            }
+
+            return true;
+
+        } catch (Exception $e) {
+            if (file_exists($tempFile)) {
+                @unlink($tempFile);
+            }
+            throw $e;
+        }
+    }
+}
+
+/**
+ * Query string decoder with security
+ */
+class QueryStringProcessor
+{
+    /**
+     * Decode and clean base64 encoded query string
+     */
+    public static function decodeAndClean(mixed $queryString): string
+    {
+        if (empty($queryString)) {
+            return '';
+        }
+        
+        try {
+            // Decode base64
+            $decoded = base64_decode((string)$queryString, true);
+            if ($decoded === false) {
+                return 'Invalid base64 data';
+            }
+            
+            // HTML entity decode
+            $decoded = html_entity_decode($decoded, ENT_QUOTES, 'UTF-8');
+            
+            // Clean up common encoded characters
+            $decoded = str_replace("%20", " ", $decoded);
+            $decoded = str_replace("/**/", "/* */", $decoded);
+            
+            // Escape for safe HTML display
+            return htmlspecialchars($decoded, ENT_QUOTES, 'UTF-8');
+            
+        } catch (Exception $e) {
+            error_log("Error decoding query string: " . $e->getMessage());
+            return 'Error decoding query string';
+        }
+    }
+
+    /**
+     * Safely encode query string for storage
+     */
+    public static function encodeForStorage(string $queryString): string
+    {
+        return base64_encode($queryString);
+    }
+}
+
+/**
+ * Utility functions for common operations
+ */
+class NukeSentinelUtils
+{
+    /**
+     * Build redirect URL with parameters
+     */
+    public static function buildRedirectUrl(string $baseFile, array $params = []): string
+    {
+        $queryString = http_build_query(array_filter($params, function($value) {
+            return $value !== '' && $value !== 0 && $value !== null;
+        }));
+
+        $url = $baseFile . ".php";
+        if (!empty($queryString)) {
+            $url .= "?" . $queryString;
+        }
+
+        return $url;
+    }
+
+    /**
+     * Calculate expiration in days
+     */
+    public static function calculateExpirationDays(mixed $expirationTimestamp): int
+    {
+        if (empty($expirationTimestamp) || !is_numeric($expirationTimestamp)) {
+            return 0;
+        }
+
+        $days = round(((int)$expirationTimestamp - time()) / 86400);
+        return max(0, $days);
+    }
+
+    /**
+     * Format timestamp to readable date
+     */
+    public static function formatDate(mixed $timestamp, string $format = "Y-m-d H:i:s"): string
+    {
+        if (empty($timestamp)) {
+            return date($format);
+        }
+
+        if (is_numeric($timestamp)) {
+            return date($format, (int)$timestamp);
+        }
+
+        return (string)$timestamp;
+    }
+
+    /**
+     * Generate expiration options for select dropdown
+     */
+    public static function generateExpirationOptions(int $currentExpiration = 0): array
+    {
+        $options = [0 => _AB_PERMENANT ?? 'Permanent'];
+        
+        for ($i = 1; $i <= 365; $i++) {
+            $expireDate = date("Y-m-d", time() + ($i * 86400));
+            $options[$i] = $i . ' (' . $expireDate . ')';
+        }
+
+        return $options;
+    }
+}
+
+// Mark functions as loaded
+if (!defined('NUKESENTINEL_FUNCTIONS')) {
+    define('NUKESENTINEL_FUNCTIONS', true);
+}
+
+
 function abget_country($tempip){
   global $prefix, $db;
   $tempip = str_replace(".*", ".0", $tempip);

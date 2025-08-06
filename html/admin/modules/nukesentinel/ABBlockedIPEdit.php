@@ -3,93 +3,314 @@
 /********************************************************/
 /* NukeSentinel(tm)                                     */
 /* By: NukeScripts(tm) (http://www.nukescripts.net)     */
-/* Copyright © 2000-2008 by NukeScripts(tm)             */
+/* Copyright Â© 2000-2008 by NukeScripts(tm)             */
 /* See CREDITS.txt for ALL contributors                 */
+/* Updated to use centralized functions library         */
 /********************************************************/
 
-if(!defined('NUKESENTINEL_ADMIN')) { header("Location: ../../../".$admin_file.".php"); }
-$pagetitle = _AB_NUKESENTINEL.": "._AB_EDITIP;
+// Security check with early exit
+if (!defined('NUKESENTINEL_ADMIN')) {
+    header("Location: ../../../" . ($admin_file ?? 'admin') . ".php");
+    exit;
+}
+
+// Include the centralized functions library
+require_once(dirname(__FILE__) . '/functions.php');
+
+// Initialize components using centralized classes
+$dbWrapper = new DatabaseWrapper($db, $prefix);
+
+// Validate and sanitize inputs using centralized validator
+$xIPs = InputValidator::sanitizeIp($xIPs ?? '');
+$sip = InputValidator::sanitizeString($sip ?? '');
+$xop = InputValidator::sanitizeString($xop ?? '');
+$min = InputValidator::validateInt($min ?? 0);
+$column = InputValidator::sanitizeColumn($column ?? '');
+$direction = InputValidator::validateDirection($direction ?? '');
+$admin_file = InputValidator::sanitizeString($admin_file ?? 'admin');
+$bgcolor2 = $bgcolor2 ?? '#EEEEEE';
+
+// Validate required IP parameter
+if (empty($xIPs)) {
+    echo '<div style="color: red; font-weight: bold; text-align: center; padding: 20px;">';
+    echo 'Error: No IP address specified for editing.';
+    echo '</div>';
+    include("footer.php");
+    exit;
+}
+
+// Get IP data from database using centralized wrapper
+$getIPs = $dbWrapper->getBlockedIp($xIPs);
+if (empty($getIPs)) {
+    echo '<div style="color: red; font-weight: bold; text-align: center; padding: 20px;">';
+    echo 'Error: IP address not found in database.';
+    echo '</div>';
+    include("footer.php");
+    exit;
+}
+
+// Process date and expiration using centralized utilities
+$currentDate = NukeSentinelUtils::formatDate($getIPs['date'] ?? null);
+$expiresInDays = NukeSentinelUtils::calculateExpirationDays($getIPs['expires'] ?? 0);
+
+// Parse IP address using centralized handler
+$tipArray = IpAddressHandler::parseIp($xIPs);
+
+// Set up page
+$pagetitle = (_AB_NUKESENTINEL ?? 'NukeSentinel') . ": " . (_AB_EDITIP ?? 'Edit IP');
 include("header.php");
+
 OpenTable();
-OpenMenu(_AB_EDITIP);
+OpenMenu(_AB_EDITIP ?? 'Edit IP');
 mastermenu();
 CarryMenu();
 blockedipmenu();
 CloseMenu();
 CloseTable();
-echo '<br />'."\n";
+echo '<br />' . "\n";
 OpenTable();
-$getIPs = $db->sql_fetchrow($db->sql_query("SELECT * FROM `".$prefix."_nsnst_blocked_ips` WHERE `ip_addr`='$xIPs' LIMIT 0,1"));
-$getIPs['date'] = date("Y-m-d H:i:s",$getIPs['date']);
-$getIPs['expires'] = round(($getIPs['expires'] - time()) / 86400);
-if (!isset($sip)) $sip = ''; // 0001801: Compliance issues reported by vanquish: NukeSentinel 
-echo '<form action="'.$admin_file.'.php" method="post">'."\n";
-echo '<input type="hidden" name="op" value="ABBlockedIPEditSave" />'."\n";
-echo '<input type="hidden" name="xop" value="'.$xop.'" />'."\n";
-echo '<input type="hidden" name="sip" value="'.$sip.'" />'."\n";
-echo '<input type="hidden" name="old_xIPs" value="'.$xIPs.'" />'."\n";
-echo '<input type="hidden" name="min" value="'.$min.'" />'."\n";
-echo '<input type="hidden" name="column" value="'.$column.'" />'."\n";
-echo '<input type="hidden" name="direction" value="'.$direction.'" />'."\n";
-echo '<table summary="" align="center" border="0" cellpadding="2" cellspacing="2">'."\n";
-echo '<tr><td align="center" colspan="2">'._AB_EDITIPS.'</td></tr>'."\n";
-$tip = explode(".", $xIPs);
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_IPBLOCKED.':</strong></td>'."\n";
-echo '<td><input type="text" name="xip[0]" value="'.$tip[0].'" size="4" maxlength="3" style="text-align: center;" />'."\n";
-echo '. <input type="text" name="xip[1]" value="'.$tip[1].'" size="4" maxlength="3" style="text-align: center;" />'."\n";
-echo '. <input type="text" name="xip[2]" value="'.$tip[2].'" size="4" maxlength="3" style="text-align: center;" />'."\n";
-echo '. <input type="text" name="xip[3]" value="'.$tip[3].'" size="4" maxlength="3" style="text-align: center;" /></td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_USERID.':</strong></td><td><input type="text" name="xuser_id" size="10" value="'.$getIPs['user_id'].'" /></td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_USERNAME.':</strong></td><td><input type="text" name="xusername" size="20" value="'.$getIPs['username'].'" /></td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_AGENT.':</strong></td><td><input type="text" name="xuser_agent" size="40" value="'.$getIPs['user_agent'].'" /></td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_BLOCKEDON.':</strong></td><td><input type="text" name="xdatetime" size="30" value="'.$getIPs['date'].'" /></td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'" valign="top"><strong>'._AB_EXPIRESIN.':</strong></td><td><select name="xexpires">'."\n";
-echo '<option value="0"';
-if($getIPs['expires']==0) { echo ' selected="selected"'; }
-echo '>'._AB_PERMENANT.'</option>'."\n";
-$i=1;
-while($i<=365) {
-  echo '<option value="'.$i.'"';
-  if($getIPs['expires']==$i) { echo ' selected="selected"'; }
-  $expiredate = date("Y-m-d", time() + ($i * 86400));
-  echo '>'.$i.' ('.$expiredate.')</option>'."\n";
-  $i++;
-}
-echo '</select><br />'."\n";
-echo _AB_EXPIRESINS.'</td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_COUNTRY.':</strong></td>'."\n";
-echo '<td><select name="xc2c">'."\n";
-echo '<option value="00">'._AB_SELECTCOUNTRY.'</option>'."\n";
-$result = $db->sql_query("SELECT * FROM `".$prefix."_nsnst_countries` ORDER BY `c2c`");
-while($countryrow = $db->sql_fetchrow($result)) {
-  echo '<option value="'.$countryrow['c2c'].'"';
-  if($countryrow['c2c'] == $getIPs['c2c']) { echo ' selected="selected"'; }
-  echo '>'.strtoupper($countryrow['c2c']).' - '.$countryrow['country'].'</option>'."\n";
-}
-echo '</select></td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'" valign="top"><strong>'._AB_NOTES.':</strong></td><td><textarea name="xnotes" rows="10" cols="60">'.$getIPs['notes'].'</textarea></td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_REASON.':</strong></td><td><select name="xreason">'."\n";
-$result = $db->sql_query("SELECT * FROM `".$prefix."_nsnst_blockers` ORDER BY `block_name`");
-while($blockerrow = $db->sql_fetchrow($result)) {
-  echo '<option value="'.$blockerrow['blocker'].'"';
-  if($getIPs['reason']==$blockerrow['blocker']) { echo ' selected="selected"'; }
-  echo '>'.$blockerrow['reason'].'</option>'."\n";
-}
-echo '</select></td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'" colspan="2">&nbsp;</td></tr>'."\n";
-$getIPs['query_string'] = htmlentities(base64_decode($getIPs['query_string']));
-$getIPs['query_string'] = str_replace("%20", " ", $getIPs['query_string']);
-$getIPs['query_string'] = str_replace("/**/", "/* */", $getIPs['query_string']);
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_QUERY.':</strong></td><td>'.info_img("<strong>"._AB_QUERY.":</strong> ".$getIPs['query_string']).'</td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_X_FORWARDED.':</strong></td><td>'.$getIPs['x_forward_for'].'</td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_CLIENT_IP.':</strong></td><td>'.$getIPs['client_ip'].'</td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_REMOTE_ADDR.':</strong></td><td>'.$getIPs['remote_addr'].'</td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_REMOTE_PORT.':</strong></td><td>'.$getIPs['remote_port'].'</td></tr>'."\n";
-echo '<tr><td bgcolor="'.$bgcolor2.'"><strong>'._AB_REQUEST_METHOD.':</strong></td><td>'.$getIPs['request_method'].'</td></tr>'."\n";
-echo '<tr><td align="center" colspan="2"><input type="submit" value="'._AB_SAVECHANGES.'" /></td></tr>'."\n";
-echo '</table>'."\n";
-echo '</form>'."\n";
+
+?>
+
+<form action="<?= HtmlHelper::escape($admin_file) ?>.php" method="post">
+    <!-- Hidden form fields using centralized helper -->
+    <?php 
+    $hiddenFields = [
+        'op' => 'ABBlockedIPEditSave',
+        'xop' => $xop,
+        'sip' => $sip,
+        'old_xIPs' => $xIPs,
+        'min' => $min,
+        'column' => $column,
+        'direction' => $direction
+    ];
+    
+    foreach ($hiddenFields as $name => $value): ?>
+        <input type="hidden" name="<?= HtmlHelper::escape($name) ?>" 
+               value="<?= HtmlHelper::escape($value) ?>" />
+    <?php endforeach; ?>
+    
+    <table summary="Edit IP Address Form" align="center" border="0" cellpadding="2" cellspacing="2">
+        <tr>
+            <td align="center" colspan="2">
+                <strong><?= HtmlHelper::escape(_AB_EDITIPS ?? 'Edit IP Address') ?></strong>
+            </td>
+        </tr>
+        
+        <!-- IP Address Input using centralized handler -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_IPBLOCKED ?? 'IP Blocked') ?>:</strong>
+            </td>
+            <td>
+                <?php for ($i = 0; $i < 4; $i++): ?>
+                    <?= $i > 0 ? '. ' : '' ?>
+                    <input type="text" 
+                           name="xip[<?= $i ?>]" 
+                           value="<?= HtmlHelper::escape(IpAddressHandler::validateIpOctet($tipArray[$i] ?? '')) ?>" 
+                           size="4" 
+                           maxlength="3" 
+                           style="text-align: center;" 
+                           title="Enter IP octet (0-255) or * for wildcard" />
+                <?php endfor; ?>
+            </td>
+        </tr>
+        
+        <!-- User ID -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_USERID ?? 'User ID') ?>:</strong>
+            </td>
+            <td>
+                <input type="text" 
+                       name="xuser_id" 
+                       size="10" 
+                       value="<?= HtmlHelper::escape($getIPs['user_id'] ?? '') ?>" />
+            </td>
+        </tr>
+        
+        <!-- Username -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_USERNAME ?? 'Username') ?>:</strong>
+            </td>
+            <td>
+                <input type="text" 
+                       name="xusername" 
+                       size="20" 
+                       value="<?= HtmlHelper::escape($getIPs['username'] ?? '') ?>" />
+            </td>
+        </tr>
+        
+        <!-- User Agent -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_AGENT ?? 'User Agent') ?>:</strong>
+            </td>
+            <td>
+                <input type="text" 
+                       name="xuser_agent" 
+                       size="40" 
+                       value="<?= HtmlHelper::escape($getIPs['user_agent'] ?? '') ?>" />
+            </td>
+        </tr>
+        
+        <!-- Blocked Date/Time using centralized utility -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_BLOCKEDON ?? 'Blocked On') ?>:</strong>
+            </td>
+            <td>
+                <input type="text" 
+                       name="xdatetime" 
+                       size="30" 
+                       value="<?= HtmlHelper::escape($currentDate) ?>"
+                       placeholder="YYYY-MM-DD HH:MM:SS" />
+            </td>
+        </tr>
+        
+        <!-- Expiration using centralized utility -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>" valign="top">
+                <strong><?= HtmlHelper::escape(_AB_EXPIRESIN ?? 'Expires In') ?>:</strong>
+            </td>
+            <td>
+                <select name="xexpires">
+                    <?php 
+                    $expirationOptions = NukeSentinelUtils::generateExpirationOptions();
+                    echo HtmlHelper::selectOptions($expirationOptions, $expiresInDays);
+                    ?>
+                </select><br />
+                <small><?= HtmlHelper::escape(_AB_EXPIRESINS ?? 'Days until expiration') ?></small>
+            </td>
+        </tr>
+        
+        <!-- Country Selection using centralized database wrapper -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_COUNTRY ?? 'Country') ?>:</strong>
+            </td>
+            <td>
+                <select name="xc2c">
+                    <option value="00"><?= HtmlHelper::escape(_AB_SELECTCOUNTRY ?? 'Select Country') ?></option>
+                    <?php 
+                    $currentCountry = HtmlHelper::toString($getIPs['c2c'] ?? '');
+                    $countries = $dbWrapper->getCountries();
+                    
+                    $countryOptions = [];
+                    foreach ($countries as $countryrow) {
+                        $c2c = HtmlHelper::toString($countryrow['c2c'] ?? '');
+                        $countryOptions[$c2c] = strtoupper($c2c) . ' - ' . ($countryrow['country'] ?? 'Unknown');
+                    }
+                    echo HtmlHelper::selectOptions($countryOptions, $currentCountry);
+                    ?>
+                </select>
+            </td>
+        </tr>
+        
+        <!-- Notes -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>" valign="top">
+                <strong><?= HtmlHelper::escape(_AB_NOTES ?? 'Notes') ?>:</strong>
+            </td>
+            <td>
+                <textarea name="xnotes" rows="10" cols="60" placeholder="Enter notes about this IP block..."><?= HtmlHelper::escape($getIPs['notes'] ?? '') ?></textarea>
+            </td>
+        </tr>
+        
+        <!-- Reason/Blocker using centralized database wrapper -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_REASON ?? 'Reason') ?>:</strong>
+            </td>
+            <td>
+                <select name="xreason">
+                    <?php 
+                    $currentReason = HtmlHelper::toString($getIPs['reason'] ?? '');
+                    $blockers = $dbWrapper->getBlockers();
+                    
+                    $blockerOptions = [];
+                    foreach ($blockers as $blockerrow) {
+                        $blocker = HtmlHelper::toString($blockerrow['blocker'] ?? '');
+                        $blockerOptions[$blocker] = $blockerrow['reason'] ?? $blocker ?: 'Unknown';
+                    }
+                    echo HtmlHelper::selectOptions($blockerOptions, $currentReason);
+                    ?>
+                </select>
+            </td>
+        </tr>
+        
+        <!-- Separator -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>" colspan="2">&nbsp;</td>
+        </tr>
+        
+        <!-- Query String using centralized processor -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_QUERY ?? 'Query') ?>:</strong>
+            </td>
+            <td>
+                <?php 
+                $queryString = QueryStringProcessor::decodeAndClean($getIPs['query_string'] ?? '');
+                if (function_exists('info_img')):
+                ?>
+                    <?= info_img("<strong>" . (_AB_QUERY ?? 'Query') . ":</strong> " . $queryString) ?>
+                <?php else: ?>
+                    <span title="<?= HtmlHelper::escape($queryString) ?>" style="cursor: help;">
+                        <?= HtmlHelper::escape(substr($queryString, 0, 50) . (strlen($queryString) > 50 ? '...' : '')) ?>
+                    </span>
+                <?php endif; ?>
+            </td>
+        </tr>
+        
+        <!-- Read-only fields using centralized helper -->
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_X_FORWARDED ?? 'X-Forwarded-For') ?>:</strong>
+            </td>
+            <td><?= HtmlHelper::escape($getIPs['x_forward_for'] ?? '') ?></td>
+        </tr>
+        
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_CLIENT_IP ?? 'Client IP') ?>:</strong>
+            </td>
+            <td><?= HtmlHelper::escape($getIPs['client_ip'] ?? '') ?></td>
+        </tr>
+        
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_REMOTE_ADDR ?? 'Remote Address') ?>:</strong>
+            </td>
+            <td><?= HtmlHelper::escape($getIPs['remote_addr'] ?? '') ?></td>
+        </tr>
+        
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_REMOTE_PORT ?? 'Remote Port') ?>:</strong>
+            </td>
+            <td><?= HtmlHelper::escape($getIPs['remote_port'] ?? '') ?></td>
+        </tr>
+        
+        <tr>
+            <td bgcolor="<?= HtmlHelper::escape($bgcolor2) ?>">
+                <strong><?= HtmlHelper::escape(_AB_REQUEST_METHOD ?? 'Request Method') ?>:</strong>
+            </td>
+            <td><?= HtmlHelper::escape($getIPs['request_method'] ?? '') ?></td>
+        </tr>
+        
+        <!-- Submit Button -->
+        <tr>
+            <td align="center" colspan="2" style="padding-top: 15px;">
+                <input type="submit" value="<?= HtmlHelper::escape(_AB_SAVECHANGES ?? 'Save Changes') ?>" class="button" />
+                <input type="button" value="Cancel" onclick="history.back();" class="button" style="margin-left: 10px;" />
+            </td>
+        </tr>
+    </table>
+</form>
+
+<?php
 CloseTable();
 include("footer.php");
-
 ?>

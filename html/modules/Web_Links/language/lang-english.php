@@ -68,6 +68,8 @@ define('_ISTHISYOURSITE','Is this your resource?');
 define('_LAST30DAYS','Last 30 Days');
 define('_LASTWEEK','Last Week');
 define('_LDESCRIPTION','Description: (255 characters max)');
+define('_LEASTPOPULAR','Least Popular');
+
 define('_LETSDECIDE','Input from users such as yourself will help other visitors better decide which links to click on.');
 define('_LINKALREADYEXT','ERROR: This URL is already listed in the Database!');
 define('_LINKCOMMENTS','Link Comments');
@@ -103,6 +105,8 @@ define('_MAIN','Main');
 if(!defined('_MODIFY')) define('_MODIFY','Modify');
 define('_MOSTPOPULAR','Most Popular - Top');
 define('_NEW','New');
+define('_NEWESTFIRST','Newest First');
+
 define('_NEWLAST3DAYS','New last 3 days');
 define('_NEWLINKS','New Links');
 define('_NEWTHISWEEK','New This Week');
@@ -118,8 +122,11 @@ define('_NUMOFCOMMENTS','Number of Comments');
 define('_NUMRATINGS','# of Ratings');
 if (!defined('_OF')) { define('_OF','of'); }
 define('_OFALL','of all');
+define('_OLDESTFIRST','Oldest First');
 define('_ONLYREGUSERSMODIFY','Only registered users can suggest links modifications. Please <a href="modules.php?name=Your_Account">register or login</a>.');
 define('_OUTSIDEVOTERS','Outside Voters');
+if (!defined('_ORDERBY')) define('_ORDERBY', 'Order by');
+
 define('_OVERALLRATING','Overall Rating');
 define('_PAGETITLE','Page Title');
 define('_PAGEURL','Page URL');
@@ -191,6 +198,7 @@ define('_VOTE4THISSITE','Vote for this Site!');
 define('_WEBLINKS','Web Links');
 define('_WEIGHNOTE','* Note: This Resource weighs Registered vs. Unregistered users ratings');
 define('_WEIGHOUTNOTE','* Note: This Resource weighs Registered vs. Outside voters ratings');
+define('_WORSTRATED','Worst Rated');
 define('_YOUARENOTREGGED','You are not a registered user or you have not logged in.');
 define('_YOUAREREGGED','You are a registered user and are logged in.');
 define('_YOUREMAIL','Your Email');

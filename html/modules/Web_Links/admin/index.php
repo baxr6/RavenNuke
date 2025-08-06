@@ -433,217 +433,274 @@ function LinksTransfer($cidfrom,$cidto) {
 }
 
 function LinksModLink($lid) {
-	global $admin_file, $bgcolor1, $bgcolor2, $db, $prefix, $sitename;
-	include_once("header.php");
-	GraphicAdmin();
-	global $anonymous;
-	$lid = intval($lid);
-	$result = $db->sql_query("SELECT cid, title, url, description, name, email, hits from " . $prefix . "_links_links where lid='$lid'");
-	OpenTable();
-	echo "<div class='text-center'><span class=\"title thick\">" . _WEBLINKSADMIN . "</span></div>";
-	CloseTable();
-	echo "<br />";
-	OpenTable();
-	echo "<div class='text-center'><span class=\"option thick\">" . _MODLINK . "</span></div><br /><br />";
-	while($row = $db->sql_fetchrow($result)) {
-		$cid = $row['cid'];
-		$title = htmlspecialchars($row['title'], ENT_QUOTES, _CHARSET);
-		$url = $row['url'];
-		$description = htmlspecialchars($row['description'], ENT_QUOTES, _CHARSET);
-		$name = $row['name'];
-		$email = $row['email'];
-		$hits = $row['hits'];
-		echo '<form action="'.$admin_file.'.php" method="post">'
-			."" . _LINKID . ": <span class='thick'>$lid</span><br />"
-			."" . _PAGETITLE . ": <input type=\"text\" name=\"title\" value=\"$title\" size=\"50\" maxlength=\"100\" /><br />"
-			."" . _PAGEURL . ": <input type=\"text\" name=\"url\" value=\"$url\" size=\"50\" maxlength=\"100\" />&nbsp;[ <a href=\"$url\">Visit</a> ]<br />"
-			."" . _DESCRIPTION . ":<br /><textarea name=\"description\" cols=\"60\" rows=\"10\">$description</textarea><br />"
-			."" . _NAME . ": <input type=\"text\" name=\"name\" size=\"50\" maxlength=\"100\" value=\"$name\" /><br />"
-			."" . _EMAIL . ": <input type=\"text\" name=\"email\" size=\"50\" maxlength=\"100\" value=\"$email\" /><br />"
-			."" . _HITS . ": <input type=\"text\" name=\"hits\" value=\"$hits\" size=\"12\" maxlength=\"11\" /><br />";
-		echo "<input type=\"hidden\" name=\"lid\" value=\"$lid\" />"
-			."" . _CATEGORY . ": <select name=\"cat\">";
-		$result2 = $db->sql_query("SELECT cid, title, parentid from " . $prefix . "_links_categories order by title");
-		while($row2 = $db->sql_fetchrow($result2)) {
-			$cid2 = $row2['cid'];
-			$ctitle2 = $row2['title'];
-			$parentid2 = $row2['parentid'];
-			if ($cid2==$cid) {
-				$sel = 'selected="selected"';
-			} else {
-				$sel = '';
-			}
-			if ($parentid2!=0) $ctitle2=getparent($parentid2,$ctitle2);
-			echo "<option value=\"$cid2\" $sel>".htmlspecialchars($ctitle2, ENT_QUOTES, _CHARSET)."</option>";
-		}
-
-		echo "</select>"
-		."<input type=\"hidden\" name=\"op\" value=\"LinksModLinkS\" />"
-		."<input type=\"submit\" value=\"" . _MODIFY . "\" /> [ <a class=\"rn_csrf\" href=\"".$admin_file.".php?op=LinksDelLink&amp;lid=$lid\">" . _DELETE . "</a> ]</form><br />";
-		CloseTable();
-		echo "<br />";
-		/* Modify or Add Editorial */
-		$editorialtext = '';
-		$editorialtitle = '';
-		$resulted2 = $db->sql_query("SELECT adminid, editorialtimestamp, editorialtext, editorialtitle from " . $prefix . "_links_editorials where linkid='$lid'");
-		$recordexist = $db->sql_numrows($resulted2);
-		OpenTable();
-		/* if returns 'bad query' status 0 (add editorial) */
-		if ($recordexist == 0) {
-			echo "<div class='text-center'><span class=\"option thick\">" . _ADDEDITORIAL . "</span></div><br /><br />"
-			."<form action=\"".$admin_file.".php\" method=\"post\">"
-			."<input type=\"hidden\" name=\"linkid\" value=\"$lid\" />"
-			."" . _EDITORIALTITLE . ":<br /><input type=\"text\" name=\"editorialtitle\" value=\"$editorialtitle\" size=\"50\" maxlength=\"100\" /><br />"
-			."" . _EDITORIALTEXT . ":<br /><textarea name=\"editorialtext\" cols=\"60\" rows=\"10\">$editorialtext</textarea><br />"
-			."<input type=\"hidden\" name=\"op\" value=\"LinksAddEditorial\" /><input type=\"submit\" value=\"Add\" /></form>";
-		} else {
-			/* if returns 'cool' then status 1 (modify editorial) */
-			while($row3 = $db->sql_fetchrow($resulted2)) {
-				$adminid = $row3['adminid'];
-				//$editorialtimestamp = $row3['editorialtimestamp'];
-				$editorialtext = htmlspecialchars($row3['editorialtext'], ENT_QUOTES, _CHARSET);
-				$editorialtitle = htmlspecialchars($row3['editorialtitle'], ENT_QUOTES, _CHARSET);
-				/*preg_match ("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/", $editorialtimestamp, $editorialtime);
-				$editorialtime = strftime("%F",mktime($editorialtime[4],$editorialtime[5],$editorialtime[6],$editorialtime[2],$editorialtime[3],$editorialtime[1]));
-				$date_array = explode("-", $editorialtime);
-				$timestamp = mktime(0, 0, 0, $date_array[1], $date_array[2], $date_array[0]);
-				$formatted_date = substr(date("F j, Y", $timestamp);  */
-				echo "<div class='text-center'><span class=\"option thick\">Modify Editorial</span></div><br /><br />"
-					."<form action=\"".$admin_file.".php\" method=\"post\">"
-					."" . _AUTHOR . ": $adminid<br />"
-					."" . _DATEWRITTEN . ": " . substr($row3['editorialtimestamp'],0,10) . "<br /><br />"
-					."<input type=\"hidden\" name=\"linkid\" value=\"$lid\" />"
-					."" . _EDITORIALTITLE . ":<br /><input type=\"text\" name=\"editorialtitle\" value=\"$editorialtitle\" size=\"50\" maxlength=\"100\" /><br />"
-					."" . _EDITORIALTEXT . ":<br /><textarea name=\"editorialtext\" cols=\"60\" rows=\"10\">$editorialtext</textarea><br />"
-					."<input type=\"hidden\" name=\"op\" value=\"LinksModEditorial\" /><input type=\"submit\" value=\"" . _MODIFY . "\" /></form> [ <a class=\"rn_csrf\" href=\"".$admin_file.".php?op=LinksDelEditorial&amp;linkid=$lid\">" . _DELETE . "</a> ]";
-			}
-		}
-		CloseTable();
-		echo "<br />";
-		OpenTable();
-		/* Show Comments */
-		$result4 = $db->sql_query("SELECT ratingdbid, ratinguser, ratingcomments, ratingtimestamp FROM " . $prefix . "_links_votedata WHERE ratinglid = '$lid' AND ratingcomments != '' ORDER BY ratingtimestamp DESC");
-		$totalcomments = $db->sql_numrows($result4);
-		echo '<table width="100%">';
-		echo "<tr><td colspan=\"7\"><span class='thick'>Link Comments (total comments: $totalcomments)</span><br /><br /></td></tr>";
-		echo "<tr><td width=\"20\" colspan=\"1\"><span class='thick'>User  </span></td><td colspan=\"5\"><span class='thick'>Comment  </span></td><td class='text-center'><span class='thick'>Delete</span></td></tr>";
-		if ($totalcomments == 0) echo "<tr><td colspan=\"7\" class='text-center'><span style='color: #cccccc;'>No Comments<br /></span></td></tr>";
-		$x = 0;
-		$colorswitch = $bgcolor1;
-		while($row4 = $db->sql_fetchrow($result4)) {
-			$ratingdbid = $row4['ratingdbid'];
-			$ratinguser = $row4['ratinguser'];
-			$ratingcomments = $row4['ratingcomments'];
-			$ratingtimestamp = $row4['ratingtimestamp'];
-			preg_match ("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/", $ratingtimestamp, $ratingtime);
-			$ratingtime = strftime("%F",mktime($ratingtime[4],$ratingtime[5],$ratingtime[6],$ratingtime[2],$ratingtime[3],$ratingtime[1]));
-			$date_array = explode("-", $ratingtime);
-			$timestamp = mktime(0, 0, 0, $date_array['1'], $date_array['2'], $date_array['0']);
-				$formatted_date = date('F j, Y', $timestamp);
-				echo '<tr><td valign="top" bgcolor="' , $colorswitch , '">' , $ratinguser , '</td><td valign="top" colspan="5" bgcolor="' , $colorswitch , '">' , $ratingcomments , '</td>'
-					, '<td bgcolor="' , $colorswitch , '" class="text-center"><span class="thick"><a class="rn_csrf" href="' , $admin_file , '.php?op=LinksDelComment&amp;lid=' , $lid , '&amp;rid=' , $ratingdbid , '">X</a>'
-					, '</span></td></tr>';
-			$x++;
-			$colorswitch = ($colorswitch == $bgcolor1) ? $bgcolor2 : $bgcolor1;
-		}
-
-		// Show Registered Users Votes
-		$result5 = $db->sql_query("SELECT ratingdbid, ratinguser, rating, ratinghostname, ratingtimestamp FROM " . $prefix . "_links_votedata WHERE ratinglid = '$lid' AND ratinguser != 'outside' AND ratinguser != '$anonymous' ORDER BY ratingtimestamp DESC");
-		$totalvotes = $db->sql_numrows($result5);
-		echo "<tr><td colspan=\"7\"><br /><br /><span class='thick'>Registered User Votes (total votes: $totalvotes)</span><br /><br /></td></tr>";
-		echo "<tr><td><span class='thick'>User  </span></td><td><span class='thick'>IP Address  </span></td><td><span class='thick'>Rating  </span></td><td><span class='thick'>User AVG Rating  </span></td><td><span class='thick'>Total Ratings  </span></td><td><span class='thick'>Date  </span></td><td class='text-center'><span class='thick'>Delete</span></td></tr>";
-		if ($totalvotes == 0) echo "<tr><td colspan=\"7\" class='text-center'><span style='color: #cccccc;'>No Registered User Votes</span><br /></td></tr>";
-		$x = 0;
-		$colorswitch = $bgcolor1;
-		while($row5 = $db->sql_fetchrow($result5)) {
-			$ratingdbid = $row5['ratingdbid'];
-			$ratinguser = $row5['ratinguser'];
-			$rating = $row5['rating'];
-			$ratinghostname = $row5['ratinghostname'];
-			$ratingtimestamp = $row5['ratingtimestamp'];
-			preg_match ("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/", $ratingtimestamp, $ratingtime);
-			$ratingtime = strftime("%F",mktime($ratingtime[4],$ratingtime[5],$ratingtime[6],$ratingtime[2],$ratingtime[3],$ratingtime[1]));
-			$date_array = explode("-", $ratingtime);
-			$timestamp = mktime(0, 0, 0, $date_array['1'], $date_array['2'], $date_array['0']);
-			$formatted_date = date("F j, Y", $timestamp);
-
-			//Individual user information
-			$result6 = $db->sql_query("SELECT rating FROM " . $prefix . "_links_votedata WHERE ratinguser = '$ratinguser'");
-			$usertotalcomments = $db->sql_numrows($result6);
-			$useravgrating = 0;
-			//while($row6 = $db->sql_fetchrow($result6)) $useravgrating = $useravgrating + $rating2;
-			// 1/1/07 fkelly ... this logic above appears to me to be screwed up
-			// i think he wants to accumulate the ratings from the table then divide them by
-			// the numrows after the while loop ends
-			// of course no braces on the while so its hard to tell the intent; i'll guess
-			while($row6 = $db->sql_fetchrow($result6)){
-				$useravgrating = $useravgrating + $row6['rating'];
-			}
-			$useravgrating = $useravgrating / $usertotalcomments;
-			$useravgrating = number_format($useravgrating, 1);
-			echo '<tr><td bgcolor="' , $colorswitch , '">' , $ratinguser , '</td><td bgcolor="' , $colorswitch , '">' , $ratinghostname , '</td><td bgcolor="' , $colorswitch , '">' , $rating , '</td>'
-				, '<td bgcolor="' , $colorswitch . '">' , $useravgrating , '</td><td bgcolor="' , $colorswitch . '">' , $usertotalcomments , '</td><td bgcolor="' , $colorswitch , '">' , $formatted_date , '  </td>'
-				, '<td bgcolor="' , $colorswitch , '" class="text-center"><span class="thick"><a class="rn_csrf" href="' , $admin_file , '.php?op=LinksDelVote&amp;lid=' , $lid , '&amp;rid=' , $ratingdbid , '">X</a></span></td></tr>';
-			$x++;
-			$colorswitch = ($colorswitch == $bgcolor1) ?  $bgcolor2 : $bgcolor1;
-		}
-
-		// Show Unregistered Users Votes
-		$result7 = $db->sql_query("SELECT ratingdbid, rating, ratinghostname, ratingtimestamp FROM " . $prefix . "_links_votedata WHERE ratinglid = '$lid' AND ratinguser = '$anonymous' ORDER BY ratingtimestamp DESC");
-		$totalvotes = $db->sql_numrows($result7);
-		echo "<tr><td colspan=\"7\"><span class='thick'><br /><br />Unregistered User Votes (total votes: $totalvotes)</span><br /><br /></td></tr>";
-		echo "<tr><td colspan=\"2\"><span class='thick'>IP Address  </span></td><td colspan=\"3\"><span class='thick'>Rating  </span></td><td><span class='thick'>Date  </span></td><td class='text-center'><span class='thick'>Delete</span></td></tr>";
-		if ($totalvotes == 0) echo "<tr><td colspan=\"7\" class='text-center'><span style='color: #cccccc;'>No Unregistered User Votes</span><br /></td></tr>";
-		$x=0;
-		$colorswitch="$bgcolor1";
-		while($row7 = $db->sql_fetchrow($result7)) {
-			$ratingdbid = $row7['ratingdbid'];
-			$rating = $row7['rating'];
-			$ratinghostname = $row7['ratinghostname'];
-			$ratingtimestamp = $row7['ratingtimestamp'];
-			preg_match ("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/", $ratingtimestamp, $ratingtime);
-			$ratingtime = strftime("%F",mktime($ratingtime[4],$ratingtime[5],$ratingtime[6],$ratingtime[2],$ratingtime[3],$ratingtime[1]));
-			$date_array = explode("-", $ratingtime);
-			$timestamp = mktime(0, 0, 0, $date_array['1'], $date_array['2'], $date_array['0']);
-			$formatted_date = date('F j, Y', $timestamp);
-			echo '<td colspan="2" bgcolor="' , $colorswitch , '">' , $ratinghostname , '</td><td colspan="3" bgcolor="' , $colorswitch , '">' , $rating , '</td>'
-				, '<td bgcolor="' , $colorswitch , '">' , $formatted_date , '  </td><td bgcolor="' , $colorswitch , '" class="text-center"><span class="thick">'
-				, '<a class="rn_csrf" href="' , $admin_file , '.php?op=LinksDelVote&amp;lid=' , $lid , '&amp;rid=' , $ratingdbid , '">X</a></span></td></tr>';
-			$x++;
-			$colorswitch = ($colorswitch == $bgcolor1) ? $bgcolor2 : $bgcolor1;
-		}
-
-		// Show Outside Users Votes
-		$result8 = $db->sql_query("SELECT ratingdbid, rating, ratinghostname, ratingtimestamp FROM " . $prefix . "_links_votedata WHERE ratinglid = '$lid' AND ratinguser = 'outside' ORDER BY ratingtimestamp DESC");
-		$totalvotes = $db->sql_numrows($result8);
-		echo "<tr><td colspan=\"7\"><span class='thick'><br /><br />Outside User Votes (total votes: $totalvotes)</span><br /><br /></td></tr>";
-		echo "<tr><td colspan=\"2\"><span class='thick'>IP Address  </span></td><td colspan=\"3\"><span class='thick'>Rating  </span></td><td><span class='thick'>Date  </span></td><td class='text-center'><span class='thick'>Delete</span></td></tr>";
-		if ($totalvotes == 0) echo "<tr><td colspan=\"7\" class='text-center'><span style='color: #cccccc;'>No Votes from Outside $sitename<br /></span></td></tr>";
-		$x=0;
-		$colorswitch="$bgcolor1";
-		while($row8 = $db->sql_fetchrow($result8)) {
-			$ratingdbid = $row8['ratingdbid'];
-			$rating = $row8['rating'];
-			$ratinghostname = $row8['ratinghostname'];
-			$ratingtimestamp = $row8['ratingtimestamp'];
-			preg_match ("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/", $ratingtimestamp, $ratingtime);
-			$ratingtime = strftime("%F",mktime($ratingtime[4],$ratingtime[5],$ratingtime[6],$ratingtime[2],$ratingtime[3],$ratingtime[1]));
-			$date_array = explode("-", $ratingtime);
-			$timestamp = mktime(0, 0, 0, $date_array['1'], $date_array['2'], $date_array['0']);
-			$formatted_date = date('F j, Y', $timestamp);
-			echo '<tr><td colspan="2" bgcolor="' , $colorswitch , '">' , $ratinghostname , '</td><td colspan="3" bgcolor="' , $colorswitch , '">' , $rating , '</td><td bgcolor="' , $colorswitch , '">' , $formatted_date , '  </td>'
-				, '<td bgcolor="' , $colorswitch , '" class="text-center"><span class="thick"><a class="rn_csrf" href="' , $admin_file , '.php?op=LinksDelVote&amp;lid=' , $lid , '&amp;rid=' , $ratingdbid , '">X</a>'
-				, '</span></td></tr><br />';
-			$x++;
-			$colorswitch = ($colorswitch == $bgcolor1) ? $bgcolor2 : $bgcolor1;
-		}
-
-		echo '<tr><td colspan="6"><br /></td></tr>'
-			, '</table>';
-	}
-	CloseTable();
-	echo '<br />';
-	include_once 'footer.php';
+    global $admin_file, $bgcolor1, $bgcolor2, $db, $prefix, $sitename;
+    include_once("header.php");
+    GraphicAdmin();
+    global $anonymous;
+    $lid = intval($lid);
+    $result = $db->sql_query("SELECT cid, title, url, description, name, email, hits FROM " . $prefix . "_links_links WHERE lid='$lid'");
+    
+    OpenTable();
+    echo "<div class='text-center'><span class=\"title thick\">" . _WEBLINKSADMIN . "</span></div>";
+    CloseTable();
+    echo "<br />";
+    OpenTable();
+    echo "<div class='text-center'><span class=\"option thick\">" . _MODLINK . "</span></div><br /><br />";
+    
+    while ($row = $db->sql_fetchrow($result)) {
+        $cid = $row['cid'];
+        $title = htmlspecialchars($row['title'], ENT_QUOTES, _CHARSET);
+        $url = $row['url'];
+        $description = htmlspecialchars($row['description'], ENT_QUOTES, _CHARSET);
+        $name = htmlspecialchars($row['name'], ENT_QUOTES, _CHARSET);
+        $email = htmlspecialchars($row['email'], ENT_QUOTES, _CHARSET);
+        $hits = intval($row['hits']);
+        
+        echo '<form action="' . $admin_file . '.php" method="post">'
+            . _LINKID . ": <span class='thick'>$lid</span><br />"
+            . _PAGETITLE . ": <input type=\"text\" name=\"title\" value=\"$title\" size=\"50\" maxlength=\"100\" /><br />"
+            . _PAGEURL . ": <input type=\"text\" name=\"url\" value=\"" . htmlspecialchars($url, ENT_QUOTES, _CHARSET) . "\" size=\"50\" maxlength=\"100\" />&nbsp;[ <a href=\"" . htmlspecialchars($url, ENT_QUOTES, _CHARSET) . "\">Visit</a> ]<br />"
+            . _DESCRIPTION . ":<br /><textarea name=\"description\" cols=\"60\" rows=\"10\">$description</textarea><br />"
+            . _NAME . ": <input type=\"text\" name=\"name\" size=\"50\" maxlength=\"100\" value=\"$name\" /><br />"
+            . _EMAIL . ": <input type=\"text\" name=\"email\" size=\"50\" maxlength=\"100\" value=\"$email\" /><br />"
+            . _HITS . ": <input type=\"text\" name=\"hits\" value=\"$hits\" size=\"12\" maxlength=\"11\" /><br />"
+            . "<input type=\"hidden\" name=\"lid\" value=\"$lid\" />"
+            . _CATEGORY . ": <select name=\"cat\">";
+        
+        $result2 = $db->sql_query("SELECT cid, title, parentid FROM " . $prefix . "_links_categories ORDER BY title");
+        while ($row2 = $db->sql_fetchrow($result2)) {
+            $cid2 = $row2['cid'];
+            $ctitle2 = $row2['title'];
+            $parentid2 = $row2['parentid'];
+            $sel = ($cid2 == $cid) ? 'selected="selected"' : '';
+            if ($parentid2 != 0) {
+                $ctitle2 = getparent($parentid2, $ctitle2);
+            }
+            echo "<option value=\"$cid2\" $sel>" . htmlspecialchars($ctitle2, ENT_QUOTES, _CHARSET) . "</option>";
+        }
+        
+        echo "</select>"
+            . "<input type=\"hidden\" name=\"op\" value=\"LinksModLinkS\" />"
+            . "<input type=\"submit\" value=\"" . _MODIFY . "\" /> [ <a class=\"rn_csrf\" href=\"" . $admin_file . ".php?op=LinksDelLink&amp;lid=$lid\">" . _DELETE . "</a> ]</form><br />";
+        CloseTable();
+        echo "<br />";
+        
+        // Modify or Add Editorial
+        $editorialtext = '';
+        $editorialtitle = '';
+        $resulted2 = $db->sql_query("SELECT adminid, editorialtimestamp, editorialtext, editorialtitle FROM " . $prefix . "_links_editorials WHERE linkid='$lid'");
+        $recordexist = $db->sql_numrows($resulted2);
+        OpenTable();
+        
+        if ($recordexist == 0) {
+            echo "<div class='text-center'><span class=\"option thick\">" . _ADDEDITORIAL . "</span></div><br /><br />"
+                . "<form action=\"" . $admin_file . ".php\" method=\"post\">"
+                . "<input type=\"hidden\" name=\"linkid\" value=\"$lid\" />"
+                . _EDITORIALTITLE . ":<br /><input type=\"text\" name=\"editorialtitle\" value=\"" . htmlspecialchars($editorialtitle, ENT_QUOTES, _CHARSET) . "\" size=\"50\" maxlength=\"100\" /><br />"
+                . _EDITORIALTEXT . ":<br /><textarea name=\"editorialtext\" cols=\"60\" rows=\"10\">" . htmlspecialchars($editorialtext, ENT_QUOTES, _CHARSET) . "</textarea><br />"
+                . "<input type=\"hidden\" name=\"op\" value=\"LinksAddEditorial\" /><input type=\"submit\" value=\"Add\" /></form>";
+        } else {
+            while ($row3 = $db->sql_fetchrow($resulted2)) {
+                $adminid = htmlspecialchars($row3['adminid'], ENT_QUOTES, _CHARSET);
+                $editorialtext = htmlspecialchars($row3['editorialtext'], ENT_QUOTES, _CHARSET);
+                $editorialtitle = htmlspecialchars($row3['editorialtitle'], ENT_QUOTES, _CHARSET);
+                $timestamp = $row3['editorialtimestamp'] ?? '';
+                // Format date safely
+                $formatted_date = 'Unknown date';
+                if (is_string($timestamp) && preg_match("/(\d{4})-(\d{1,2})-(\d{1,2})/", $timestamp, $m)) {
+                    try {
+                        $dt = new DateTime();
+                        $dt->setDate((int)$m[1], (int)$m[2], (int)$m[3]);
+                        $formatted_date = $dt->format('F j, Y');
+                    } catch (Exception $e) {
+                        // keep default 'Unknown date'
+                    }
+                }
+                
+                echo "<div class='text-center'><span class=\"option thick\">Modify Editorial</span></div><br /><br />"
+                    . "<form action=\"" . $admin_file . ".php\" method=\"post\">"
+                    . _AUTHOR . ": $adminid<br />"
+                    . _DATEWRITTEN . ": " . $formatted_date . "<br /><br />"
+                    . "<input type=\"hidden\" name=\"linkid\" value=\"$lid\" />"
+                    . _EDITORIALTITLE . ":<br /><input type=\"text\" name=\"editorialtitle\" value=\"$editorialtitle\" size=\"50\" maxlength=\"100\" /><br />"
+                    . _EDITORIALTEXT . ":<br /><textarea name=\"editorialtext\" cols=\"60\" rows=\"10\">$editorialtext</textarea><br />"
+                    . "<input type=\"hidden\" name=\"op\" value=\"LinksModEditorial\" /><input type=\"submit\" value=\"" . _MODIFY . "\" /></form> [ <a class=\"rn_csrf\" href=\"" . $admin_file . ".php?op=LinksDelEditorial&amp;linkid=$lid\">" . _DELETE . "</a> ]";
+            }
+        }
+        CloseTable();
+        echo "<br />";
+        
+        // Show Comments
+        $result4 = $db->sql_query("SELECT ratingdbid, ratinguser, ratingcomments, ratingtimestamp FROM " . $prefix . "_links_votedata WHERE ratinglid = '$lid' AND ratingcomments != '' ORDER BY ratingtimestamp DESC");
+        $totalcomments = $db->sql_numrows($result4);
+        
+        echo '<table width="100%">';
+        echo "<tr><td colspan=\"7\"><span class='thick'>Link Comments (total comments: $totalcomments)</span><br /><br /></td></tr>";
+        echo "<tr><td width=\"20\" colspan=\"1\"><span class='thick'>User  </span></td><td colspan=\"5\"><span class='thick'>Comment  </span></td><td class='text-center'><span class='thick'>Delete</span></td></tr>";
+        
+        if ($totalcomments == 0) {
+            echo "<tr><td colspan=\"7\" class='text-center'><span style='color: #cccccc;'>No Comments<br /></span></td></tr>";
+        }
+        
+        $colorswitch = $bgcolor1;
+        while ($row4 = $db->sql_fetchrow($result4)) {
+            $ratingdbid = $row4['ratingdbid'];
+            $ratinguser = htmlspecialchars($row4['ratinguser'], ENT_QUOTES);
+            $ratingcomments = htmlspecialchars($row4['ratingcomments'], ENT_QUOTES);
+            $ratingtimestamp = $row4['ratingtimestamp'];
+            
+            $formatted_date = 'Unknown date';
+            if (is_string($ratingtimestamp) && preg_match("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/", $ratingtimestamp, $matches)) {
+                try {
+                    $dt = new DateTime();
+                    $dt->setDate((int)$matches[1], (int)$matches[2], (int)$matches[3]);
+                    $formatted_date = $dt->format('F j, Y');
+                } catch (Exception $e) {
+                    // leave default
+                }
+            }
+            
+            echo '<tr><td valign="top" bgcolor="' . $colorswitch . '">' . $ratinguser . '</td>'
+                . '<td valign="top" colspan="5" bgcolor="' . $colorswitch . '">' . $ratingcomments . '</td>'
+                . '<td bgcolor="' . $colorswitch . '" class="text-center"><span class="thick"><a class="rn_csrf" href="' . $admin_file . '.php?op=LinksDelComment&amp;lid=' . $lid . '&amp;rid=' . $ratingdbid . '">X</a></span></td></tr>';
+            
+            $colorswitch = ($colorswitch == $bgcolor1) ? $bgcolor2 : $bgcolor1;
+        }
+        
+        // Show Registered Users Votes
+        $result5 = $db->sql_query("SELECT ratingdbid, ratinguser, rating, ratinghostname, ratingtimestamp FROM " . $prefix . "_links_votedata WHERE ratinglid = '$lid' AND ratinguser != 'outside' AND ratinguser != '$anonymous' ORDER BY ratingtimestamp DESC");
+        $totalvotes = $db->sql_numrows($result5);
+        
+        echo "<tr><td colspan=\"7\"><br /><br /><span class='thick'>Registered User Votes (total votes: $totalvotes)</span><br /><br /></td></tr>";
+        echo "<tr><td><span class='thick'>User  </span></td><td><span class='thick'>IP Address  </span></td><td><span class='thick'>Rating  </span></td><td><span class='thick'>User AVG Rating  </span></td><td><span class='thick'>Total Ratings  </span></td><td><span class='thick'>Date  </span></td><td class='text-center'><span class='thick'>Delete</span></td></tr>";
+        
+        if ($totalvotes == 0) {
+            echo "<tr><td colspan=\"7\" class='text-center'><span style='color: #cccccc;'>No Registered User Votes</span><br /></td></tr>";
+        }
+        
+        $colorswitch = $bgcolor1;
+        while ($row5 = $db->sql_fetchrow($result5)) {
+            $ratingdbid = $row5['ratingdbid'];
+            $ratinguser = htmlspecialchars($row5['ratinguser'], ENT_QUOTES);
+            $rating = intval($row5['rating']);
+            $ratinghostname = htmlspecialchars($row5['ratinghostname'], ENT_QUOTES);
+            $ratingtimestamp = $row5['ratingtimestamp'];
+            
+            $formatted_date = 'Unknown date';
+            if (is_string($ratingtimestamp) && preg_match("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/", $ratingtimestamp, $matches)) {
+                try {
+                    $dt = new DateTime();
+                    $dt->setDate((int)$matches[1], (int)$matches[2], (int)$matches[3]);
+                    $formatted_date = $dt->format('F j, Y');
+                } catch (Exception $e) {
+                    // leave default
+                }
+            }
+            
+            // Calculate user average rating
+            $result6 = $db->sql_query("SELECT rating FROM " . $prefix . "_links_votedata WHERE ratinguser = '" . $db->sql_escape($ratinguser) . "'");
+            $usertotalcomments = $db->sql_numrows($result6);
+            $useravgrating = 0.0;
+            while ($row6 = $db->sql_fetchrow($result6)) {
+                $useravgrating += (int)$row6['rating'];
+            }
+            if ($usertotalcomments > 0) {
+                $useravgrating = number_format($useravgrating / $usertotalcomments, 1);
+            } else {
+                $useravgrating = 'N/A';
+            }
+            
+            echo '<tr><td bgcolor="' . $colorswitch . '">' . $ratinguser . '</td>'
+                . '<td bgcolor="' . $colorswitch . '">' . $ratinghostname . '</td>'
+                . '<td bgcolor="' . $colorswitch . '">' . $rating . '</td>'
+                . '<td bgcolor="' . $colorswitch . '">' . $useravgrating . '</td>'
+                . '<td bgcolor="' . $colorswitch . '">' . $usertotalcomments . '</td>'
+                . '<td bgcolor="' . $colorswitch . '">' . $formatted_date . '</td>'
+                . '<td bgcolor="' . $colorswitch . '" class="text-center"><span class="thick"><a class="rn_csrf" href="' . $admin_file . '.php?op=LinksDelVote&amp;lid=' . $lid . '&amp;rid=' . $ratingdbid . '">X</a></span></td></tr>';
+            
+            $colorswitch = ($colorswitch == $bgcolor1) ? $bgcolor2 : $bgcolor1;
+        }
+        
+        // Show Unregistered Users Votes
+        $result7 = $db->sql_query("SELECT ratingdbid, rating, ratinghostname, ratingtimestamp FROM " . $prefix . "_links_votedata WHERE ratinglid = '$lid' AND ratinguser = '$anonymous' ORDER BY ratingtimestamp DESC");
+        $totalvotes = $db->sql_numrows($result7);
+        
+        echo "<tr><td colspan=\"7\"><span class='thick'><br /><br />Unregistered User Votes (total votes: $totalvotes)</span><br /><br /></td></tr>";
+        echo "<tr><td colspan=\"2\"><span class='thick'>IP Address  </span></td><td colspan=\"3\"><span class='thick'>Rating  </span></td><td><span class='thick'>Date  </span></td><td class='text-center'><span class='thick'>Delete</span></td></tr>";
+        
+        if ($totalvotes == 0) {
+            echo "<tr><td colspan=\"7\" class='text-center'><span style='color: #cccccc;'>No Unregistered User Votes</span><br /></td></tr>";
+        }
+        
+        $colorswitch = $bgcolor1;
+        while ($row7 = $db->sql_fetchrow($result7)) {
+            $ratingdbid = $row7['ratingdbid'];
+            $rating = intval($row7['rating']);
+            $ratinghostname = htmlspecialchars($row7['ratinghostname'], ENT_QUOTES);
+            $ratingtimestamp = $row7['ratingtimestamp'];
+            
+            $formatted_date = 'Unknown date';
+            if (is_string($ratingtimestamp) && preg_match("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/", $ratingtimestamp, $matches)) {
+                try {
+                    $dt = new DateTime();
+                    $dt->setDate((int)$matches[1], (int)$matches[2], (int)$matches[3]);
+                    $formatted_date = $dt->format('F j, Y');
+                } catch (Exception $e) {
+                    // leave default
+                }
+            }
+            
+            echo '<tr><td colspan="2" bgcolor="' . $colorswitch . '">' . $ratinghostname . '</td>'
+                . '<td colspan="3" bgcolor="' . $colorswitch . '">' . $rating . '</td>'
+                . '<td bgcolor="' . $colorswitch . '">' . $formatted_date . '</td>'
+                . '<td bgcolor="' . $colorswitch . '" class="text-center"><span class="thick">'
+                . '<a class="rn_csrf" href="' . $admin_file . '.php?op=LinksDelVote&amp;lid=' . $lid . '&amp;rid=' . $ratingdbid . '">X</a></span></td></tr>';
+            
+            $colorswitch = ($colorswitch == $bgcolor1) ? $bgcolor2 : $bgcolor1;
+        }
+        
+        // Show Outside Users Votes
+        $result8 = $db->sql_query("SELECT ratingdbid, rating, ratinghostname, ratingtimestamp FROM " . $prefix . "_links_votedata WHERE ratinglid = '$lid' AND ratinguser = 'outside' ORDER BY ratingtimestamp DESC");
+        $totalvotes = $db->sql_numrows($result8);
+        
+        echo "<tr><td colspan=\"7\"><span class='thick'><br /><br />Outside User Votes (total votes: $totalvotes)</span><br /><br /></td></tr>";
+        echo "<tr><td colspan=\"2\"><span class='thick'>IP Address  </span></td><td colspan=\"3\"><span class='thick'>Rating  </span></td><td><span class='thick'>Date  </span></td><td class='text-center'><span class='thick'>Delete</span></td></tr>";
+        
+        if ($totalvotes == 0) {
+            echo "<tr><td colspan=\"7\" class='text-center'><span style='color: #cccccc;'>No Outside User Votes</span><br /></td></tr>";
+        }
+        
+        $colorswitch = $bgcolor1;
+        while ($row8 = $db->sql_fetchrow($result8)) {
+            $ratingdbid = $row8['ratingdbid'];
+            $rating = intval($row8['rating']);
+            $ratinghostname = htmlspecialchars($row8['ratinghostname'], ENT_QUOTES);
+            $ratingtimestamp = $row8['ratingtimestamp'];
+            
+            $formatted_date = 'Unknown date';
+            if (is_string($ratingtimestamp) && preg_match("/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/", $ratingtimestamp, $matches)) {
+                try {
+                    $dt = new DateTime();
+                    $dt->setDate((int)$matches[1], (int)$matches[2], (int)$matches[3]);
+                    $formatted_date = $dt->format('F j, Y');
+                } catch (Exception $e) {
+                    // leave default
+                }
+            }
+            
+            echo '<tr><td colspan="2" bgcolor="' . $colorswitch . '">' . $ratinghostname . '</td>'
+                . '<td colspan="3" bgcolor="' . $colorswitch . '">' . $rating . '</td>'
+                . '<td bgcolor="' . $colorswitch . '">' . $formatted_date . '</td>'
+                . '<td bgcolor="' . $colorswitch . '" class="text-center"><span class="thick">'
+                . '<a class="rn_csrf" href="' . $admin_file . '.php?op=LinksDelVote&amp;lid=' . $lid . '&amp;rid=' . $ratingdbid . '">X</a></span></td></tr>';
+            
+            $colorswitch = ($colorswitch == $bgcolor1) ? $bgcolor2 : $bgcolor1;
+        }
+        
+        echo "</table>";
+    }
+    CloseTable();
+    include_once("footer.php");
 }
 
 function LinksDelComment($lid, $rid) {
@@ -982,59 +1039,64 @@ function LinksDelLink($lid) {
 }
 
 function LinksModCat($cat) {
-	global $prefix, $db, $admin_file;
-	include_once("header.php");
-	GraphicAdmin();
-	OpenTable();
-	echo "<div class='text-center'><span class=\"title thick\">" . _WEBLINKSADMIN . "</span></div>";
-	CloseTable();
-	echo "<br />";
-	$cat = explode("-", $cat);
-	if (empty($cat[1])) {
-		$cat[1] = 0;
-	}
-	OpenTable();
-	echo "<div class='text-center'><span class=\"option thick\">" . _MODCATEGORY . "</span></div><br /><br />";
-	if ($cat[1]==0) {
-		$row = $db->sql_fetchrow($db->sql_query("SELECT title, cdescription from " . $prefix . "_links_categories where cid='$cat[0]'"));
-		$title = htmlspecialchars($row['title'], ENT_QUOTES, _CHARSET);
-		$cdescription = htmlspecialchars($row['cdescription'], ENT_QUOTES, _CHARSET);
-		echo "<form action=\"".$admin_file.".php\" method=\"post\">"
-			."" . _NAME . ": <input type=\"text\" name=\"title\" value=\"$title\" size=\"51\" maxlength=\"50\" /><br />"
-			."" . _DESCRIPTION . ":<br /><textarea name=\"cdescription\" cols=\"60\" rows=\"10\">$cdescription</textarea><br />"
-			."<input type=\"hidden\" name=\"sub\" value=\"0\" />"
-			."<input type=\"hidden\" name=\"cid\" value=\"$cat[0]\" />"
-			."<input type=\"hidden\" name=\"op\" value=\"LinksModCatS\" />"
-			."<input type=\"submit\" value=\"" . _SAVECHANGES . "\" />"
-			."</form>"
-			."<form action=\"".$admin_file.".php\" method=\"post\">"
-			."<input type=\"hidden\" name=\"sub\" value=\"0\" />"
-			."<input type=\"hidden\" name=\"cid\" value=\"$cat[0]\" />"
-			."<input type=\"hidden\" name=\"op\" value=\"LinksDelCat\" />"
-			."<input type=\"submit\" value=\"" . _DELETE . "\" /></form>";
-	} else {
-		$row2 = $db->sql_fetchrow($db->sql_query("SELECT title from " . $prefix . "_links_categories where cid='$cat[0]'"));
-		$ctitle = $row2['title'];
-		$row3 = $db->sql_fetchrow($db->sql_query("SELECT title from " . $prefix . "_links_subcategories where sid='$cat[1]'"));
-		$stitle = $row3['title'];
-		echo "<form action=\"".$admin_file.".php\" method=\"post\">"
-			."" . _CATEGORY . ": $ctitle<br />"
-			."" . _SUBCATEGORY . ": <input type=\"text\" name=\"title\" value=\"$stitle\" size=\"51\" maxlength=\"50\" /><br />"
-			."<input type=\"hidden\" name=\"sub\" value=\"1\" />"
-			."<input type=\"hidden\" name=\"cid\" value=\"$cat[0]\" />"
-			."<input type=\"hidden\" name=\"sid\" value=\"$cat[1]\" />"
-			."<input type=\"hidden\" name=\"op\" value=\"LinksModCatS\" />"
-			."<input type=\"submit\" value=\"" . _SAVECHANGES . "\" />"
-			."</form>"
-			."<form action=\"".$admin_file.".php\" method=\"post\">"
-			."<input type=\"hidden\" name=\"sub\" value=\"1\" />"
-			."<input type=\"hidden\" name=\"cid\" value=\"$cat[0]\" />"
-			."<input type=\"hidden\" name=\"sid\" value=\"$cat[1]\" />"
-			."<input type=\"hidden\" name=\"op\" value=\"LinksDelCat\" />"
-			."<input type=\"submit\" value=\"" . _DELETE . "\" /></form>";
-	}
-	CloseTable();
-	include_once("footer.php");
+    global $prefix, $db, $admin_file;
+    include_once("header.php");
+    GraphicAdmin();
+    OpenTable();
+    echo "<div class='text-center'><span class=\"title thick\">" . _WEBLINKSADMIN . "</span></div>";
+    CloseTable();
+    echo "<br />";
+    $cat = explode("-", $cat);
+    if (empty($cat[1])) {
+        $cat[1] = 0;
+    }
+    OpenTable();
+    echo "<div class='text-center'><span class=\"option thick\">" . _MODCATEGORY . "</span></div><br /><br />";
+    if ($cat[1] == 0) {
+        $row = $db->sql_fetchrow($db->sql_query("SELECT title, cdescription FROM " . $prefix . "_links_categories WHERE cid='" . intval($cat[0]) . "'"));
+        if ($row) {
+            $title = htmlspecialchars($row['title'], ENT_QUOTES, _CHARSET);
+            $cdescription = htmlspecialchars($row['cdescription'], ENT_QUOTES, _CHARSET);
+        } else {
+            $title = '';
+            $cdescription = '';
+        }
+        echo "<form action=\"" . $admin_file . ".php\" method=\"post\">"
+            . "" . _NAME . ": <input type=\"text\" name=\"title\" value=\"$title\" size=\"51\" maxlength=\"50\" /><br />"
+            . "" . _DESCRIPTION . ":<br /><textarea name=\"cdescription\" cols=\"60\" rows=\"10\">$cdescription</textarea><br />"
+            . "<input type=\"hidden\" name=\"sub\" value=\"0\" />"
+            . "<input type=\"hidden\" name=\"cid\" value=\"" . intval($cat[0]) . "\" />"
+            . "<input type=\"hidden\" name=\"op\" value=\"LinksModCatS\" />"
+            . "<input type=\"submit\" value=\"" . _SAVECHANGES . "\" />"
+            . "</form>"
+            . "<form action=\"" . $admin_file . ".php\" method=\"post\">"
+            . "<input type=\"hidden\" name=\"sub\" value=\"0\" />"
+            . "<input type=\"hidden\" name=\"cid\" value=\"" . intval($cat[0]) . "\" />"
+            . "<input type=\"hidden\" name=\"op\" value=\"LinksDelCat\" />"
+            . "<input type=\"submit\" value=\"" . _DELETE . "\" /></form>";
+    } else {
+        $row2 = $db->sql_fetchrow($db->sql_query("SELECT title FROM " . $prefix . "_links_categories WHERE cid='" . intval($cat[0]) . "'"));
+        $ctitle = $row2 ? $row2['title'] : '';
+        $row3 = $db->sql_fetchrow($db->sql_query("SELECT title FROM " . $prefix . "_links_subcategories WHERE sid='" . intval($cat[1]) . "'"));
+        $stitle = $row3 ? $row3['title'] : '';
+        echo "<form action=\"" . $admin_file . ".php\" method=\"post\">"
+            . "" . _CATEGORY . ": " . htmlspecialchars($ctitle, ENT_QUOTES, _CHARSET) . "<br />"
+            . "" . _SUBCATEGORY . ": <input type=\"text\" name=\"title\" value=\"" . htmlspecialchars($stitle, ENT_QUOTES, _CHARSET) . "\" size=\"51\" maxlength=\"50\" /><br />"
+            . "<input type=\"hidden\" name=\"sub\" value=\"1\" />"
+            . "<input type=\"hidden\" name=\"cid\" value=\"" . intval($cat[0]) . "\" />"
+            . "<input type=\"hidden\" name=\"sid\" value=\"" . intval($cat[1]) . "\" />"
+            . "<input type=\"hidden\" name=\"op\" value=\"LinksModCatS\" />"
+            . "<input type=\"submit\" value=\"" . _SAVECHANGES . "\" />"
+            . "</form>"
+            . "<form action=\"" . $admin_file . ".php\" method=\"post\">"
+            . "<input type=\"hidden\" name=\"sub\" value=\"1\" />"
+            . "<input type=\"hidden\" name=\"cid\" value=\"" . intval($cat[0]) . "\" />"
+            . "<input type=\"hidden\" name=\"sid\" value=\"" . intval($cat[1]) . "\" />"
+            . "<input type=\"hidden\" name=\"op\" value=\"LinksDelCat\" />"
+            . "<input type=\"submit\" value=\"" . _DELETE . "\" /></form>";
+    }
+    CloseTable();
+    include_once("footer.php");
 }
 
 function LinksModCatS($cid, $sid, $sub, $title, $cdescription) {

@@ -40,6 +40,8 @@ define('_LINKSWAITINGVAL','Links Waiting for Validation');
 define('_LINKVALIDATION','Link Validation');
 define('_MODLINK','Modify a Link');
 define('_NEWLINKADDED','New Link added to the Database');
+define('_NEWESTFIRST','Newest First');
+
 define('_NOREPORTEDBROKEN','No reported broken links.');
 if (!defined('_PAGETITLE')) { define('_PAGETITLE','Page Title');}
 if (!defined('_PAGEURL')) { define('_PAGEURL','Page URL');}
@@ -54,7 +56,7 @@ define('_YOURLINKAT','Your Link at');
 define('_ACCEPT','Accept');
 //define('_ADD','Add');
 define('_ADDEDITORIAL','Add Editorial');
-define('_ADDMAINCATEGORY','Add a MAIN Category');
+if (!defined('_ADDMAINCATEGORY')) { define('_ADDMAINCATEGORY','Add a MAIN Category');}
 define('_ADDSUBCATEGORY','Add a SUB-Category');
 define('_ALREADYEXIST','already exist!');
 //define('_AUTHOR','Author');

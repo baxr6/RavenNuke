@@ -13,7 +13,7 @@ if (!isset($name)) {
 }
 
 if ($multilingual == 1) {
-    $querylang = "AND (`alanguage` = '" . $db->sql_escape($currentlang) . "' OR `alanguage` = '')"; // Prevent SQL injection with proper escaping
+    $querylang = "AND (`alanguage` = '" . $db->sql_escape_string($currentlang) . "' OR `alanguage` = '')"; // Prevent SQL injection with proper escaping
 } else {
     $querylang = '';
 }

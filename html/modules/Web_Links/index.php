@@ -24,7 +24,6 @@
 if ( !defined('MODULE_FILE') ) {
 	die('You can\'t access this file directly...');
 }
-
 if (isset($min)) {
 	$min = intval($min);
 }
@@ -525,503 +524,596 @@ function NewLinks($newlinkshowdays) {
 }
 
 function NewLinksDate($selectdate) {
-	global $prefix, $db, $module_name, $admin, $user, $admin_file, $locale, $mainvotedecimal, $datetime;
-	$radminsuper = is_mod_admin($module_name);
-	$dateDB = (date('d-M-Y', $selectdate));
-	$dateView = (date('F d, Y', $selectdate));
-	include_once('header.php');
-	menu(1);
-	echo '<br />';
-	OpenTable();
-	echo '<div class="content">';
-	$newlinkDB = Date('Y-m-d', $selectdate);
-	$totallinks = $db->sql_numrows($db->sql_query('SELECT * FROM '.$prefix.'_links_links WHERE date LIKE \'%'.$newlinkDB.'%\''));
-	echo '<span class="option thick">'.$dateView.' - '.$totallinks.' '._NEWLINKS.'</span>'
-		.'<table width="100%" cellspacing="0" cellpadding="10" border="0"><tr><td>';
-	$result2 = $db->sql_query('SELECT lid, cid, sid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments from '.$prefix.'_links_links where date LIKE \'%'.$newlinkDB.'%\' order by title ASC');
-	while ($row2 = $db->sql_fetchrow($result2)) {
-		$lid = $row2['lid'];
-		$cid = $row2['cid'];
-		$sid = $row2['sid'];
-		$title = check_html($row2['title'], 'nohtml');
-		$description = $row2['description'];
-		$time = $row2['date'];
-		$hits = $row2['hits'];
-		$linkratingsummary = $row2['linkratingsummary'];
-		$totalvotes = $row2['totalvotes'];
-		$totalcomments = $row2['totalcomments'];
-		$linkratingsummary = number_format($linkratingsummary, $mainvotedecimal);
-		echo '<a href="modules.php?name='.$module_name.'&amp;l_op=visit&amp;lid='.$lid.'" target="new">'.$title.'</a>';
-		newlinkgraphic($datetime, $time);
-		popgraphic($hits);
-		echo '<br /><span class="thick">'._DESCRIPTION.':</span> <div>'.htmlspecialchars($description, ENT_QUOTES, _CHARSET).'</div><br />';
-		setlocale (LC_TIME, $locale);
-		/* INSERT code for *editor review* here */
-		preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetime);
-		$datetime = strftime(_LINKSDATESTRING, mktime($datetime[4],$datetime[5],$datetime[6],$datetime[2],$datetime[3],$datetime[1]));
-		$datetime = ucfirst($datetime);
-		echo '<span class="thick">'._ADDEDON.':</span> '.$datetime.' <span class="thick">'._HITS.':</span> '.$hits;
-		$transfertitle = str_replace (' ', '_', $title);
-		/* voting & comments stats */
-		if ($totalvotes == 1) {
-			$votestring = _VOTE;
-		} else {
-			$votestring = _VOTES;
-		}
-		if ($linkratingsummary!='0' || $linkratingsummary!='0.0') {
-			echo ' <span class="thick">'._RATING.':</span> '.$linkratingsummary.' ('.$totalvotes.' '.$votestring.')';
-		}
-		echo '<br />';
-		if ($radminsuper == 1) {
-			echo '<a href="'.$admin_file.'.php?op=LinksModLink&amp;lid='.$lid.'">'._EDIT.'</a> | ';
-		}
-		echo '<a href="modules.php?name='.$module_name.'&amp;l_op=ratelink&amp;lid='.$lid.'">'._RATESITE.'</a>';
-		if (is_user($user)) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=brokenlink&amp;lid='.$lid.'">'._REPORTBROKEN.'</a>';
-		}
-		if ($totalvotes != 0) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=viewlinkdetails&amp;lid='.$lid.'">'._DETAILS.'</a>';
-		}
-		if ($totalcomments != 0) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=viewlinkcomments&amp;lid='.$lid.'">'._SCOMMENTS.' ('.$totalcomments.')</a>';
-		}
-		detecteditorial($lid);
-		echo '<br />';
-		$row3 = $db->sql_fetchrow($db->sql_query('SELECT title from '.$prefix.'_links_categories where cid=\''.$cid.'\''));
-		$ctitle = check_html($row3['title'], 'nohtml');
-		$ctitle=getparent($cid,$ctitle);
-		echo '<span class="thick">'._CATEGORY.':</span> '.$ctitle;
-		echo '<br /><br />';
-	}
-	echo '</td></tr></table></div>';
-	CloseTable();
-	include_once('footer.php');
+    global $prefix, $db, $module_name, $admin, $user, $admin_file, $locale, $mainvotedecimal, $datetime;
+
+    $radminsuper = is_mod_admin($module_name);
+    $dateDB = date('Y-m-d', $selectdate);
+    $dateView = date('F d, Y', $selectdate);
+
+    include_once('header.php');
+    menu(1);
+    echo '<br />';
+    OpenTable();
+    echo '<div class="content">';
+
+    // Count total links for the day
+    $totallinks = $db->sql_numrows(
+        $db->sql_query("SELECT * FROM {$prefix}_links_links WHERE date LIKE '%$dateDB%'")
+    );
+
+    echo '<span class="option thick">' . $dateView . ' - ' . $totallinks . ' ' . _NEWLINKS . '</span>'
+       . '<table width="100%" cellspacing="0" cellpadding="10" border="0"><tr><td>';
+
+    $result2 = $db->sql_query("SELECT lid, cid, sid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments FROM {$prefix}_links_links WHERE date LIKE '%$dateDB%' ORDER BY title ASC");
+    while ($row2 = $db->sql_fetchrow($result2)) {
+        $lid = (int)$row2['lid'];
+        $cid = (int)$row2['cid'];
+        $title = htmlspecialchars($row2['title'], ENT_QUOTES, _CHARSET);
+        $description = htmlspecialchars($row2['description'], ENT_QUOTES, _CHARSET);
+        $time = $row2['date'];
+        $hits = (int)$row2['hits'];
+        $linkratingsummary = (float)$row2['linkratingsummary'];
+        $totalvotes = (int)$row2['totalvotes'];
+        $totalcomments = (int)$row2['totalcomments'];
+
+        $linkratingsummaryFormatted = number_format($linkratingsummary, $mainvotedecimal);
+
+        echo '<a href="modules.php?name=' . $module_name . '&amp;l_op=visit&amp;lid=' . $lid . '" target="_blank">' . $title . '</a> ';
+
+        newlinkgraphic($datetime, $time);
+        popgraphic($hits);
+
+        echo '<br /><span class="thick">' . _DESCRIPTION . ':</span> <div>' . $description . '</div><br />';
+
+        // Format date safely using DateTime
+        $formattedDate = 'Unknown date';
+        try {
+            $dt = new DateTime($time);
+            // Set locale for strftime if needed, but use DateTime->format for portability
+            setlocale(LC_TIME, $locale);
+            // Format date with localized format string if defined, fallback to default format
+            $formattedDate = ucfirst($dt->format('F j, Y H:i:s'));
+        } catch (Exception $e) {
+            // fallback remains
+        }
+
+        echo '<span class="thick">' . _ADDEDON . ':</span> ' . $formattedDate . ' <span class="thick">' . _HITS . ':</span> ' . $hits;
+
+        // Voting and comments stats
+        $votestring = ($totalvotes === 1) ? _VOTE : _VOTES;
+        if ($linkratingsummaryFormatted !== '0' && $linkratingsummaryFormatted !== '0.0') {
+            echo ' <span class="thick">' . _RATING . ':</span> ' . $linkratingsummaryFormatted . ' (' . $totalvotes . ' ' . $votestring . ')';
+        }
+        echo '<br />';
+
+        if ($radminsuper == 1) {
+            echo '<a href="' . $admin_file . '.php?op=LinksModLink&amp;lid=' . $lid . '">' . _EDIT . '</a> | ';
+        }
+        echo '<a href="modules.php?name=' . $module_name . '&amp;l_op=ratelink&amp;lid=' . $lid . '">' . _RATESITE . '</a>';
+
+        if (is_user($user)) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=brokenlink&amp;lid=' . $lid . '">' . _REPORTBROKEN . '</a>';
+        }
+
+        if ($totalvotes !== 0) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=viewlinkdetails&amp;lid=' . $lid . '">' . _DETAILS . '</a>';
+        }
+
+        if ($totalcomments !== 0) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=viewlinkcomments&amp;lid=' . $lid . '">' . _SCOMMENTS . ' (' . $totalcomments . ')</a>';
+        }
+
+        detecteditorial($lid);
+
+        echo '<br />';
+
+        // Get category title safely
+        $catResult = $db->sql_query("SELECT title FROM {$prefix}_links_categories WHERE cid='$cid'");
+        if ($catRow = $db->sql_fetchrow($catResult)) {
+            $ctitle = htmlspecialchars(check_html($catRow['title'], 'nohtml'), ENT_QUOTES, _CHARSET);
+            $ctitle = getparent($cid, $ctitle);
+            echo '<span class="thick">' . _CATEGORY . ':</span> ' . $ctitle;
+        }
+
+        echo '<br /><br />';
+    }
+
+    echo '</td></tr></table></div>';
+    CloseTable();
+    include_once('footer.php');
 }
 
 function TopRated($ratenum, $ratetype) {
-	global $prefix, $db, $admin, $module_name, $user, $locale, $mainvotedecimal, $datetime;
-	include_once('header.php');
-	include('modules/'.$module_name.'/l_config.php');
-	menu(1);
-	echo '<br />';
-	OpenTable();
-	echo '<div class="content">';
-	if (!empty($ratenum) && !empty($ratetype)) {
-		$ratenum = intval($ratenum);
-		$ratetype = htmlentities($ratetype);
-		$toplinks = $ratenum;
-		if ($ratetype == 'percent') {
-			$toplinkspercentrigger = 1;
-		}
-	}
-	if ($toplinkspercentrigger == 1) {
-		$toplinkspercent = $toplinks;
-		$totalratedlinks = $db->sql_numrows($db->sql_query('SELECT * from '.$prefix.'_links_links where linkratingsummary != \'0\''));
-		$toplinks = $toplinks / 100;
-		$toplinks = $totalratedlinks * $toplinks;
-		$toplinks = round($toplinks);
-	}
-	if ($toplinkspercentrigger == 1) {
-		echo '<div class="text-center option thick">'._BESTRATED.' '.$toplinkspercent.'% ('._OF.' '.$totalratedlinks.' '._TRATEDLINKS.')</div><br />';
-	} else {
-		echo '<div class="text-center option thick">'._BESTRATED.' '.htmlentities($toplinks).' </div><br />';
-	}
-	echo '<br />'
-		.'<div class="text-center">'._NOTE.' '.$linkvotemin.' '._TVOTESREQ.'<br />'
-		._SHOWTOP.':  [ <a href="modules.php?name='.$module_name.'&amp;l_op=TopRated&amp;ratenum=10&amp;ratetype=num">10</a> - '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=TopRated&amp;ratenum=25&amp;ratetype=num">25</a> - '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=TopRated&amp;ratenum=50&amp;ratetype=num">50</a> | '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=TopRated&amp;ratenum=1&amp;ratetype=percent">1%</a> - '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=TopRated&amp;ratenum=5&amp;ratetype=percent">5%</a> - '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=TopRated&amp;ratenum=10&amp;ratetype=percent">10%</a> ]</div><br /><br />';
-	$result = $db->sql_query('SELECT lid, cid, sid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments from '.$prefix.'_links_links where linkratingsummary != 0 and totalvotes >= '.$linkvotemin.' order by linkratingsummary DESC limit 0,'.$toplinks);
-	while ($row = $db->sql_fetchrow($result)) {
-		$lid = $row['lid'];
-		$cid = $row['cid'];
-		$sid = $row['sid'];
-		$title = check_html($row['title'], 'nohtml');
-		$description = $row['description'];
-		$time = $row['date'];
-		$hits = $row['hits'];
-		$linkratingsummary = $row['linkratingsummary'];
-		$totalvotes = $row['totalvotes'];
-		$totalcomments = $row['totalcomments'];
-		$linkratingsummary = number_format($linkratingsummary, $mainvotedecimal);
-		echo '<a href="modules.php?name='.$module_name.'&amp;l_op=visit&amp;lid='.$lid.'" target="new">'.$title.'</a>';
-		newlinkgraphic($datetime, $time);
-		popgraphic($hits);
-		echo '<br />';
-		echo '<span class="thick">'._DESCRIPTION.':</span> <div>'.$description.'</div><br />';
-		setlocale (LC_TIME, $locale);
-		preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetime);
-		$datetime = strftime(_LINKSDATESTRING, mktime($datetime[4],$datetime[5],$datetime[6],$datetime[2],$datetime[3],$datetime[1]));
-		$datetime = ucfirst($datetime);
-		echo '<span class="thick">'._ADDEDON.':</span> '.$datetime.' <span class="thick">'._HITS.':</span> '.$hits;
-		$transfertitle = str_replace (' ', '_', $title);
-		/* voting & comments stats */
-		if ($totalvotes == 1) {
-			$votestring = _VOTE;
-		} else {
-			$votestring = _VOTES;
-		}
-		if ($linkratingsummary!='0' || $linkratingsummary!='0.0') {
-			echo ' <span class="thick">'._RATING.':</span> '.$linkratingsummary.' ('.$totalvotes.' '.$votestring.')';
-		}
-		echo '<br /><a href="modules.php?name='.$module_name.'&amp;l_op=ratelink&amp;lid='.$lid.'">'._RATESITE.'</a>';
-		if (is_user($user)) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=brokenlink&amp;lid='.$lid.'">'._REPORTBROKEN.'</a>';
-		}
-		if ($totalvotes != 0) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=viewlinkdetails&amp;lid='.$lid.'">'._DETAILS.'</a>';
-		}
-		if ($totalcomments != 0) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=viewlinkcomments&amp;lid='.$lid.'">'._SCOMMENTS.' ('.$totalcomments.')</a>';
-		}
-		detecteditorial($lid);
-		echo '<br />';
-		$row2 = $db->sql_fetchrow($db->sql_query('SELECT title from '.$prefix.'_links_categories where cid=\''.$cid.'\''));
-		$ctitle = $row2['title'];
-		$ctitle = getparent($cid,$ctitle);
-		echo '<span class="thick">'._CATEGORY.':</span> '.$ctitle;
-		echo '<br /><br />';
-		echo '<br /><br />';
-	}
-	echo '</div>';
-	CloseTable();
-	include_once('footer.php');
+    global $prefix, $db, $module_name, $user, $locale, $mainvotedecimal, $datetime, $linkvotemin;
+
+    include_once('header.php');
+    include('modules/'.$module_name.'/l_config.php');
+    menu(1);
+    echo '<br />';
+    OpenTable();
+    echo '<div class="content">';
+
+    // Initialize variables
+    $toplinkspercentrigger = 0;
+    $toplinks = 10; // default fallback
+
+    // Validate inputs
+    if (!empty($ratenum) && !empty($ratetype)) {
+        $ratenum = intval($ratenum);
+        if ($ratenum <= 0) {
+            $ratenum = 10;
+        }
+
+        // Sanitize ratetype explicitly
+        if ($ratetype === 'percent') {
+            $toplinkspercentrigger = 1;
+        } else {
+            $ratetype = 'num';
+        }
+
+        $toplinks = $ratenum;
+    }
+
+    if ($toplinkspercentrigger === 1) {
+        $toplinkspercent = $toplinks;
+        $totalratedlinks = $db->sql_numrows($db->sql_query('SELECT * FROM ' . $prefix . '_links_links WHERE linkratingsummary != 0'));
+        $toplinks = round($totalratedlinks * ($toplinks / 100));
+        if ($toplinks < 1) $toplinks = 1;
+    }
+
+    // Output header info
+    if ($toplinkspercentrigger === 1) {
+        echo '<div class="text-center option thick">' . _BESTRATED . ' ' . $toplinkspercent . '% (' . _OF . ' ' . $totalratedlinks . ' ' . _TRATEDLINKS . ')</div><br />';
+    } else {
+        echo '<div class="text-center option thick">' . _BESTRATED . ' ' . htmlentities($toplinks) . ' </div><br />';
+    }
+
+    // Links to show different top options
+    echo '<br />'
+        . '<div class="text-center">' . _NOTE . ' ' . intval($linkvotemin) . ' ' . _TVOTESREQ . '<br />'
+        . _SHOWTOP . ': [ <a href="modules.php?name=' . $module_name . '&amp;l_op=TopRated&amp;ratenum=10&amp;ratetype=num">10</a> - '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=TopRated&amp;ratenum=25&amp;ratetype=num">25</a> - '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=TopRated&amp;ratenum=50&amp;ratetype=num">50</a> | '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=TopRated&amp;ratenum=1&amp;ratetype=percent">1%</a> - '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=TopRated&amp;ratenum=5&amp;ratetype=percent">5%</a> - '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=TopRated&amp;ratenum=10&amp;ratetype=percent">10%</a> ]</div><br /><br />';
+
+    $query = 'SELECT lid, cid, sid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments
+              FROM ' . $prefix . '_links_links
+              WHERE linkratingsummary != 0 AND totalvotes >= ' . intval($linkvotemin) . '
+              ORDER BY linkratingsummary DESC
+              LIMIT 0, ' . intval($toplinks);
+
+    $result = $db->sql_query($query);
+
+    while ($row = $db->sql_fetchrow($result)) {
+        $lid = $row['lid'];
+        $cid = $row['cid'];
+        $sid = $row['sid'];
+        $title = check_html($row['title'], 'nohtml');
+        $description = $row['description'];
+        $time = $row['date'];
+        $hits = $row['hits'];
+        $linkratingsummary = $row['linkratingsummary'];
+        $totalvotes = $row['totalvotes'];
+        $totalcomments = $row['totalcomments'];
+
+        $linkratingsummary = number_format($linkratingsummary, $mainvotedecimal);
+
+        echo '<a href="modules.php?name=' . $module_name . '&amp;l_op=visit&amp;lid=' . $lid . '" target="_blank">' . $title . '</a>';
+        newlinkgraphic($datetime, $time);
+        popgraphic($hits);
+        echo '<br />';
+        echo '<span class="thick">' . _DESCRIPTION . ':</span> <div>' . $description . '</div><br />';
+
+        setlocale(LC_TIME, $locale);
+        preg_match('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetimeArr);
+        $datetime = strftime(_LINKSDATESTRING, mktime($datetimeArr[4], $datetimeArr[5], $datetimeArr[6], $datetimeArr[2], $datetimeArr[3], $datetimeArr[1]));
+        $datetime = ucfirst($datetime);
+
+        echo '<span class="thick">' . _ADDEDON . ':</span> ' . $datetime . ' <span class="thick">' . _HITS . ':</span> ' . $hits;
+
+        /* voting & comments stats */
+        $votestring = ($totalvotes == 1) ? _VOTE : _VOTES;
+
+        if ($linkratingsummary !== '0' && $linkratingsummary !== '0.0') {
+            echo ' <span class="thick">' . _RATING . ':</span> ' . $linkratingsummary . ' (' . $totalvotes . ' ' . $votestring . ')';
+        }
+
+        echo '<br /><a href="modules.php?name=' . $module_name . '&amp;l_op=ratelink&amp;lid=' . $lid . '">' . _RATESITE . '</a>';
+
+        if (is_user($user)) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=brokenlink&amp;lid=' . $lid . '">' . _REPORTBROKEN . '</a>';
+        }
+
+        if ($totalvotes != 0) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=viewlinkdetails&amp;lid=' . $lid . '">' . _DETAILS . '</a>';
+        }
+
+        if ($totalcomments != 0) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=viewlinkcomments&amp;lid=' . $lid . '">' . _SCOMMENTS . ' (' . $totalcomments . ')</a>';
+        }
+
+        detecteditorial($lid);
+
+        echo '<br />';
+
+        $row2 = $db->sql_fetchrow($db->sql_query('SELECT title FROM ' . $prefix . '_links_categories WHERE cid=\'' . intval($cid) . '\''));
+        $ctitle = $row2['title'];
+        $ctitle = getparent($cid, $ctitle);
+
+        echo '<span class="thick">' . _CATEGORY . ':</span> ' . $ctitle;
+        echo '<br /><br /><br />';
+    }
+
+    echo '</div>';
+    CloseTable();
+    include_once('footer.php');
 }
 
 function MostPopular($ratenum, $ratetype) {
-	global $prefix, $db, $admin, $module_name, $user, $admin_file, $locale, $mainvotedecimal, $datetime;
-	$radminsuper = is_mod_admin($module_name);
-	include_once('header.php');
-	include('modules/'.$module_name.'/l_config.php');
-	menu(1);
-	echo '<br />';
-	OpenTable();
-	echo '<div class="content"><div class="text-center">';
-	if (!empty($ratenum) && !empty($ratetype)) {
-		$ratenum = intval($ratenum);
-		$ratetype = htmlentities($ratetype);
-		$mostpoplinks = $ratenum;
-		if ($ratetype == 'percent') $mostpoplinkspercentrigger = 1;
-	}
-	if ($mostpoplinkspercentrigger == 1) {
-		$toplinkspercent = $mostpoplinks;
-		$result2 = $db->sql_query('SELECT * from '.$prefix.'_links_links');
-		$totalmostpoplinks = $db->sql_numrows($result2);
-		$mostpoplinks = $mostpoplinks / 100;
-		$mostpoplinks = $totalmostpoplinks * $mostpoplinks;
-		$mostpoplinks = round($mostpoplinks);
-	}
-	if ($mostpoplinkspercentrigger == 1) {
-		echo '<div class="text-center option thick">'._MOSTPOPULAR.' '.$toplinkspercent.'% ('._OFALL.' '.$totalmostpoplinks.' '._LINKS.')</div>';
-	} else {
-		echo '<div class="text-center option thick">'._MOSTPOPULAR.' '.htmlentities($mostpoplinks).'</div>';
-	}
-	echo '<br />'._SHOWTOP.': [ <a href="modules.php?name='.$module_name.'&amp;l_op=MostPopular&amp;ratenum=10&amp;ratetype=num">10</a> - '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=MostPopular&amp;ratenum=25&amp;ratetype=num">25</a> - '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=MostPopular&amp;ratenum=50&amp;ratetype=num">50</a> | '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=MostPopular&amp;ratenum=1&amp;ratetype=percent">1%</a> - '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=MostPopular&amp;ratenum=5&amp;ratetype=percent">5%</a> - '
-		.'<a href="modules.php?name='.$module_name.'&amp;l_op=MostPopular&amp;ratenum=10&amp;ratetype=percent">10%</a> ]<br /><br />';
-	if(!is_numeric($mostpoplinks)) {
-		$mostpoplinks=10;
-	}
-	$result3 = $db->sql_query('SELECT lid, cid, sid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments from '.$prefix.'_links_links order by hits DESC limit 0,'.$mostpoplinks);
-	echo '</div><br /><br /> ';
-	while($row3 = $db->sql_fetchrow($result3)) {
-		$lid = $row3['lid'];
-		$cid = $row3['cid'];
-		$sid = $row3['sid'];
-		$title = check_html($row3['title'], 'nohtml');
-		$description = $row3['description'];
-		$time = $row3['date'];
-		$hits = $row3['hits'];
-		$linkratingsummary = $row3['linkratingsummary'];
-		$totalvotes = $row3['totalvotes'];
-		$totalcomments = $row3['totalcomments'];
-		$linkratingsummary = number_format($linkratingsummary, $mainvotedecimal);
-		echo '<a href="modules.php?name='.$module_name.'&amp;l_op=visit&amp;lid='.$lid.'" target="new">'.$title.'</a>';
-		newlinkgraphic($datetime, $time);
-		popgraphic($hits);
-		echo '<br />';
-		echo '<span class="thick">'._DESCRIPTION.':</span> <div>'.$description.'</div><br />';
-		setlocale (LC_TIME, $locale);
-		preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetime);
-		$datetime = strftime(''._LINKSDATESTRING.'', mktime($datetime[4],$datetime[5],$datetime[6],$datetime[2],$datetime[3],$datetime[1]));
-		$datetime = ucfirst($datetime);
-		echo '<span class="thick">'._ADDEDON.':</span> '.$datetime.' <span class="thick">'._HITS.':</span> '.$hits;
-		$transfertitle = str_replace (' ', '_', $title);
-		/* voting & comments stats */
-		if ($totalvotes == 1) {
-			$votestring = _VOTE;
-		} else {
-			$votestring = _VOTES;
-		}
-		if ($linkratingsummary!='0' || $linkratingsummary!='0.0') {
-			echo ' <span class="thick">'._RATING.':</span> '.$linkratingsummary.' ('.$totalvotes.' '.$votestring.')';
-		}
-		echo '<br />';
-		if ($radminsuper == 1) {
-			echo '<a href="'.$admin_file.'.php?op=LinksModLink&amp;lid='.$lid.'">'._EDIT.'</a> | ';
-		}
-		echo '<a href="modules.php?name='.$module_name.'&amp;l_op=ratelink&amp;lid='.$lid.'">'._RATESITE.'</a>';
-		if (is_user($user)) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=brokenlink&amp;lid='.$lid.'">'._REPORTBROKEN.'</a>';
-		}
-		if ($totalvotes != 0) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=viewlinkdetails&amp;lid='.$lid.'">'._DETAILS.'</a>';
-		}
-		if ($totalcomments != 0) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=viewlinkcomments&amp;lid='.$lid.'">'._SCOMMENTS.' ('.$totalcomments.')</a>';
-		}
-		detecteditorial($lid);
-		echo '<br />';
-		$row4 = $db->sql_fetchrow($db->sql_query('SELECT title from '.$prefix.'_links_categories where cid=\''.$cid.'\''));
-		$ctitle = check_html($row4['title'], 'nohtml');
-		$ctitle=getparent($cid,$ctitle);
-		echo '<span class="thick">'._CATEGORY.':</span> '.$ctitle;
-		echo '<br /><br /><br />';
-	}
-	echo '</div>';
-	CloseTable();
-	include_once('footer.php');
+    global $prefix, $db, $module_name, $user, $admin_file, $locale, $mainvotedecimal, $datetime;
+    
+    $radminsuper = is_mod_admin($module_name);
+    
+    include_once('header.php');
+    include('modules/'.$module_name.'/l_config.php');
+    menu(1);
+    echo '<br />';
+    OpenTable();
+    echo '<div class="content"><div class="text-center">';
+    
+    $mostpoplinkspercentrigger = 0;
+    $mostpoplinks = 10; // default fallback
+    
+    if (!empty($ratenum) && !empty($ratetype)) {
+        $ratenum = intval($ratenum);
+        if ($ratenum <= 0) {
+            $ratenum = 10;
+        }
+        if ($ratetype === 'percent') {
+            $mostpoplinkspercentrigger = 1;
+        } else {
+            $ratetype = 'num';
+        }
+        $mostpoplinks = $ratenum;
+    }
+    
+    if ($mostpoplinkspercentrigger === 1) {
+        $toplinkspercent = $mostpoplinks;
+        $result2 = $db->sql_query('SELECT * FROM ' . $prefix . '_links_links');
+        $totalmostpoplinks = $db->sql_numrows($result2);
+        $mostpoplinks = round($totalmostpoplinks * ($mostpoplinks / 100));
+        if ($mostpoplinks < 1) $mostpoplinks = 1;
+    }
+    
+    if ($mostpoplinkspercentrigger === 1) {
+        echo '<div class="text-center option thick">' . _MOSTPOPULAR . ' ' . $toplinkspercent . '% (' . _OFALL . ' ' . $totalmostpoplinks . ' ' . _LINKS . ')</div>';
+    } else {
+        echo '<div class="text-center option thick">' . _MOSTPOPULAR . ' ' . htmlentities($mostpoplinks) . '</div>';
+    }
+    
+    echo '<br />' . _SHOWTOP . ': [ <a href="modules.php?name=' . $module_name . '&amp;l_op=MostPopular&amp;ratenum=10&amp;ratetype=num">10</a> - '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=MostPopular&amp;ratenum=25&amp;ratetype=num">25</a> - '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=MostPopular&amp;ratenum=50&amp;ratetype=num">50</a> | '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=MostPopular&amp;ratenum=1&amp;ratetype=percent">1%</a> - '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=MostPopular&amp;ratenum=5&amp;ratetype=percent">5%</a> - '
+        . '<a href="modules.php?name=' . $module_name . '&amp;l_op=MostPopular&amp;ratenum=10&amp;ratetype=percent">10%</a> ]<br /><br />';
+    
+    if (!is_numeric($mostpoplinks) || $mostpoplinks < 1) {
+        $mostpoplinks = 10;
+    }
+    
+    $result3 = $db->sql_query('SELECT lid, cid, sid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments FROM '
+        . $prefix . '_links_links ORDER BY hits DESC LIMIT 0,' . intval($mostpoplinks));
+    
+    echo '</div><br /><br />';
+    
+    while ($row3 = $db->sql_fetchrow($result3)) {
+        $lid = $row3['lid'];
+        $cid = $row3['cid'];
+        $sid = $row3['sid'];
+        $title = check_html($row3['title'], 'nohtml');
+        $description = $row3['description'];
+        $time = $row3['date'];
+        $hits = $row3['hits'];
+        $linkratingsummary = $row3['linkratingsummary'];
+        $totalvotes = $row3['totalvotes'];
+        $totalcomments = $row3['totalcomments'];
+
+        $linkratingsummary = number_format($linkratingsummary, $mainvotedecimal);
+
+        echo '<a href="modules.php?name=' . $module_name . '&amp;l_op=visit&amp;lid=' . $lid . '" target="_blank">' . $title . '</a>';
+        newlinkgraphic($datetime, $time);
+        popgraphic($hits);
+        echo '<br />';
+        echo '<span class="thick">' . _DESCRIPTION . ':</span> <div>' . $description . '</div><br />';
+
+        setlocale(LC_TIME, $locale);
+        preg_match('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetimeArr);
+        $datetime = strftime(_LINKSDATESTRING, mktime($datetimeArr[4], $datetimeArr[5], $datetimeArr[6], $datetimeArr[2], $datetimeArr[3], $datetimeArr[1]));
+        $datetime = ucfirst($datetime);
+
+        echo '<span class="thick">' . _ADDEDON . ':</span> ' . $datetime . ' <span class="thick">' . _HITS . ':</span> ' . $hits;
+
+        $votestring = ($totalvotes == 1) ? _VOTE : _VOTES;
+
+        if ($linkratingsummary !== '0' && $linkratingsummary !== '0.0') {
+            echo ' <span class="thick">' . _RATING . ':</span> ' . $linkratingsummary . ' (' . $totalvotes . ' ' . $votestring . ')';
+        }
+
+        echo '<br />';
+
+        if ($radminsuper == 1) {
+            echo '<a href="' . $admin_file . '.php?op=LinksModLink&amp;lid=' . $lid . '">' . _EDIT . '</a> | ';
+        }
+
+        echo '<a href="modules.php?name=' . $module_name . '&amp;l_op=ratelink&amp;lid=' . $lid . '">' . _RATESITE . '</a>';
+
+        if (is_user($user)) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=brokenlink&amp;lid=' . $lid . '">' . _REPORTBROKEN . '</a>';
+        }
+
+        if ($totalvotes != 0) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=viewlinkdetails&amp;lid=' . $lid . '">' . _DETAILS . '</a>';
+        }
+
+        if ($totalcomments != 0) {
+            echo ' | <a href="modules.php?name=' . $module_name . '&amp;l_op=viewlinkcomments&amp;lid=' . $lid . '">' . _SCOMMENTS . ' (' . $totalcomments . ')</a>';
+        }
+
+        detecteditorial($lid);
+        echo '<br />';
+
+        $row4 = $db->sql_fetchrow($db->sql_query('SELECT title FROM ' . $prefix . '_links_categories WHERE cid=\'' . intval($cid) . '\''));
+        $ctitle = check_html($row4['title'], 'nohtml');
+        $ctitle = getparent($cid, $ctitle);
+
+        echo '<span class="thick">' . _CATEGORY . ':</span> ' . $ctitle;
+        echo '<br /><br /><br />';
+    }
+
+    echo '</div>';
+    CloseTable();
+    include_once('footer.php');
 }
 
 function RandomLink() {
-	global $prefix, $db, $module_name;
-	$result = $db->sql_query('SELECT `lid`, `url` FROM `' . $prefix . '_links_links` ORDER BY RAND() LIMIT 1');
-	$numrows = $db->sql_numrows($result);
-	if ($numrows < 1) {-
-		$url = 'modules.php?name=' . $module_name;
-	} else {
-		list($lid, $url) = $db->sql_fetchrow($result, SQL_NUM);
-		$db->sql_query('UPDATE `' . $prefix . '_links_links` SET `hits`= hits + 1 WHERE `lid`="' . $lid . '"');
-	}
-	Header('Location: ' . $url);
+    global $prefix, $db, $module_name;
+
+    $result = $db->sql_query('SELECT lid, url FROM ' . $prefix . '_links_links ORDER BY RAND() LIMIT 1');
+    $numrows = $db->sql_numrows($result);
+
+    if ($numrows < 1) {
+        $url = 'modules.php?name=' . $module_name;
+    } else {
+        list($lid, $url) = $db->sql_fetchrow($result, SQL_NUM);
+        $db->sql_query('UPDATE ' . $prefix . '_links_links SET hits = hits + 1 WHERE lid = "' . intval($lid) . '"');
+    }
+
+    Header('Location: ' . $url);
+    exit();
 }
 
-function viewlink($cid, $min, $orderby, $show) {
-	global $prefix, $db, $admin, $perpage, $module_name, $user, $admin_file, $locale, $mainvotedecimal, $datetime;
-	$show = intval($show);
-	if (empty($show)) {
-		$show = '';
-	}
-	if (!empty($orderby)) {
-		$orderby = htmlspecialchars($orderby, ENT_QUOTES, _CHARSET);
-	}
-	$radminsuper = is_mod_admin($module_name);
-	include_once('header.php');
-	if (!isset($min)) $min = 0;
-	if (!isset($max)) $max=(int)$min+$perpage;
-	if(!empty($orderby)) {
-		$orderby = convertorderbyin($orderby);
-	} else {
-		$orderby = 'title ASC';
-	}
-	if (!empty($show)) {
-		$perpage = $show;
-	} else {
-		$show=$perpage;
-	}
-	menu(1);
-	echo '<br />';
-	OpenTable();
-	echo '<div class="content">';
-	$cid = intval($cid);
-	$row_two = $db->sql_fetchrow($db->sql_query('SELECT title, parentid FROM '.$prefix.'_links_categories WHERE cid=\''.$cid.'\''));
-	$title = check_html($row_two['title'], 'nohtml');
-	$parentid = $row_two['parentid'];
-	$title = getparentlink($parentid,$title);
-	$title = '<a href="modules.php?name='.$module_name.'">'._MAIN.'</a>/'.$title.'';
-	echo '<div class="text-center option thick">'._CATEGORY.': '.$title.'</div><br />';
-	echo '<table border="0" cellspacing="10" cellpadding="0" align="center" width="100%"><tr>';
-	$cdescription = '';
-	$result2 = $db->sql_query('SELECT cid, title, cdescription from '.$prefix.'_links_categories where parentid=\''.$cid.'\' order by title');
-	$dum = 0;
-	$count = 0;
-	while($row2 = $db->sql_fetchrow($result2)) {
-		$cid2 = $row2['cid'];
-		$title2 = check_html($row2['title'], 'nohtml');
-		$cdescription2 = $row2['cdescription'];
-		echo '<td valign="top" width="45%"><span class="option"><strong><span class="larger">&middot;</span></strong> <a href="modules.php?name=Web_Links&amp;l_op=viewlink&amp;cid='.$cid2.'"><span class="thick">'.$title2.'</span></a></span>';
-		categorynewlinkgraphic($cid2);
-		if ($cdescription) {
-			echo '<div>'.$cdescription2.'</div><br />';
-		} else {
-			echo '<br />';
-		}
-		$result3 = $db->sql_query('SELECT cid, title from '.$prefix.'_links_categories where parentid=\''.$cid2.'\' order by title limit 0,3');
-		$space = 0;
-		while($row3 = $db->sql_fetchrow($result3)) {
-			$cid3 = $row3['cid'];
-			$title3 = check_html($row3['title'], 'nohtml');
-			if ($space>0) {
-				echo ',&nbsp;';
-			}
-			echo '<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid3.'">'.$title3.'</a>';
-			$space++;
-		}
-		if ($count<1) {
-			echo '</td><td width="10%">&nbsp;&nbsp;&nbsp;&nbsp;</td>';
-			$dum = 1;
-		}
-		$count++;
-		if ($count==2) {
-			echo '</td></tr><tr>';
-			$count = 0;
-			$dum = 0;
-		}
-	}
-	if ($dum == 1) {
-		echo "</tr></table>";
-	} elseif ($dum == 0) {
-		echo "<td></td></tr></table>";
-	}
+function viewlink($cid, $min = 0, $orderby = null, $show = null): void {
+    global $prefix, $db, $module_name, $user, $admin_file, $locale, $mainvotedecimal, $perpage;
 
-	echo '<hr noshade="noshade" size="1" />';
-	$orderbyTrans = convertorderbytrans($orderby);
-	echo '<div class="text-center">'._SORTLINKSBY.': '
-		._TITLE.' (<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;orderby=titleA">A</a>\<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;orderby=titleD">D</a>) '
-		._DATE.' (<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;orderby=dateA">A</a>\<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;orderby=dateD">D</a>) '
-		._RATING.' (<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;orderby=ratingA">A</a>\<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;orderby=ratingD">D</a>) '
-		._POPULARITY.' (<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;orderby=hitsA">A</a>\<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;orderby=hitsD">D</a>)'
-		.'<br /><span class="thick">'._SITESSORTED.': '.$orderbyTrans.'</span></div><br /><br />';
-	if(!is_numeric($min)){
-		$min=0;
-	}
-	$result4 = $db->sql_query('SELECT lid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments from '.$prefix.'_links_links where cid=\''.$cid.'\' order by '.$orderby.' limit '.$min.','.$perpage.'');
-	$fullcountresult = $db->sql_query('SELECT lid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments from '.$prefix.'_links_links where cid=\''.$cid.'\'');
-	$totalselectedlinks = $db->sql_numrows($fullcountresult);
-	echo '<table width="100%" cellspacing="0" cellpadding="10" border="0"><tr><td>';
-	$x=0;
-	while($row4 = $db->sql_fetchrow($result4)) {
-		$lid = $row4['lid'];
-		$title = check_html($row4['title'], 'nohtml');
-		$description = $row4['description'];
-		$time = $row4['date'];
-		$hits = $row4['hits'];
-		$linkratingsummary = $row4['linkratingsummary'];
-		$totalvotes = $row4['totalvotes'];
-		$totalcomments = $row4['totalcomments'];
-		$linkratingsummary = number_format($linkratingsummary, $mainvotedecimal);
-		echo '<a href="modules.php?name='.$module_name.'&amp;l_op=visit&amp;lid='.$lid.'" target="new"><span class="thick">'.$title.'</span></a>';
-		newlinkgraphic($datetime, $time);
-		popgraphic($hits);
-		/* INSERT code for *editor review* here */
-		echo '<br />';
-		echo '<span class="thick">'._DESCRIPTION.':</span> <div>'.htmlspecialchars($description, ENT_QUOTES, _CHARSET).'</div><br />';
-		setlocale (LC_TIME, $locale);
-		preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetime);
-		$datetime = strftime(_LINKSDATESTRING, mktime($datetime[4],$datetime[5],$datetime[6],$datetime[2],$datetime[3],$datetime[1]));
-		$datetime = ucfirst($datetime);
-		echo '<span class="thick">'._ADDEDON.':</span> '.$datetime.' <span class="thick">'._HITS.': </span> '.$hits;
-		$transfertitle = str_replace (' ', '_', $title);
-		/* voting & comments stats */
-		if ($totalvotes == 1) {
-			$votestring = _VOTE;
-		} else {
-			$votestring = _VOTES;
-		}
-		if ($linkratingsummary!='0' || $linkratingsummary!='0.0') {
-			echo ' <span class="thick">'._RATING.':</span> '.$linkratingsummary.' ('.$totalvotes.' '.$votestring.')';
-		}
-		echo '<br />';
-		if ($radminsuper == 1) {
-			echo '<a href="'.$admin_file.'.php?op=LinksModLink&amp;lid='.$lid.'">'._EDIT.'</a> | ';
-		}
-		echo '<a href="modules.php?name='.$module_name.'&amp;l_op=ratelink&amp;lid='.$lid.'">'._RATESITE.'</a>';
-		if (is_user($user)) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=brokenlink&amp;lid='.$lid.'">'._REPORTBROKEN.'</a>';
-		}
-		echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=viewlinkdetails&amp;lid='.$lid.'">'._DETAILS.'</a>';
-		if ($totalcomments != 0) {
-			echo ' | <a href="modules.php?name='.$module_name.'&amp;l_op=viewlinkcomments&amp;lid='.$lid.'">'._SCOMMENTS.' ('.$totalcomments.')</a>';
-		}
-		detecteditorial($lid);
-		echo '<br /><br />';
-		$x++;
-	}
-	$orderby = convertorderbyout($orderby);
-	/* Calculates how many pages exist. Which page one should be on, etc... */
-	$linkpagesint = ($totalselectedlinks / $perpage);
-	$linkpageremainder = ($totalselectedlinks % $perpage);
-	if ($linkpageremainder != 0) {
-		$linkpages = ceil($linkpagesint);
-		if ($totalselectedlinks < $perpage) {
-			$linkpageremainder = 0;
-		}
-	} else {
-		$linkpages = $linkpagesint;
-	}
-	/* Page Numbering */
-	if ($linkpages!=1 && $linkpages!=0) {
-		echo '<br /><br />';
-		echo _SELECTPAGE.': ';
-		$prev=$min-$perpage;
-		if ($prev>=0) {
-			echo '&nbsp;&nbsp;<span class="thick">[ <a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;min='.$prev.'&amp;orderby='.$orderby.'&amp;show='.$show.'">';
-			echo ' &lt;&lt; '._PREVIOUS.'</a> ]</span> ';
-		}
-		$counter = 1;
-		$currentpage = ($max / $perpage);
-		while ($counter<=$linkpages ) {
-			$cpage = $counter;
-			$mintemp = ($perpage * $counter) - $perpage;
-			if ($counter == $currentpage) {
-				echo '<span class="thick">'.$counter.'</span>&nbsp;';
-			} else {
-				echo '<a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;min='.$mintemp.'&amp;orderby='.$orderby.'&amp;show='.$show.'">'.$counter.'</a> ';
-			}
-			$counter++;
-		}
-		$next=$min+$perpage;
-		if ($x>=$perpage) {
-			echo '&nbsp;&nbsp;<span class="thick">[ <a href="modules.php?name='.$module_name.'&amp;l_op=viewlink&amp;cid='.$cid.'&amp;min='.$max.'&amp;orderby='.$orderby.'&amp;show='.$show.'">';
-			echo ' '._NEXT.' &gt;&gt;</a> ]</span> ';
-		}
-	}
-	echo '</td></tr></table></div>';
-	CloseTable();
-	include_once('footer.php');
+    // Sanitize and cast inputs:
+    $cid = (int)$cid;
+    $min = (isset($min) && is_numeric($min)) ? (int)$min : 0;
+    $show = (isset($show) && is_numeric($show)) ? (int)$show : $perpage;
+
+    $radminsuper = is_mod_admin($module_name);
+
+    include_once 'header.php';
+    menu(1);
+    echo '<br />';
+    OpenTable();
+    echo '<div class="content">';
+
+    $min = $min ?? 0;
+    $show = $show ?? $perpage;
+    $perpage = $show;
+
+    // Sanitize and validate orderby
+    $validOrders = [
+        'title ASC', 'title DESC',
+        'date ASC', 'date DESC',
+        'linkratingsummary ASC', 'linkratingsummary DESC',
+        'hits ASC', 'hits DESC'
+    ];
+
+    $orderby = $orderby ? htmlspecialchars($orderby, ENT_QUOTES, _CHARSET) : 'title ASC';
+
+    if (!in_array($orderby, $validOrders, true)) {
+        $orderby = 'title ASC';
+    }
+
+    // Fetch category info safely using prepared statements
+    $stmt = $db->prepare("SELECT title, parentid FROM {$prefix}_links_categories WHERE cid = ?");
+    $stmt->bind_param('i', $cid);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row_two = $result->fetch_assoc() ?: ['title' => '', 'parentid' => 0];
+    $stmt->close();
+
+    $title = check_html($row_two['title'], 'nohtml');
+    $parentid = (int)$row_two['parentid'];
+    $title = getparentlink($parentid, $title);
+    $title = '<a href="modules.php?name=' . htmlspecialchars($module_name, ENT_QUOTES) . '">' . _LINKS . '</a> -> ' . $title;
+
+    echo '<div class="text-center thick">' . $title . '</div><br />';
+
+    // Output show options
+    echo '<div class="text-center option">' . _SHOW . ': [ ';
+    foreach ([10, 25, 50, 100] as $val) {
+        echo '<a href="modules.php?name=' . rawurlencode($module_name) . '&amp;l_op=viewlink&amp;cid=' . $cid . '&amp;min=' . $min . '&amp;orderby=' . rawurlencode($orderby) . '&amp;show=' . $val . '">' . $val . '</a> | ';
+    }
+    echo ']</div><br />';
+
+    // Output orderby options
+    echo '<div class="text-center option">' . _ORDERBY . ': [ ';
+    $orderLabels = [
+        'title ASC' => _TITLEAZ,
+        'title DESC' => _TITLEAZ,
+        'date DESC' => _NEWESTFIRST,
+        'date ASC' => _OLDESTFIRST,
+        'linkratingsummary DESC' => _BESTRATED,
+        'linkratingsummary ASC' => _WORSTRATED,
+        'hits DESC' => _POPULARITY,
+        'hits ASC' => _LEASTPOPULAR,
+    ];
+
+    foreach ($orderLabels as $key => $label) {
+        echo '<a href="modules.php?name=' . rawurlencode($module_name) . '&amp;l_op=viewlink&amp;cid=' . $cid
+            . '&amp;min=' . $min . '&amp;orderby=' . rawurlencode($key) . '&amp;show=' . $show . '">'
+            . $label . '</a> | ';
+    }
+    echo ']</div><br />';
+
+    // Count total links for pagination
+    $stmt = $db->prepare("SELECT COUNT(lid) AS count FROM {$prefix}_links_links WHERE cid = ?");
+    $stmt->bind_param('i', $cid);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rowcount = $result->fetch_assoc() ?: ['count' => 0];
+    $stmt->close();
+
+    $numrows = (int)$rowcount['count'];
+
+    // Fetch links with safe order and limit
+    // Warning: ORDER BY with prepared statements is tricky; here we must whitelist and insert directly
+    $safeOrder = $orderby; // Already validated
+
+    $stmt = $db->prepare("SELECT lid, cid, sid, title, description, date, hits, linkratingsummary, totalvotes, totalcomments 
+        FROM {$prefix}_links_links WHERE cid = ? ORDER BY $safeOrder LIMIT ?, ?");
+    $stmt->bind_param('iii', $cid, $min, $show);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $lid = (int)$row['lid'];
+        $cid = (int)$row['cid'];
+        $sid = (int)$row['sid'];
+        $title = check_html($row['title'], 'nohtml');
+        $description = $row['description'];
+        $time = $row['date'];
+        $hits = (int)$row['hits'];
+        $linkratingsummary = (float)$row['linkratingsummary'];
+        $totalvotes = (int)$row['totalvotes'];
+        $totalcomments = (int)$row['totalcomments'];
+
+        $linkratingsummaryFormatted = number_format($linkratingsummary, $mainvotedecimal);
+
+        echo '<a href="modules.php?name=' . htmlspecialchars($module_name, ENT_QUOTES) . '&amp;l_op=visit&amp;lid=' . $lid . '" target="_blank">'
+            . $title . '</a> ';
+
+        newlinkgraphic($datetime ?? '', $time);
+        popgraphic($hits);
+        echo '<br />';
+        echo '<span class="thick">' . _DESCRIPTION . ':</span> <div>' . nl2br(htmlspecialchars($description)) . '</div><br />';
+
+        // Format date with IntlDateFormatter
+        $dateObj = DateTime::createFromFormat('Y-m-d H:i:s', $time);
+        if ($dateObj !== false) {
+            $formatter = new IntlDateFormatter($locale, IntlDateFormatter::LONG, IntlDateFormatter::NONE);
+            $datetimeFormatted = $formatter->format($dateObj);
+            if ($datetimeFormatted === false) {
+                $datetimeFormatted = $dateObj->format('F j, Y');
+            }
+        } else {
+            $datetimeFormatted = $time;
+        }
+
+        echo '<span class="thick">' . _ADDEDON . ':</span> ' . htmlspecialchars($datetimeFormatted) . ' <span class="thick">' . _HITS . ':</span> ' . $hits;
+
+        $votestring = ($totalvotes === 1) ? _VOTE : _VOTES;
+
+        if ($linkratingsummary !== 0.0) {
+            echo ' <span class="thick">' . _RATING . ':</span> ' . $linkratingsummaryFormatted . ' (' . $totalvotes . ' ' . $votestring . ')';
+        }
+
+        echo '<br />';
+
+        if ($radminsuper === 1) {
+            echo '<a href="' . htmlspecialchars($admin_file, ENT_QUOTES) . '.php?op=LinksModLink&amp;lid=' . $lid . '">' . _EDIT . '</a> | ';
+        }
+
+        echo '<a href="modules.php?name=' . htmlspecialchars($module_name, ENT_QUOTES) . '&amp;l_op=ratelink&amp;lid=' . $lid . '">' . _RATESITE . '</a>';
+
+        if (is_user($user)) {
+            echo ' | <a href="modules.php?name=' . htmlspecialchars($module_name, ENT_QUOTES) . '&amp;l_op=brokenlink&amp;lid=' . $lid . '">' . _REPORTBROKEN . '</a>';
+        }
+
+        if ($totalvotes !== 0) {
+            echo ' | <a href="modules.php?name=' . htmlspecialchars($module_name, ENT_QUOTES) . '&amp;l_op=viewlinkdetails&amp;lid=' . $lid . '">' . _DETAILS . '</a>';
+        }
+
+        if ($totalcomments !== 0) {
+            echo ' | <a href="modules.php?name=' . htmlspecialchars($module_name, ENT_QUOTES) . '&amp;l_op=viewlinkcomments&amp;lid=' . $lid . '">' . _SCOMMENTS . ' (' . $totalcomments . ')</a>';
+        }
+
+        detecteditorial($lid);
+        echo '<br />';
+
+        // Fetch category title again (this might be optimized outside the loop)
+        $stmt2 = $db->prepare("SELECT title FROM {$prefix}_links_categories WHERE cid = ?");
+        $stmt2->bind_param('i', $cid);
+        $stmt2->execute();
+        $result2 = $stmt2->get_result();
+        $row2 = $result2->fetch_assoc() ?: ['title' => ''];
+        $stmt2->close();
+
+        $ctitle = check_html($row2['title'], 'nohtml');
+        $ctitle = getparent($cid, $ctitle);
+
+        echo '<span class="thick">' . _CATEGORY . ':</span> ' . $ctitle;
+        echo '<br /><br /><br />';
+    }
+
+    $stmt->close();
+
+    if ($numrows > $show) {
+        echo '<div align="center">';
+        echo '<br />' . pagination($numrows, $show, $min, 'modules.php?name=' . rawurlencode($module_name) . '&amp;l_op=viewlink&amp;cid=' . $cid . '&amp;orderby=' . rawurlencode($orderby));
+        echo '</div>';
+    }
+
+    echo '</div>';
+    CloseTable();
+    include_once 'footer.php';
 }
-
 function newlinkgraphic($datetime, $time) {
-	global $module_name, $locale;
-	echo '&nbsp;';
-	setlocale (LC_TIME, $locale);
-	preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetime);
-	$datetime = strftime(_LINKSDATESTRING, mktime($datetime[4],$datetime[5],$datetime[6],$datetime[2],$datetime[3],$datetime[1]));
-	$datetime = ucfirst($datetime);
-	// BEGIN: 0001257: Images in Weblinks doesnt display
-	$startdate = strftime("%G-%m-%d %T");
-	preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $startdate, $daysold);
-	$daysold = strftime(_LINKSDATESTRING, mktime(intval($daysold[4]),intval($daysold[5]),intval($daysold[6]),intval($daysold[2]),intval($daysold[3]),intval($daysold[1])));
-	$daysold = ucfirst($daysold);
-	// END: 0001257: Images in Weblinks doesnt display
-	$count = 0;
-	while ($count <= 7) {
-		if ($daysold == $datetime) {
-			if ($count<=1) {
-				echo '<img src="modules/'.$module_name.'/images/newred.gif" alt="'._NEWTODAY.'" />';
-			}
-			if ($count<=3 && $count>1) {
-				echo '<img src="modules/'.$module_name.'/images/newgreen.gif" alt="'._NEWLAST3DAYS.'" />';
-			}
-			if ($count<=7 && $count>3) {
-				echo '<img src="modules/'.$module_name.'/images/newblue.gif" alt="'._NEWTHISWEEK.'" />';
-			}
-		}
-		$count++;
-		$startdate = (time()-(86400 * $count));
-		// BEGIN: 0001257: Images in Weblinks doesnt display
-		$startdate = strftime("%G-%m-%d %T",$startdate);
-		preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $startdate, $daysold);
-		$daysold = strftime(_LINKSDATESTRING, mktime(intval($daysold[4]),intval($daysold[5]),intval($daysold[6]),intval($daysold[2]),intval($daysold[3]),intval($daysold[1])));
-		$daysold = ucfirst($daysold);
-		// END: 0001257: Images in Weblinks doesnt display
-	}
+    global $module_name;
+
+    // Convert both to timestamps for better date comparison
+    $now_ts = time();
+    $time_ts = strtotime($time);
+
+    $datediff = ($now_ts - $time_ts) / (60 * 60 * 24); // difference in days (float)
+
+    $linkage = 0;
+    $linkdays = 0;
+
+    $handle = opendir('modules/' . $module_name . '/images');
+    if ($handle) {
+        while (($file = readdir($handle)) !== false) {
+            if ($file === '.' || $file === '..') continue;
+            if (!preg_match('/^\d+\.gif$/', $file)) continue;
+
+            $linkdays = intval(basename($file, '.gif'));
+
+            if ($datediff <= $linkdays) {
+                $linkage = $linkdays;
+                break; // found first matching
+            }
+        }
+        closedir($handle);
+    }
+
+    if ($linkage > 0) {
+        echo '<img src="modules/' . $module_name . '/images/new/' . $linkage . '.gif" alt="' . _NEWLINK . '" title="' . _NEWLINK . '" /> ';
+    }
 }
 
 function categorynewlinkgraphic($cat) {

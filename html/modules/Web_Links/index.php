@@ -1117,46 +1117,75 @@ function newlinkgraphic($datetime, $time) {
 }
 
 function categorynewlinkgraphic($cat) {
-	global $prefix, $db, $module_name, $locale;
-	$cat = intval(trim($cat));
-	$row = $db->sql_fetchrow($db->sql_query('SELECT date from '.$prefix.'_links_links where cid=\''.$cat.'\' order by date desc limit 1'));
-	$time = $row['date'];
-	echo '&nbsp;';
-	setlocale (LC_TIME, $locale);
-	if (preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $time, $datetime)) {
-		$datetime = strftime(_LINKSDATESTRING, mktime($datetime[4],$datetime[5],$datetime[6],$datetime[2],$datetime[3],$datetime[1]));
-		$datetime = ucfirst($datetime);
-	} else {
-		$datetime = array();
-	}
-	// BEGIN: 0001257: Images in Weblinks doesnt display
-	$startdate = strftime("%G-%m-%d %T");
-	preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $startdate, $daysold);
-	$daysold = strftime(_LINKSDATESTRING, mktime(intval($daysold[4]),intval($daysold[5]),intval($daysold[6]),intval($daysold[2]),intval($daysold[3]),intval($daysold[1])));
-	$daysold = ucfirst($daysold);
-	// END: 0001257: Images in Weblinks doesnt display
-	$count = 0;
-	while ($count <= 7) {
-		if ($daysold == $datetime) {
-			if ($count<=1) {
-				echo '<img src="modules/'.$module_name.'/images/newred.gif" alt="'._CATNEWTODAY.'" />';
-			}
-			if ($count<=3 && $count>1) {
-				echo '<img src="modules/'.$module_name.'/images/newgreen.gif" alt="'._CATLAST3DAYS.'" />';
-			}
-			if ($count<=7 && $count>3) {
-				echo '<img src="modules/'.$module_name.'/images/newblue.gif" alt="'._CATTHISWEEK.'" />';
-			}
-		}
-		$count++;
-		$startdate = (time()-(86400 * $count));
-		// BEGIN: 0001257: Images in Weblinks doesnt display
-		$startdate = strftime("%G-%m-%d %T",$startdate);
-		preg_match ('/([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})/', $startdate, $daysold);
-		$daysold = strftime(_LINKSDATESTRING, mktime(intval($daysold[4]),intval($daysold[5]),intval($daysold[6]),intval($daysold[2]),intval($daysold[3]),intval($daysold[1])));
-		$daysold = ucfirst($daysold);
-		// END: 0001257: Images in Weblinks doesnt display
-	}
+    global $prefix, $db, $module_name, $locale;
+
+    $cat = intval(trim($cat));
+    $row = $db->sql_fetchrow($db->sql_query('SELECT date FROM ' . $prefix . '_links_links WHERE cid=\'' . $cat . '\' ORDER BY date DESC LIMIT 1'));
+    $time = $row['date'] ?? null;
+
+    echo '&nbsp;';
+    setlocale(LC_TIME, $locale);
+
+    if (!$time) {
+        // No date found, nothing to display
+        return;
+    }
+
+    // Convert link date string to DateTime object
+    $linkDate = DateTime::createFromFormat('Y-m-d H:i:s', $time);
+    if (!$linkDate) {
+        // Invalid date format, abort
+        return;
+    }
+
+    // Function to convert strftime format to PHP date format (simple mapping)
+    function convert_strftime_to_date_format(string $format): string {
+        $replacements = [
+            '%a' => 'D',
+            '%A' => 'l',
+            '%d' => 'd',
+            '%e' => 'j',
+            '%m' => 'm',
+            '%b' => 'M',
+            '%B' => 'F',
+            '%Y' => 'Y',
+            '%y' => 'y',
+            '%H' => 'H',
+            '%I' => 'h',
+            '%p' => 'A',
+            '%M' => 'i',
+            '%S' => 's',
+            '%T' => 'H:i:s',
+            '%Z' => 'T',
+        ];
+        return strtr($format, $replacements);
+    }
+
+    // Prepare date format string compatible with DateTime::format()
+    $phpDateFormat = convert_strftime_to_date_format(_LINKSDATESTRING);
+
+    // Format link date according to _LINKSDATESTRING
+    $linkDateFormatted = ucfirst($linkDate->format($phpDateFormat));
+
+    $count = 0;
+    while ($count <= 7) {
+        // Calculate the date $count days ago from now
+        $compareDate = new DateTime();
+        $compareDate->modify("-$count days");
+        $compareDateFormatted = ucfirst($compareDate->format($phpDateFormat));
+
+        if ($linkDateFormatted === $compareDateFormatted) {
+            if ($count <= 1) {
+                echo '<img src="modules/' . $module_name . '/images/newred.gif" alt="' . _CATNEWTODAY . '" />';
+            } elseif ($count <= 3) {
+                echo '<img src="modules/' . $module_name . '/images/newgreen.gif" alt="' . _CATLAST3DAYS . '" />';
+            } elseif ($count <= 7) {
+                echo '<img src="modules/' . $module_name . '/images/newblue.gif" alt="' . _CATTHISWEEK . '" />';
+            }
+            break; // Once matched and image printed, exit the loop
+        }
+        $count++;
+    }
 }
 
 function popgraphic($hits) {

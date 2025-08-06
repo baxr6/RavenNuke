@@ -211,6 +211,7 @@ define('_IMPRESSIONS','Impressions');
 define('_INACTIVE','Inactive');
 define('_INACTIVEBANNERS','Inactive Banners');
 define('_INHOME','In Home');
+define('_AB_INNODB_SELFHEAL', 'InnoDB tables are self-healing');
 define('_IPBAN', 'IP Ban');
 define('_IPBANNED','Banned IP Addresses');
 define('_IPBANSYSTEM','IP Ban System');

@@ -27,6 +27,36 @@ if (!defined('NUKESENTINEL_ADMIN') && !defined('NUKESENTINEL_FUNCTIONS')) {
 if (!defined('NUKESENTINEL_FUNCTIONS_VERSION')) {
     define('NUKESENTINEL_FUNCTIONS_VERSION', '3.0.0');
 }
+/**
+ * Check and repair a database table if needed.
+ *
+ * @param object $db Database connection object with sql_query and sql_fetchrow methods.
+ * @param string $tableName Table name.
+ * @param string $engine Storage engine name (e.g. INNODB, MYISAM).
+ * @return string Status message from CHECK or REPAIR.
+ */
+function checkAndRepairTable($db, string $tableName, string $engine): string
+{
+    $checkResult = $db->sql_query("CHECK TABLE `$tableName`");
+    $checkRow = $db->sql_fetchrow($checkResult);
+    $status = $checkRow['Msg_text'] ?? 'Unknown';
+
+    if (strtoupper($engine) === 'INNODB') {
+        // InnoDB does not support REPAIR; just report check status with note
+        if (strtoupper($status) !== 'OK') {
+            $status .= ' (InnoDB tables are self-healing)';
+        }
+    } else {
+        // For other engines, try to repair if not OK
+        if (strtoupper($status) !== 'OK') {
+            $repairResult = $db->sql_query("REPAIR TABLE `$tableName` EXTENDED");
+            $repairRow = $db->sql_fetchrow($repairResult);
+            $status = $repairRow['Msg_text'] ?? $status;
+        }
+    }
+
+    return $status;
+}
 
 /**
  * HTML output helper with type safety for PHP 8.3+

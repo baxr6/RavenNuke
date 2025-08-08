@@ -38,11 +38,11 @@ $phpver = phpversion();
  * convert superglobals - Modified by Raven 5/12/2006 - from http://www.php.net/manual/en/language.variables.predefined.php
 */
 if (!isset($_SERVER)) {
-	$_GET = &$HTTP_GET_VARS;
-	$_POST = &$HTTP_POST_VARS;
-	$_ENV = &$HTTP_ENV_VARS;
-	$_SERVER = &$HTTP_SERVER_VARS;
-	$_COOKIE = &$HTTP_COOKIE_VARS;
+	$_GET = &$_GET;
+	$_POST = &$_POST;
+	$_ENV = &$_ENV;
+	$_SERVER = &$_SERVER;
+	$_COOKIE = &$_COOKIE;
 	$_REQUEST = array_merge($_GET, $_POST, $_COOKIE);
 }
 $PHP_SELF = $_SERVER['PHP_SELF'];

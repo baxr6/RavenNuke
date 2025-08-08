@@ -896,86 +896,93 @@ function amod_realpath($path)
 *
 * @private
 */
+/**
+* _set_var
+*
+* Set variable type casting
+*/
 function _set_var(&$result, $var, $type, $multibyte = false)
 {
-	settype($var, $type);
-	$result = $var;
+    settype($var, $type);
+    $result = $var;
 
-	if ($type == 'string')
-	{
-		$result = trim(htmlspecialchars(str_replace(array("\r\n", "\r", '\xFF'), array("\n", "\n", ' '), $result), ENT_COMPAT));
-		// 2.0.x is doing addslashes on all variables
-		$result = stripslashes($result);
-		if ($multibyte)
-		{
-			$result = preg_replace('#&amp;(\#[0-9]+;)#', '&\1', $result);
-		}
-	}
+    if ($type == 'string')
+    {
+        $result = trim(htmlspecialchars(str_replace(array("\r\n", "\r", "\0"), array("\n", "\n", ''), $result), ENT_COMPAT));
+        
+        if ($multibyte)
+        {
+            if (!empty($result))
+            {
+                $result = (function_exists('mb_strlen')) ? mb_substr($result, 0, 255, 'UTF-8') : substr($result, 0, 255);
+            }
+        }
+    }
 }
 
 /**
 * get_var
 *
-* Used to get passed variable
+* Used to get passed variable - Updated for modern PHP compatibility
 */
 function get_var($var_name, $default, $multibyte = false)
 {
-	global $HTTP_POST_VARS, $HTTP_GET_VARS;
+    // Use modern superglobals instead of deprecated ones
+    $request_var = (isset($_POST[$var_name])) ? $_POST : $_GET;
 
-	$request_var = (isset($HTTP_POST_VARS[$var_name])) ? $HTTP_POST_VARS : $HTTP_GET_VARS;
+    if (!isset($request_var[$var_name]) || (is_array($request_var[$var_name]) && !is_array($default)) || (is_array($default) && !is_array($request_var[$var_name])))
+    {
+        return (is_array($default)) ? array() : $default;
+    }
 
-	if (!isset($request_var[$var_name]) || (is_array($request_var[$var_name]) && !is_array($default)) || (is_array($default) && !is_array($request_var[$var_name])))
-	{
-		return (is_array($default)) ? array() : $default;
-	}
+    $var = $request_var[$var_name];
 
-	$var = $request_var[$var_name];
+    if (!is_array($default))
+    {
+        $type = gettype($default);
+    }
+    else
+    {
+        reset($default); // optional, ensures pointer is at the start
+        
+        // Replace array_key_first() for PHP compatibility
+        $first_key = key($default);
+        $first_value = current($default);
 
-	if (!is_array($default))
-	{
-		$type = gettype($default);
-	}
-	else
-	{
-reset($default); // optional, ensures pointer is at the start
-$first_key = array_key_first($default);
-$first_value = $default[$first_key];
+        $key_type = gettype($first_key);
+        $type = gettype($first_value);
+    }
 
-$key_type = gettype($first_key);
-$type = gettype($first_value);
-	}
+    if (is_array($var))
+    {
+        $_var = $var;
+        $var = array();
 
-	if (is_array($var))
-	{
-		$_var = $var;
-		$var = array();
-
-		foreach ($_var as $k => $v)
-		{
-			if (is_array($v))
-			{
-				foreach ($v as $_k => $_v)
-				{
-					_set_var($k, $k, $key_type);
-					_set_var($_k, $_k, $key_type);
-					_set_var($var[$k][$_k], $_v, $type, $multibyte);
-				}
-			}
-			else
-			{
-				_set_var($k, $k, $key_type);
-				_set_var($var[$k], $v, $type, $multibyte);
-			}
-		}
-	}
-	else
-	{
-		_set_var($var, $var, $type, $multibyte);
-	}
-		
-	return $var;
+        foreach ($_var as $k => $v)
+        {
+            if (is_array($v))
+            {
+                foreach ($v as $_k => $_v)
+                {
+                    _set_var($k, $k, $key_type);
+                    _set_var($_k, $_k, $key_type);
+                    _set_var($var[$k][$_k], $_v, $type, $multibyte);
+                }
+            }
+            else
+            {
+                _set_var($k, $k, $key_type);
+                _set_var($var[$k], $v, $type, $multibyte);
+            }
+        }
+    }
+    else
+    {
+        _set_var($var, $var, $type, $multibyte);
+    }
+        
+    return $var;
 }
-
 /**
 * Escaping SQL
 */

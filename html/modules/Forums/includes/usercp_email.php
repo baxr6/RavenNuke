@@ -73,9 +73,9 @@ if (!$board_config['board_email_form'])
         exit;
 }
 
-if ( !empty($HTTP_GET_VARS[POST_USERS_URL]) || !empty($HTTP_POST_VARS[POST_USERS_URL]) )
+if ( !empty($_GET[POST_USERS_URL]) || !empty($_POST[POST_USERS_URL]) )
 {
-        $user_id = ( !empty($HTTP_GET_VARS[POST_USERS_URL]) ) ? intval($HTTP_GET_VARS[POST_USERS_URL]) : intval($HTTP_POST_VARS[POST_USERS_URL]);
+        $user_id = ( !empty($_GET[POST_USERS_URL]) ) ? intval($_GET[POST_USERS_URL]) : intval($_POST[POST_USERS_URL]);
 }
 else
 {
@@ -107,13 +107,13 @@ if ( $result = $db->sql_query($sql) )
                         message_die(GENERAL_MESSAGE, $lang['Flood_email_limit']);
                 }
 
-                if ( isset($HTTP_POST_VARS['submit']) )
+                if ( isset($_POST['submit']) )
                 {
                         $error = FALSE;
 
-                        if ( !empty($HTTP_POST_VARS['subject']) )
+                        if ( !empty($_POST['subject']) )
                         {
-                                $subject = trim(stripslashes($HTTP_POST_VARS['subject']));
+                                $subject = trim(stripslashes($_POST['subject']));
                         }
                         else
                         {
@@ -121,9 +121,9 @@ if ( $result = $db->sql_query($sql) )
                                 $error_msg = ( !empty($error_msg) ) ? $error_msg . '<br />' . $lang['Empty_subject_email'] : $lang['Empty_subject_email'];
                         }
 
-                        if ( !empty($HTTP_POST_VARS['message']) )
+                        if ( !empty($_POST['message']) )
                         {
-                                $message = trim(stripslashes($HTTP_POST_VARS['message']));
+                                $message = trim(stripslashes($_POST['message']));
                         }
                         else
                         {
@@ -164,7 +164,7 @@ if ( $result = $db->sql_query($sql) )
                                         $emailer->send();
                                         $emailer->reset();
 
-                                        if ( !empty($HTTP_POST_VARS['cc_email']) )
+                                        if ( !empty($_POST['cc_email']) )
                                         {
                                                 $emailer->from($userdata['user_email']);
                                                 $emailer->replyto($userdata['user_email']);

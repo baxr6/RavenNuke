@@ -34,28 +34,28 @@ error_reporting  (E_ERROR | E_WARNING | E_PARSE); // This will NOT report uninit
 // PHP5 with register_long_arrays off?
 if (@phpversion() >= '5.0.0' && (!@ini_get('register_long_arrays') || @ini_get('register_long_arrays') == '0' || strtolower(@ini_get('register_long_arrays')) == 'off'))
 {
-	$HTTP_POST_VARS = $_POST;
-	$HTTP_GET_VARS = $_GET;
-	$HTTP_SERVER_VARS = $_SERVER;
-	$HTTP_COOKIE_VARS = $_COOKIE;
-	$HTTP_ENV_VARS = $_ENV;
+	$_POST = $_POST;
+	$_GET = $_GET;
+	$_SERVER = $_SERVER;
+	$_COOKIE = $_COOKIE;
+	$_ENV = $_ENV;
 	$HTTP_POST_FILES = $_FILES;
 
 	// _SESSION is the only superglobal which is conditionally set
 	if (isset($_SESSION))
 	{
-		$HTTP_SESSION_VARS = $_SESSION;
+		$_SESSION = $_SESSION;
 	}
 }
 
 // Protect against GLOBALS tricks
-if (isset($HTTP_POST_VARS['GLOBALS']) || isset($HTTP_POST_FILES['GLOBALS']) || isset($HTTP_GET_VARS['GLOBALS']) || isset($HTTP_COOKIE_VARS['GLOBALS']))
+if (isset($_POST['GLOBALS']) || isset($HTTP_POST_FILES['GLOBALS']) || isset($_GET['GLOBALS']) || isset($_COOKIE['GLOBALS']))
 {
 	die("Hacking attempt");
 }
 
 // Protect against HTTP_SESSION_VARS tricks
-if (isset($HTTP_SESSION_VARS) && !is_array($HTTP_SESSION_VARS))
+if (isset($_SESSION) && !is_array($_SESSION))
 {
 	die("Hacking attempt");
 }
@@ -63,7 +63,7 @@ if (isset($HTTP_SESSION_VARS) && !is_array($HTTP_SESSION_VARS))
 if (@ini_get('register_globals') == '1' || strtolower(@ini_get('register_globals')) == 'on')
 {
 	// PHP4+ path
-	$not_unset = array('HTTP_GET_VARS', 'HTTP_POST_VARS', 'HTTP_COOKIE_VARS', 'HTTP_SERVER_VARS', 'HTTP_SESSION_VARS', 'HTTP_ENV_VARS', 'HTTP_POST_FILES', 'phpEx', 'phpbb_root_path', 'name', 'admin', 'nukeuser', 'user', 'no_page_header', 'cookie', 'db', 'prefix');
+	$not_unset = array('HTTP_GET_VARS', 'HTTP_POST_VARS', 'HTTP_COOKIE_VARS', '$_SERVER', 'HTTP_SESSION_VARS', 'HTTP_ENV_VARS', 'HTTP_POST_FILES', 'phpEx', 'phpbb_root_path', 'name', 'admin', 'nukeuser', 'user', 'no_page_header', 'cookie', 'db', 'prefix');
 
 	// Not only will array_merge give a warning if a parameter
 	// is not an array, it will actually fail. So we check if
@@ -73,11 +73,11 @@ if (@ini_get('register_globals') == '1' || strtolower(@ini_get('register_globals
 	 * montego:0000772 - following code apparently is not enough to stop the issue mentioned above
 	 * in PHP5, so will change the approach and check each and every super global.
 	 */
-	//if (!isset($HTTP_SESSION_VARS) || !is_array($HTTP_SESSION_VARS))
+	//if (!isset($_SESSION) || !is_array($_SESSION))
 	//{
-	//	$HTTP_SESSION_VARS = array();
+	//	$_SESSION = array();
 	//}
-	$rn_asSuperGlobals = array('HTTP_GET_VARS', 'HTTP_POST_VARS', 'HTTP_COOKIE_VARS', 'HTTP_SERVER_VARS', 'HTTP_SESSION_VARS', 'HTTP_ENV_VARS', 'HTTP_POST_FILES');
+	$rn_asSuperGlobals = array('HTTP_GET_VARS', 'HTTP_POST_VARS', 'HTTP_COOKIE_VARS', '$_SERVER', 'HTTP_SESSION_VARS', 'HTTP_ENV_VARS', 'HTTP_POST_FILES');
 	foreach($rn_asSuperGlobals as $var)
 	{
 		if (!isset($$var) || !is_array($$var))
@@ -91,7 +91,7 @@ if (@ini_get('register_globals') == '1' || strtolower(@ini_get('register_globals
 
 	// Merge all into one extremely huge array; unset
 	// this later
-	$input = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS, $HTTP_COOKIE_VARS, $HTTP_SERVER_VARS, $HTTP_SESSION_VARS, $HTTP_ENV_VARS, $HTTP_POST_FILES);
+	$input = array_merge($_GET, $_POST, $_COOKIE, $_SERVER, $_SESSION, $_ENV, $HTTP_POST_FILES);
 
 	unset($input['input']);
 	unset($input['not_unset']);
@@ -113,9 +113,9 @@ if (!function_exists('get_magic_quotes_gpc')) {
 }
 
 // Legacy variables fallback to superglobals if needed
-$http_get_vars = isset($HTTP_GET_VARS) ? $HTTP_GET_VARS : $_GET;
-$http_post_vars = isset($HTTP_POST_VARS) ? $HTTP_POST_VARS : $_POST;
-$http_cookie_vars = isset($HTTP_COOKIE_VARS) ? $HTTP_COOKIE_VARS : $_COOKIE;
+$http_get_vars = isset($_GET) ? $_GET : $_GET;
+$http_post_vars = isset($_POST) ? $_POST : $_POST;
+$http_cookie_vars = isset($_COOKIE) ? $_COOKIE : $_COOKIE;
 
 // Function to recursively add slashes
 function addslashes_deep(&$value) {
@@ -136,20 +136,20 @@ if (!get_magic_quotes_gpc()) {
 }
 
 // If you want to keep the legacy variables in sync, assign back
-if (isset($HTTP_GET_VARS)) {
-    $HTTP_GET_VARS = $http_get_vars;
+if (isset($_GET)) {
+    $_GET = $http_get_vars;
 } else {
     $_GET = $http_get_vars;
 }
 
-if (isset($HTTP_POST_VARS)) {
-    $HTTP_POST_VARS = $http_post_vars;
+if (isset($_POST)) {
+    $_POST = $http_post_vars;
 } else {
     $_POST = $http_post_vars;
 }
 
-if (isset($HTTP_COOKIE_VARS)) {
-    $HTTP_COOKIE_VARS = $http_cookie_vars;
+if (isset($_COOKIE)) {
+    $_COOKIE = $http_cookie_vars;
 } else {
     $_COOKIE = $http_cookie_vars;
 }
@@ -203,7 +203,7 @@ unset($dbpasswd);
 // even bother complaining ... go scream and shout at the idiots out there who feel
 // "clever" is doing harm rather than good ... karma is a great thing ... :)
 //
-$client_ip = ( !empty($HTTP_SERVER_VARS['REMOTE_ADDR']) ) ? $HTTP_SERVER_VARS['REMOTE_ADDR'] : ( ( !empty($HTTP_ENV_VARS['REMOTE_ADDR']) ) ? $HTTP_ENV_VARS['REMOTE_ADDR'] : getenv('REMOTE_ADDR') );
+$client_ip = ( !empty($_SERVER['REMOTE_ADDR']) ) ? $_SERVER['REMOTE_ADDR'] : ( ( !empty($_ENV['REMOTE_ADDR']) ) ? $_ENV['REMOTE_ADDR'] : getenv('REMOTE_ADDR') );
 $user_ip = encode_ip($client_ip);
 
 //

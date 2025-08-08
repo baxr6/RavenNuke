@@ -41,28 +41,43 @@ class attach_parent
 	/**
 	* Constructor
 	*/
-	function attach_parent()
-	{
-		global $_POST, $HTTP_POST_FILES;
-		
-		$this->add_attachment_body = get_var('add_attachment_body', 0);
-		$this->posted_attachments_body = get_var('posted_attachments_body', 0);
-
-		$this->file_comment					= get_var('filecomment', '');
-		$this->attachment_id_list			= get_var('attach_id_list', array(0));
-		$this->attachment_comment_list		= get_var('comment_list', array(''), true);
-		$this->attachment_filesize_list		= get_var('filesize_list', array(0));
-		$this->attachment_filetime_list		= get_var('filetime_list', array(0));
-		$this->attachment_filename_list		= get_var('filename_list', array(''));
-		$this->attachment_extension_list	= get_var('extension_list', array(''));
-		$this->attachment_mimetype_list		= get_var('mimetype_list', array(''));
-
-		$this->filename = (isset($HTTP_POST_FILES['fileupload']) && isset($HTTP_POST_FILES['fileupload']['name']) && $HTTP_POST_FILES['fileupload']['name'] != 'none') ? trim(stripslashes($HTTP_POST_FILES['fileupload']['name'])) : '';
-
-		$this->attachment_list = get_var('attachment_list', array(''));
-		$this->attachment_thumbnail_list = get_var('attach_thumbnail_list', array(0));
-	}
-	
+	// Add this to the end of the attach_parent constructor
+function attach_parent()
+{
+    global $_POST, $_FILES;
+    // Debug: Log constructor call
+    error_log("ATTACH DEBUG: Constructor called");
+    error_log("ATTACH DEBUG: Files array: " . print_r($_FILES, true));
+    error_log("ATTACH DEBUG: Post data: " . print_r($_POST, true));
+    // Initialize ALL properties FIRST to prevent undefined property errors
+    $this->attachment_list = get_var('attachment_list', array(''));
+    $this->attachment_thumbnail_list = get_var('attach_thumbnail_list', array(0));
+    $this->attachment_id_list = get_var('attach_id_list', array(0));
+    $this->attachment_comment_list = get_var('comment_list', array(''), true);
+    $this->attachment_filesize_list = get_var('filesize_list', array(0));
+    $this->attachment_filetime_list = get_var('filetime_list', array(0));
+    $this->attachment_filename_list = get_var('filename_list', array(''));
+    $this->attachment_extension_list = get_var('extension_list', array(''));
+    $this->attachment_mimetype_list = get_var('mimetype_list', array(''));
+    
+    // Ensure arrays are properly initialized
+    if (!is_array($this->attachment_list)) {
+        $this->attachment_list = array();
+    }
+    if (!is_array($this->attachment_thumbnail_list)) {
+        $this->attachment_thumbnail_list = array();
+    }
+    
+    // Now initialize other properties
+    $this->add_attachment_body = get_var('add_attachment_body', 0);
+    $this->posted_attachments_body = get_var('posted_attachments_body', 0);
+    $this->file_comment = get_var('filecomment', '');
+    
+    $this->filename = (isset($_FILES['fileupload']) && isset($_FILES['fileupload']['name']) && $_FILES['fileupload']['name'] != 'none') ? trim(stripslashes($_FILES['fileupload']['name'])) : '';
+// Debug: Check filename after initialization
+    error_log("ATTACH DEBUG: Filename after init: " . $this->filename);
+    error_log("ATTACH DEBUG: Post attach flag: " . ($this->post_attach ? 'true' : 'false'));
+}
 	/**
 	* Get Quota Limits
 	*/
@@ -422,7 +437,8 @@ class attach_parent
 			}
 		}
 
-		$this->num_attachments = count((array) $this->attachment_list);
+		// To this:
+$this->num_attachments = (isset($this->attachment_list) && is_array($this->attachment_list)) ? count($this->attachment_list) : 0;
 
 		
 		if ($submit && $mode != 'vote')
@@ -786,7 +802,8 @@ class attach_parent
 
 		if ($mode == 'attach_list')
 		{
-			foreach ((array) $this->attachment_list as $i => $attachment) {
+			if (isset($this->attachment_list) && is_array($this->attachment_list)) {
+    foreach ($this->attachment_list as $i => $attachment) {
 				if ($this->attachment_id_list[$i])
 				{
 					// Check if the attachment id is connected to the message
@@ -858,6 +875,7 @@ class attach_parent
 					}
 				}
 			}
+		}
 	
 			return TRUE;
 		}
@@ -980,7 +998,7 @@ class attach_parent
 
 		$attachments = array();
 
-		if (count((array) $this->attachment_list) > 0)
+		if (isset($this->attachment_list) && is_array($this->attachment_list) && count($this->attachment_list) > 0)
 
 		{
 			if (intval($attach_config['show_apcp']))
@@ -1085,17 +1103,16 @@ class attach_parent
 	*/
 	function upload_attachment()
 	{
-		global $HTTP_POST_FILES, $db, $_POST, $error, $error_msg, $lang, $attach_config, $userdata, $upload_dir, $forum_id;
-		
+		global $_FILES, $db, $_POST, $error, $error_msg, $lang, $attach_config, $userdata, $upload_dir, $forum_id;
 		$this->post_attach = ($this->filename != '') ? TRUE : FALSE;
 
 		if ($this->post_attach) 
 		{
 			$r_file = trim(basename(htmlspecialchars($this->filename, ENT_COMPAT, _CHARSET)));
-			$file = $HTTP_POST_FILES['fileupload']['tmp_name'];
-			$this->type = $HTTP_POST_FILES['fileupload']['type'];
+			$file = $_FILES['fileupload']['tmp_name'];
+			$this->type = $_FILES['fileupload']['type'];
 
-			if (isset($HTTP_POST_FILES['fileupload']['size']) && $HTTP_POST_FILES['fileupload']['size'] == 0)
+			if (isset($_FILES['fileupload']['size']) && $_FILES['fileupload']['size'] == 0)
 			{
 				message_die(GENERAL_ERROR, 'Tried to upload empty file');
 			}
@@ -1290,6 +1307,7 @@ class attach_parent
 				// Ok, upload the Attachment
 				if (!$error)
 				{
+					// Add this before the move_uploaded_file() call
 					$this->move_uploaded_attachment($upload_mode, $file);
 				}
 			}
@@ -1562,7 +1580,12 @@ class attach_parent
 	function move_uploaded_attachment($upload_mode, $file)
 	{
 		global $error, $error_msg, $lang, $upload_dir;
-
+// Add this before the move_uploaded_file() call
+echo "Temp file: " . $_FILES['fileupload']['tmp_name'] . "<br>";
+echo "Target path: " . $upload_dir . "<br>";
+echo "Full target: " . $upload_dir . $filename . "<br>";
+echo "Upload dir exists: " . (is_dir($upload_dir) ? "YES" : "NO") . "<br>";
+echo "Upload dir writable: " . (is_writable($upload_dir) ? "YES" : "NO") . "<br>";
 		if (!is_uploaded_file($file))
 		{
 			message_die(GENERAL_ERROR, 'Unable to upload file. The given source has not been uploaded.', __LINE__, __FILE__);
@@ -1672,8 +1695,15 @@ class attach_posting extends attach_parent
 	* Insert an Attachment into a Post (this is the second function called from posting.php)
 	*/
 	function insert_attachment($post_id)
-	{
-		global $db, $is_auth, $mode, $userdata, $error, $error_msg;
+{
+    global $db, $is_auth, $mode, $userdata, $error, $error_msg, $upload_dir, $attach_config;
+    
+    echo "POST DATA: <pre>" . print_r($_POST, true) . "</pre><br>";
+    echo "FILES DATA: <pre>" . print_r($_FILES, true) . "</pre><br>";
+    echo "Upload dir from global: " . (isset($upload_dir) ? $upload_dir : 'NOT SET') . "<br>";
+    echo "Upload dir from config: " . (isset($attach_config['upload_dir']) ? $attach_config['upload_dir'] : 'NOT SET') . "<br>";
+    
+					$this->move_uploaded_attachment($upload_mode, $file);
 
 		// Insert Attachment ?
 		if (!empty($post_id) && ($mode == 'newtopic' || $mode == 'reply' || $mode == 'editpost') && $is_auth['auth_attachments'])
@@ -1681,7 +1711,7 @@ class attach_posting extends attach_parent
 			$this->do_insert_attachment('attach_list', 'post', $post_id);
 			$this->do_insert_attachment('last_attachment', 'post', $post_id);
 
-        if ((count((array) $this->attachment_list) > 0 || $this->post_attach) && !isset($_POST['update_attachment']))
+        if (((isset($this->attachment_list) && is_array($this->attachment_list) && count($this->attachment_list) > 0) || $this->post_attach) && !isset($_POST['update_attachment']))
 			{
 				$sql = 'UPDATE ' . POSTS_TABLE . '
 					SET post_attachment = 1

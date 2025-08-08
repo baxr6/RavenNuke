@@ -143,10 +143,10 @@ else
 }
 $select_sort_order .= '</select>';
 
-$delete = (isset($HTTP_POST_VARS['delete'])) ? true : false;
-$delete_id_list = (isset($HTTP_POST_VARS['delete_id_list'])) ? array_map('intval', $HTTP_POST_VARS['delete_id_list']) : array();
+$delete = (isset($_POST['delete'])) ? true : false;
+$delete_id_list = (isset($_POST['delete_id_list'])) ? array_map('intval', $_POST['delete_id_list']) : array();
 
-$confirm = (isset($HTTP_POST_VARS['confirm']) && $HTTP_POST_VARS['confirm']) ? true : false;
+$confirm = (isset($_POST['confirm']) && $_POST['confirm']) ? true : false;
 
 if ($confirm && sizeof($delete_id_list) > 0)
 {

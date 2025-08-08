@@ -1,5 +1,14 @@
 <?php
+// Add this early in posting.php to track the file data
+// Add this at the top of posting.php, right after the includes
+echo "Raw FILES at start: <pre>" . print_r($_FILES, true) . "</pre>";
+echo "Raw POST keys: " . implode(', ', array_keys($_POST)) . "<br>";
 
+if (!empty($_FILES)) {
+    echo "File upload detected!<br>";
+} else {
+    echo "NO file upload data found!<br>";
+}
 /***************************************************************************
  *                                posting.php
  *                            -------------------
@@ -48,9 +57,9 @@ include_once("modules/Forums/includes/functions_post.php");
 $params = array('submit' => 'post', 'preview' => 'preview', 'delete' => 'delete', 'poll_delete' => 'poll_delete', 'poll_add' => 'add_poll_option', 'poll_edit' => 'edit_poll_option', 'mode' => 'mode', 'popup' => 'popup');
 foreach($params as $var => $param)
 {
-   if ( !empty($HTTP_POST_VARS[$param]) || !empty($HTTP_GET_VARS[$param]) )
+   if ( !empty($_POST[$param]) || !empty($_GET[$param]) )
    {
-      $$var = ( !empty($HTTP_POST_VARS[$param]) ) ? htmlspecialchars($HTTP_POST_VARS[$param]) : htmlspecialchars($HTTP_GET_VARS[$param]);
+      $$var = ( !empty($_POST[$param]) ) ? htmlspecialchars($_POST[$param]) : htmlspecialchars($_GET[$param]);
    }
    else
    {
@@ -58,14 +67,14 @@ foreach($params as $var => $param)
    }
 }
 
-$confirm = isset($HTTP_POST_VARS['confirm']) ? true : false;
-$sid = (isset($HTTP_POST_VARS['sid'])) ? $HTTP_POST_VARS['sid'] : 0;
+$confirm = isset($_POST['confirm']) ? true : false;
+$sid = (isset($_POST['sid'])) ? $_POST['sid'] : 0;
 $params = array('forum_id' => POST_FORUM_URL, 'topic_id' => POST_TOPIC_URL, 'post_id' => POST_POST_URL);
 foreach($params as $var => $param)
 {
-   if ( !empty($HTTP_POST_VARS[$param]) || !empty($HTTP_GET_VARS[$param]) )
+   if ( !empty($_POST[$param]) || !empty($_GET[$param]) )
    {
-      $$var = ( !empty($HTTP_POST_VARS[$param]) ) ? intval($HTTP_POST_VARS[$param]) : intval($HTTP_GET_VARS[$param]);
+      $$var = ( !empty($_POST[$param]) ) ? intval($_POST[$param]) : intval($_GET[$param]);
    }
    else
    {
@@ -79,7 +88,7 @@ $orig_word = $replacement_word = array();
 //
 // Set topic type
 //
-$topic_type = ( !empty($HTTP_POST_VARS['topictype']) ) ? intval($HTTP_POST_VARS['topictype']) : POST_NORMAL;
+$topic_type = ( !empty($_POST['topictype']) ) ? intval($_POST['topictype']) : POST_NORMAL;
 $topic_type = ( in_array($topic_type, array(POST_NORMAL, POST_STICKY, POST_ANNOUNCE)) ) ? $topic_type : POST_NORMAL;
 
 //
@@ -111,7 +120,7 @@ init_userprefs($userdata);
 // Was cancel pressed? If so then redirect to the appropriate
 // page, no point in continuing with any further checks
 //
-if ( isset($HTTP_POST_VARS['cancel']) )
+if ( isset($_POST['cancel']) )
 {
    if ( $post_id )
    {
@@ -389,7 +398,7 @@ if ( !$board_config['allow_html'] )
 }
 else
 {
-   $html_on = ( $submit || $refresh ) ? ( ( !empty($HTTP_POST_VARS['disable_html']) ) ? 0 : TRUE ) : ( ( $userdata['user_id'] == ANONYMOUS ) ? $board_config['allow_html'] : $userdata['user_allowhtml'] );
+   $html_on = ( $submit || $refresh ) ? ( ( !empty($_POST['disable_html']) ) ? 0 : TRUE ) : ( ( $userdata['user_id'] == ANONYMOUS ) ? $board_config['allow_html'] : $userdata['user_allowhtml'] );
 }
 
 if ( !$board_config['allow_bbcode'] )
@@ -398,7 +407,7 @@ if ( !$board_config['allow_bbcode'] )
 }
 else
 {
-   $bbcode_on = ( $submit || $refresh ) ? ( ( !empty($HTTP_POST_VARS['disable_bbcode']) ) ? 0 : TRUE ) : ( ( $userdata['user_id'] == ANONYMOUS ) ? $board_config['allow_bbcode'] : $userdata['user_allowbbcode'] );
+   $bbcode_on = ( $submit || $refresh ) ? ( ( !empty($_POST['disable_bbcode']) ) ? 0 : TRUE ) : ( ( $userdata['user_id'] == ANONYMOUS ) ? $board_config['allow_bbcode'] : $userdata['user_allowbbcode'] );
 }
 
 if ( !$board_config['allow_smilies'] )
@@ -407,12 +416,12 @@ if ( !$board_config['allow_smilies'] )
 }
 else
 {
-   $smilies_on = ( $submit || $refresh ) ? ( ( !empty($HTTP_POST_VARS['disable_smilies']) ) ? 0 : TRUE ) : ( ( $userdata['user_id'] == ANONYMOUS ) ? $board_config['allow_smilies'] : $userdata['user_allowsmile'] );
+   $smilies_on = ( $submit || $refresh ) ? ( ( !empty($_POST['disable_smilies']) ) ? 0 : TRUE ) : ( ( $userdata['user_id'] == ANONYMOUS ) ? $board_config['allow_smilies'] : $userdata['user_allowsmile'] );
 }
 
 if ( ($submit || $refresh) && $is_auth['auth_read'])
 {
-   $notify_user = ( !empty($HTTP_POST_VARS['notify']) ) ? TRUE : 0;
+   $notify_user = ( !empty($_POST['notify']) ) ? TRUE : 0;
 }
 else
 {
@@ -436,7 +445,7 @@ else
    }
 }
 
-$attach_sig = ( $submit || $refresh ) ? ( ( !empty($HTTP_POST_VARS['attach_sig']) ) ? TRUE : 0 ) : ( ( $userdata['user_id'] == ANONYMOUS ) ? 0 : $userdata['user_attachsig'] );
+$attach_sig = ( $submit || $refresh ) ? ( ( !empty($_POST['attach_sig']) ) ? TRUE : 0 ) : ( ( $userdata['user_id'] == ANONYMOUS ) ? 0 : $userdata['user_attachsig'] );
 execute_posting_attachment_handling();
 
 // --------------------
@@ -483,9 +492,9 @@ else if ( $mode == 'vote' )
    //
    // Vote in a poll
    //
-   if ( !empty($HTTP_POST_VARS['vote_id']) )
+   if ( !empty($_POST['vote_id']) )
    {
-      $vote_option_id = intval($HTTP_POST_VARS['vote_id']);
+      $vote_option_id = intval($_POST['vote_id']);
 
       $sql = "SELECT vd.vote_id
          FROM " . VOTE_DESC_TABLE . " vd, " . VOTE_RESULTS_TABLE . " vr
@@ -562,7 +571,6 @@ else if ( $submit || $confirm )
    $return_message = '';
    $return_meta = '';
    // session id check introduced v2.0.22
-   var_dump($sid);
    if ($sid == '' || $sid != $userdata['session_id'])
    {
       $error_msg .= (!empty($error_msg)) ? '<br />' . $lang['Session_invalid'] : $lang['Session_invalid'];
@@ -573,12 +581,12 @@ else if ( $submit || $confirm )
                 case 'editpost':
                 case 'newtopic':
       case 'reply':
-         $username = ( !empty($HTTP_POST_VARS['username']) ) ? $HTTP_POST_VARS['username'] : '';
-         $subject = ( !empty($HTTP_POST_VARS['subject']) ) ? trim($HTTP_POST_VARS['subject']) : '';
-         $message = ( !empty($HTTP_POST_VARS['message']) ) ? $HTTP_POST_VARS['message'] : '';
-         $poll_title = ( isset($HTTP_POST_VARS['poll_title']) && $is_auth['auth_pollcreate'] ) ? $HTTP_POST_VARS['poll_title'] : '';
-         $poll_options = ( isset($HTTP_POST_VARS['poll_option_text']) && $is_auth['auth_pollcreate'] ) ? $HTTP_POST_VARS['poll_option_text'] : '';
-         $poll_length = ( isset($HTTP_POST_VARS['poll_length']) && $is_auth['auth_pollcreate'] ) ? $HTTP_POST_VARS['poll_length'] : '';
+         $username = ( !empty($_POST['username']) ) ? $_POST['username'] : '';
+         $subject = ( !empty($_POST['subject']) ) ? trim($_POST['subject']) : '';
+         $message = ( !empty($_POST['message']) ) ? $_POST['message'] : '';
+         $poll_title = ( isset($_POST['poll_title']) && $is_auth['auth_pollcreate'] ) ? $_POST['poll_title'] : '';
+         $poll_options = ( isset($_POST['poll_option_text']) && $is_auth['auth_pollcreate'] ) ? $_POST['poll_option_text'] : '';
+         $poll_length = ( isset($_POST['poll_length']) && $is_auth['auth_pollcreate'] ) ? $_POST['poll_length'] : '';
                         $bbcode_uid = '';
 
                         prepare_post($mode, $post_data, $bbcode_on, $html_on, $smilies_on, $error_msg, $username, $bbcode_uid, $subject, $message, $poll_title, $poll_options, $poll_length);
@@ -586,7 +594,8 @@ else if ( $submit || $confirm )
                         if ( $error_msg == '' )
                         {
                                 $topic_type = ( $topic_type != $post_data['topic_type'] && !$is_auth['auth_sticky'] && !$is_auth['auth_announce'] ) ? $post_data['topic_type'] : $topic_type;
-
+                                 // Add this just before submit_post()
+echo "FILES before submit_post: <pre>" . print_r($_FILES, true) . "</pre>";
                                 submit_post($mode, $post_data, $return_message, $return_meta, $forum_id, $topic_id, $post_id, $poll_id, $topic_type, $bbcode_on, $html_on, $smilies_on, $attach_sig, $bbcode_uid, str_replace("\'", "''", $username), str_replace("\'", "''", $subject), str_replace("\'", "''", $message), str_replace("\'", "''", $poll_title), $poll_options, $poll_length);
                         }
                         break;
@@ -617,8 +626,8 @@ else if ( $submit || $confirm )
 
       if ( $mode == 'newtopic' || $mode == 'reply' )
       {
-         $tracking_topics = ( !empty($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_t']) ) ? unserialize($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_t']) : array();
-         $tracking_forums = ( !empty($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_f']) ) ? unserialize($HTTP_COOKIE_VARS[$board_config['cookie_name'] . '_f']) : array();
+         $tracking_topics = ( !empty($_COOKIE[$board_config['cookie_name'] . '_t']) ) ? unserialize($_COOKIE[$board_config['cookie_name'] . '_t']) : array();
+         $tracking_forums = ( !empty($_COOKIE[$board_config['cookie_name'] . '_f']) ) ? unserialize($_COOKIE[$board_config['cookie_name'] . '_f']) : array();
 
          if ( count($tracking_topics) + count($tracking_forums) == 100 && empty($tracking_topics[$topic_id]) )
          {
@@ -638,21 +647,21 @@ else if ( $submit || $confirm )
    }
 }
 
-if( $refresh || isset($HTTP_POST_VARS['del_poll_option']) || $error_msg != '' )
+if( $refresh || isset($_POST['del_poll_option']) || $error_msg != '' )
 {
-   $username = ( !empty($HTTP_POST_VARS['username']) ) ? htmlspecialchars(trim(stripslashes($HTTP_POST_VARS['username'])), ENT_QUOTES, _CHARSET) : '';
-   $subject = ( !empty($HTTP_POST_VARS['subject']) ) ? htmlspecialchars(trim(stripslashes($HTTP_POST_VARS['subject'])), ENT_QUOTES, _CHARSET) : '';
-   $message = ( !empty($HTTP_POST_VARS['message']) ) ? htmlspecialchars(trim(stripslashes($HTTP_POST_VARS['message'])), ENT_QUOTES, _CHARSET) : '';
+   $username = ( !empty($_POST['username']) ) ? htmlspecialchars(trim(stripslashes($_POST['username'])), ENT_QUOTES, _CHARSET) : '';
+   $subject = ( !empty($_POST['subject']) ) ? htmlspecialchars(trim(stripslashes($_POST['subject'])), ENT_QUOTES, _CHARSET) : '';
+   $message = ( !empty($_POST['message']) ) ? htmlspecialchars(trim(stripslashes($_POST['message'])), ENT_QUOTES, _CHARSET) : '';
 
-   $poll_title = ( !empty($HTTP_POST_VARS['poll_title']) ) ? htmlspecialchars(trim(stripslashes($HTTP_POST_VARS['poll_title'])), ENT_QUOTES, _CHARSET) : '';
-   $poll_length = ( isset($HTTP_POST_VARS['poll_length']) ) ? max(0, intval($HTTP_POST_VARS['poll_length'])) : 0;
+   $poll_title = ( !empty($_POST['poll_title']) ) ? htmlspecialchars(trim(stripslashes($_POST['poll_title'])), ENT_QUOTES, _CHARSET) : '';
+   $poll_length = ( isset($_POST['poll_length']) ) ? max(0, intval($_POST['poll_length'])) : 0;
 
    $poll_options = array();
-   if ( !empty($HTTP_POST_VARS['poll_option_text']) )
+   if ( !empty($_POST['poll_option_text']) )
    {
-      foreach($HTTP_POST_VARS['poll_option_text'] as $option_id => $option_text)
+      foreach($_POST['poll_option_text'] as $option_id => $option_text)
       {
-         if( isset($HTTP_POST_VARS['del_poll_option'][$option_id]) )
+         if( isset($_POST['del_poll_option'][$option_id]) )
          {
             unset($poll_options[$option_id]);
          }
@@ -663,9 +672,9 @@ if( $refresh || isset($HTTP_POST_VARS['del_poll_option']) || $error_msg != '' )
       }
    }
 
-   if ( isset($poll_add) && !empty($HTTP_POST_VARS['add_poll_option_text']) )
+   if ( isset($poll_add) && !empty($_POST['add_poll_option_text']) )
    {
-      $poll_options[] = htmlspecialchars(trim(stripslashes($HTTP_POST_VARS['add_poll_option_text'])), ENT_QUOTES, _CHARSET);
+      $poll_options[] = htmlspecialchars(trim(stripslashes($_POST['add_poll_option_text'])), ENT_QUOTES, _CHARSET);
    }
 
    if ( $mode == 'newtopic' || $mode == 'reply')

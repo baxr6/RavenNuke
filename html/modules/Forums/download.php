@@ -68,7 +68,7 @@ $lang['Denied_Message'] = 'You are not authorized to view, download or link to t
 // Parse the order and evaluate the array
 //
 
-$site = explode('?', $HTTP_SERVER_VARS['HTTP_REFERER']);
+$site = explode('?', $_SERVER['HTTP_REFERER']);
 $url = trim($site[0]);
 //$url = $HTTP_HOST;
 
@@ -104,7 +104,7 @@ $thumbnail = get_var('thumb', 0);
 // Send file to browser
 function send_file_to_browser($attachment, $upload_dir)
 {
-	global $HTTP_USER_AGENT, $HTTP_SERVER_VARS, $lang, $db, $attach_config;
+	global $HTTP_USER_AGENT, $_SERVER, $lang, $db, $attach_config;
 
 	$filename = ($upload_dir == '') ? $attachment['physical_filename'] : $upload_dir . '/' . $attachment['physical_filename'];
 
@@ -122,9 +122,9 @@ function send_file_to_browser($attachment, $upload_dir)
 	// Determine the Browser the User is using, because of some nasty incompatibilities.
 	// Most of the methods used in this function are from phpMyAdmin. :)
 	//
-	if (!empty($HTTP_SERVER_VARS['HTTP_USER_AGENT']))
+	if (!empty($_SERVER['HTTP_USER_AGENT']))
 	{
-		$HTTP_USER_AGENT = $HTTP_SERVER_VARS['HTTP_USER_AGENT'];
+		$HTTP_USER_AGENT = $_SERVER['HTTP_USER_AGENT'];
 	}
 	else if (!isset($HTTP_USER_AGENT))
 	{

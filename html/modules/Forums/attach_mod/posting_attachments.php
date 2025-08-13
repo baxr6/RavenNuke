@@ -39,46 +39,177 @@ class attach_parent
 	var $posted_attachments_body = 0;
 
 	/**
-	* Constructor
+	 * Clean and synchronize attachment arrays to prevent undefined key errors
+	 */
+	function clean_attachment_arrays()
+	{
+		error_log("ATTACH DEBUG: clean_attachment_arrays started");
+		
+		// Ensure all arrays are properly initialized
+		if (!is_array($this->attachment_list)) $this->attachment_list = array();
+		if (!is_array($this->attachment_thumbnail_list)) $this->attachment_thumbnail_list = array();
+		if (!is_array($this->attachment_id_list)) $this->attachment_id_list = array();
+		if (!is_array($this->attachment_comment_list)) $this->attachment_comment_list = array();
+		if (!is_array($this->attachment_filesize_list)) $this->attachment_filesize_list = array();
+		if (!is_array($this->attachment_filetime_list)) $this->attachment_filetime_list = array();
+		if (!is_array($this->attachment_filename_list)) $this->attachment_filename_list = array();
+		if (!is_array($this->attachment_extension_list)) $this->attachment_extension_list = array();
+		if (!is_array($this->attachment_mimetype_list)) $this->attachment_mimetype_list = array();
+		
+		// Filter out empty attachment entries
+		$this->attachment_list = array_filter($this->attachment_list, function($item) {
+			return !empty(trim($item));
+		});
+		
+		// Reindex to prevent gaps
+		$this->attachment_list = array_values($this->attachment_list);
+		$attachment_count = count($this->attachment_list);
+		
+		error_log("ATTACH DEBUG: Cleaned attachment_list has " . $attachment_count . " items");
+		
+		// Ensure all other arrays match the attachment_list length
+		$arrays_to_sync = array(
+			'attachment_thumbnail_list' => 0,
+			'attachment_id_list' => 0, 
+			'attachment_comment_list' => '',
+			'attachment_filesize_list' => 0,
+			'attachment_filetime_list' => 0,
+			'attachment_filename_list' => '',
+			'attachment_extension_list' => '',
+			'attachment_mimetype_list' => ''
+		);
+		
+		foreach ($arrays_to_sync as $array_name => $default_value) {
+			$current_array = $this->$array_name;
+			$new_array = array();
+			
+			for ($i = 0; $i < $attachment_count; $i++) {
+				$new_array[$i] = isset($current_array[$i]) ? $current_array[$i] : $default_value;
+			}
+			
+			$this->$array_name = $new_array;
+		}
+		
+		error_log("ATTACH DEBUG: clean_attachment_arrays completed - all arrays synchronized to " . $attachment_count . " items");
+	}
+
+	/**
+	* Preview Attachments in Posts - Fixed version
 	*/
-	// Add this to the end of the attach_parent constructor
+	function preview_attachments()
+	{
+		global $attach_config, $is_auth, $userdata;
+
+		error_log("ATTACH DEBUG: preview_attachments started");
+
+		if (intval($attach_config['disable_mod']) || !$is_auth['auth_attachments'])
+		{
+			error_log("ATTACH DEBUG: Preview disabled - mod disabled or no auth");
+			return FALSE;
+		}
+		
+		// Clean arrays before displaying to prevent undefined key errors
+		$this->clean_attachment_arrays();
+		
+		error_log("ATTACH DEBUG: Arrays cleaned, calling display_attachments_preview");
+	
+		display_attachments_preview(
+			$this->attachment_list, 
+			$this->attachment_filesize_list, 
+			$this->attachment_filename_list, 
+			$this->attachment_comment_list, 
+			$this->attachment_extension_list, 
+			$this->attachment_thumbnail_list
+		);
+		
+		error_log("ATTACH DEBUG: preview_attachments completed");
+	}
+/**
+* Constructor - Fixed version
+*/
 function attach_parent()
 {
     global $_POST, $_FILES;
-    // Debug: Log constructor call
-    error_log("ATTACH DEBUG: Constructor called");
-    error_log("ATTACH DEBUG: Files array: " . print_r($_FILES, true));
-    error_log("ATTACH DEBUG: Post data: " . print_r($_POST, true));
-    // Initialize ALL properties FIRST to prevent undefined property errors
-    $this->attachment_list = get_var('attachment_list', array(''));
-    $this->attachment_thumbnail_list = get_var('attach_thumbnail_list', array(0));
-    $this->attachment_id_list = get_var('attach_id_list', array(0));
-    $this->attachment_comment_list = get_var('comment_list', array(''), true);
-    $this->attachment_filesize_list = get_var('filesize_list', array(0));
-    $this->attachment_filetime_list = get_var('filetime_list', array(0));
-    $this->attachment_filename_list = get_var('filename_list', array(''));
-    $this->attachment_extension_list = get_var('extension_list', array(''));
-    $this->attachment_mimetype_list = get_var('mimetype_list', array(''));
     
-    // Ensure arrays are properly initialized
-    if (!is_array($this->attachment_list)) {
+    error_log("ATTACH DEBUG: Constructor started");
+    
+    try {
+        // FIRST: Initialize ALL array properties to prevent undefined property errors
         $this->attachment_list = array();
-    }
-    if (!is_array($this->attachment_thumbnail_list)) {
         $this->attachment_thumbnail_list = array();
+        $this->attachment_id_list = array();
+        $this->attachment_comment_list = array();
+        $this->attachment_filesize_list = array();
+        $this->attachment_filetime_list = array();
+        $this->attachment_filename_list = array();
+        $this->attachment_extension_list = array();
+        $this->attachment_mimetype_list = array();
+        
+        error_log("ATTACH DEBUG: All attachment arrays initialized as empty");
+        
+        // THEN: Try to populate them from form data if it exists
+        $temp_list = get_var('attachment_list', array(''));
+        if (is_array($temp_list) && !empty($temp_list[0])) {
+            $this->attachment_list = $temp_list;
+            error_log("ATTACH DEBUG: attachment_list populated with " . count($temp_list) . " items");
+            
+            // Only populate other arrays if we have attachment data
+            $this->attachment_thumbnail_list = get_var('attach_thumbnail_list', array());
+            $this->attachment_id_list = get_var('attach_id_list', array());
+            $this->attachment_comment_list = get_var('comment_list', array(), true);
+            $this->attachment_filesize_list = get_var('filesize_list', array());
+            $this->attachment_filetime_list = get_var('filetime_list', array());
+            $this->attachment_filename_list = get_var('filename_list', array());
+            $this->attachment_extension_list = get_var('extension_list', array());
+            $this->attachment_mimetype_list = get_var('mimetype_list', array());
+            
+            error_log("ATTACH DEBUG: All attachment arrays populated from form data");
+        }
+        
+        // Initialize other properties
+        $this->add_attachment_body = get_var('add_attachment_body', 0);
+        $this->posted_attachments_body = get_var('posted_attachments_body', 0);
+        $this->file_comment = get_var('filecomment', '');
+        
+        error_log("ATTACH DEBUG: Basic properties initialized");
+        
+        // File upload handling with enhanced debugging
+        if (isset($_FILES['fileupload'])) {
+            error_log("ATTACH DEBUG: FILES array exists for fileupload");
+            error_log("ATTACH DEBUG: Upload error code: " . $_FILES['fileupload']['error']);
+            error_log("ATTACH DEBUG: Upload name: " . $_FILES['fileupload']['name']);
+            error_log("ATTACH DEBUG: Upload size: " . $_FILES['fileupload']['size']);
+        } else {
+            error_log("ATTACH DEBUG: No FILES array for fileupload");
+        }
+
+        // DEBUG: Log uploaded file info
+        error_log("ATTACH DEBUG: _FILES['fileupload'] = " . var_export($_FILES['fileupload'] ?? null, true));
+
+        $this->filename = (
+            !empty($_FILES['fileupload']['name']) &&
+            $_FILES['fileupload']['error'] === UPLOAD_ERR_OK
+        ) ? trim($_FILES['fileupload']['name']) : '';
+        
+        error_log("ATTACH DEBUG: Final filename set to: '" . $this->filename . "'");
+        error_log("ATTACH DEBUG: Constructor completed successfully");
+        
+    } catch (Exception $e) {
+        error_log("ATTACH DEBUG: Constructor exception: " . $e->getMessage());
+        error_log("ATTACH DEBUG: Constructor trace: " . $e->getTraceAsString());
+        
+        // Ensure arrays are initialized even on error
+        $this->attachment_list = array();
+        $this->attachment_thumbnail_list = array();
+        $this->attachment_id_list = array();
+        $this->attachment_comment_list = array();
+        $this->attachment_filesize_list = array();
+        $this->attachment_filetime_list = array();
+        $this->attachment_filename_list = array();
+        $this->attachment_extension_list = array();
+        $this->attachment_mimetype_list = array();
     }
-    
-    // Now initialize other properties
-    $this->add_attachment_body = get_var('add_attachment_body', 0);
-    $this->posted_attachments_body = get_var('posted_attachments_body', 0);
-    $this->file_comment = get_var('filecomment', '');
-    
-    $this->filename = (isset($_FILES['fileupload']) && isset($_FILES['fileupload']['name']) && $_FILES['fileupload']['name'] != 'none') ? trim(stripslashes($_FILES['fileupload']['name'])) : '';
-// Debug: Check filename after initialization
-    error_log("ATTACH DEBUG: Filename after init: " . $this->filename);
-    error_log("ATTACH DEBUG: Post attach flag: " . ($this->post_attach ? 'true' : 'false'));
-}
-	/**
+}	/**
 	* Get Quota Limits
 	*/
 	function get_quota_limits($userdata_quota, $user_id = 0)
@@ -445,8 +576,10 @@ $this->num_attachments = (isset($this->attachment_list) && is_array($this->attac
 		{
 			if ($mode == 'newtopic' || $mode == 'reply' || $mode == 'editpost')
 			{
-				if ($this->filename != '')
-				{
+				error_log("ATTACH DEBUG: Inside upload logic");
+    if ($this->filename != '')
+    {
+        error_log("ATTACH DEBUG: Filename is set, attempting upload");
 					if ($this->num_attachments < intval($max_attachments))
 					{
 						$this->upload_attachment($this->page);
@@ -932,7 +1065,7 @@ $this->num_attachments = (isset($this->attachment_list) && is_array($this->attac
 	{
 		global $attach_config, $db, $is_auth, $lang, $mode, $phpEx, $template, $upload_dir, $userdata, $_POST, $forum_id;
 		global $phpbb_root_path;
-	
+
 		// Choose what to display
 		$value_add = $value_posted = 0;
 
@@ -997,7 +1130,6 @@ $this->num_attachments = (isset($this->attachment_list) && is_array($this->attac
 		);
 
 		$attachments = array();
-
 		if (isset($this->attachment_list) && is_array($this->attachment_list) && count($this->attachment_list) > 0)
 
 		{
@@ -1027,7 +1159,6 @@ $this->num_attachments = (isset($this->attachment_list) && is_array($this->attac
 				);
 			}
 		}
-
 		if ($this->add_attachment_body)
 		{
 			init_display_template('attachbody', '{ADD_ATTACHMENT_BODY}', 'add_attachment_body.tpl');
@@ -1045,10 +1176,10 @@ $this->num_attachments = (isset($this->attachment_list) && is_array($this->attac
 
 				'S_FORM_ENCTYPE'		=> $form_enctype)	
 			);
-		}
+		} 
 
 		//if ($this->posted_attachments_body && sizeof($this->attachment_list) > 0)
-		if ($this->posted_attachments_body && count((array) $this->attachment_list) > 0)
+		if ($this->posted_attachments_body && count($this->attachment_list) > 0)
 
 		{
 			init_display_template('attachbody', '{POSTED_ATTACHMENTS_BODY}', 'posted_attachments_body.tpl');
@@ -1062,37 +1193,50 @@ $this->num_attachments = (isset($this->attachment_list) && is_array($this->attac
 				'L_OPTIONS'				=> $lang['Options'])
 			);
 
-			for ($i = 0; $i < sizeof($this->attachment_list); $i++)
-			{
-				if ($this->attachment_id_list[$i] == 0)
-				{
-					$download_link = $upload_dir . '/' . basename($this->attachment_list[$i]);
-				}
-				else
-				{
-					$download_link = append_sid($phpbb_root_path . 'download.' . $phpEx . '?id=' . $this->attachment_id_list[$i]);
-				}
+			
 
-				$template->assign_block_vars('attach_row', array(
-					'FILE_NAME'			=> $this->attachment_filename_list[$i],
-					'ATTACH_FILENAME'	=> $this->attachment_list[$i],
-					'FILE_COMMENT'		=> $this->attachment_comment_list[$i],
-					'ATTACH_ID'			=> $this->attachment_id_list[$i],
+// Modern PHP version with improved practices
+foreach ($this->attachment_list as $i => $attachment) {
+    // Ensure all required arrays have the same index
+    if (!isset($this->attachment_id_list[$i], 
+               $this->attachment_filename_list[$i], 
+               $this->attachment_comment_list[$i])) {
+        continue; // Skip malformed entries
+    }
 
-					'U_VIEW_ATTACHMENT'	=> $download_link)
-				);
-				
-				// Thumbnail there ? And is the User Admin or Mod ? Then present the 'Delete Thumbnail' Button
-				if (intval($this->attachment_thumbnail_list[$i]) == 1 && ((isset($is_auth['auth_mod']) && $is_auth['auth_mod']) || $userdata['user_level'] == ADMIN))
-				{
-					$template->assign_block_vars('attach_row.switch_thumbnail', array());
-				}
+    $attachment_id = (int) $this->attachment_id_list[$i];
+    
+    // Generate download link based on attachment type
+    $download_link = match ($attachment_id) {
+        0 => $upload_dir . '/' . basename($attachment),
+        default => append_sid($phpbb_root_path . 'download.' . $phpEx . '?id=' . $attachment_id)
+    };
 
-				if ($this->attachment_id_list[$i])
-				{
-					$template->assign_block_vars('attach_row.switch_update_attachment', array());
-				}
-			}
+    // Assign template variables
+    $template->assign_block_vars('attach_row', [
+        'FILE_NAME'         => htmlspecialchars($this->attachment_filename_list[$i], ENT_QUOTES, 'UTF-8'),
+        'ATTACH_FILENAME'   => htmlspecialchars($attachment, ENT_QUOTES, 'UTF-8'),
+        'FILE_COMMENT'      => htmlspecialchars($this->attachment_comment_list[$i], ENT_QUOTES, 'UTF-8'),
+        'ATTACH_ID'         => $attachment_id,
+        'U_VIEW_ATTACHMENT' => htmlspecialchars($download_link, ENT_QUOTES, 'UTF-8'),
+    ]);
+
+    // Show thumbnail deletion option for admins/mods
+    $has_thumbnail = isset($this->attachment_thumbnail_list[$i]) && 
+                     (int) $this->attachment_thumbnail_list[$i] === 1;
+    
+    $is_privileged = (isset($is_auth['auth_mod']) && $is_auth['auth_mod']) || 
+                     ($userdata['user_level'] ?? 0) === ADMIN;
+
+    if ($has_thumbnail && $is_privileged) {
+        $template->assign_block_vars('attach_row.switch_thumbnail', []);
+    }
+
+    // Show update option for database attachments
+    if ($attachment_id > 0) {
+        $template->assign_block_vars('attach_row.switch_update_attachment', []);
+    }
+}
 		}
 
 		$template->assign_var_from_handle('ATTACHBOX', 'attachbody');
@@ -1105,7 +1249,6 @@ $this->num_attachments = (isset($this->attachment_list) && is_array($this->attac
 	{
 		global $_FILES, $db, $_POST, $error, $error_msg, $lang, $attach_config, $userdata, $upload_dir, $forum_id;
 		$this->post_attach = ($this->filename != '') ? TRUE : FALSE;
-
 		if ($this->post_attach) 
 		{
 			$r_file = trim(basename(htmlspecialchars($this->filename, ENT_COMPAT, _CHARSET)));
@@ -1580,12 +1723,6 @@ $this->num_attachments = (isset($this->attachment_list) && is_array($this->attac
 	function move_uploaded_attachment($upload_mode, $file)
 	{
 		global $error, $error_msg, $lang, $upload_dir;
-// Add this before the move_uploaded_file() call
-echo "Temp file: " . $_FILES['fileupload']['tmp_name'] . "<br>";
-echo "Target path: " . $upload_dir . "<br>";
-echo "Full target: " . $upload_dir . $filename . "<br>";
-echo "Upload dir exists: " . (is_dir($upload_dir) ? "YES" : "NO") . "<br>";
-echo "Upload dir writable: " . (is_writable($upload_dir) ? "YES" : "NO") . "<br>";
 		if (!is_uploaded_file($file))
 		{
 			message_die(GENERAL_ERROR, 'Unable to upload file. The given source has not been uploaded.', __LINE__, __FILE__);
@@ -1667,14 +1804,44 @@ echo "Upload dir writable: " . (is_writable($upload_dir) ? "YES" : "NO") . "<br>
 */
 class attach_posting extends attach_parent
 {
-	/**
-	* Constructor
-	*/
-	function attach_posting()
-	{
-		$this->attach_parent();
-		$this->page = 0;
-	}
+    /**
+     * Modern constructor
+     */
+    function __construct()
+    {
+        error_log("ATTACH DEBUG: attach_posting __construct started");
+        
+        // Initialize arrays first to prevent undefined property errors
+        $this->attachment_list = array();
+        $this->attachment_thumbnail_list = array();
+        $this->attachment_id_list = array();
+        $this->attachment_comment_list = array();
+        $this->attachment_filesize_list = array();
+        $this->attachment_filetime_list = array();
+        $this->attachment_filename_list = array();
+        $this->attachment_extension_list = array();
+        $this->attachment_mimetype_list = array();
+        
+        // Initialize other properties
+        $this->posted_attachments_body = 0;
+        $this->add_attachment_body = 0;
+        $this->page = 0;
+        
+        // Call parent constructor
+        $this->attach_parent();
+        
+        error_log("ATTACH DEBUG: attach_posting __construct completed");
+    }
+    
+    /**
+     * Legacy constructor for PHP 4 compatibility
+     */
+    function attach_posting()
+    {
+        error_log("ATTACH DEBUG: attach_posting legacy constructor started");
+        $this->__construct();
+        error_log("ATTACH DEBUG: attach_posting legacy constructor completed");
+    }
 	
 	/**
 	* Preview Attachments in Posts
@@ -1692,59 +1859,73 @@ class attach_posting extends attach_parent
 	}
 	
 	/**
-	* Insert an Attachment into a Post (this is the second function called from posting.php)
-	*/
-	function insert_attachment($post_id)
+ * Insert an Attachment into a Post (this is the second function called from posting.php)
+ */
+function insert_attachment($post_id)
 {
     global $db, $is_auth, $mode, $userdata, $error, $error_msg, $upload_dir, $attach_config;
     
-    echo "POST DATA: <pre>" . print_r($_POST, true) . "</pre><br>";
-    echo "FILES DATA: <pre>" . print_r($_FILES, true) . "</pre><br>";
-    echo "Upload dir from global: " . (isset($upload_dir) ? $upload_dir : 'NOT SET') . "<br>";
-    echo "Upload dir from config: " . (isset($attach_config['upload_dir']) ? $attach_config['upload_dir'] : 'NOT SET') . "<br>";
-    
-					$this->move_uploaded_attachment($upload_mode, $file);
+    // Only process file uploads if there are actually attachments to process
+    if (isset($_POST['add_attachment_body']) && $_POST['add_attachment_body'] == '1') {
+        // Check if there are uploaded files to process
+        if (!empty($_FILES) && isset($_FILES['fileupload'])) {
+            // Traditional file upload
+            $upload_mode = 'move'; // or 'copy' based on your preference
+            $file = $_FILES['fileupload']['tmp_name'];
+            
+            if ($_FILES['fileupload']['error'] === UPLOAD_ERR_OK) {
+                $this->move_uploaded_attachment($upload_mode, $file);
+            }
+        }
+        // Handle elFinder or other file sources here if needed
+        elseif (isset($_POST['elfinder_file']) && !empty($_POST['elfinder_file'])) {
+            // elFinder file reference
+            $upload_mode = 'copy';
+            $file = $_POST['elfinder_file']; // or however elFinder passes the file
+            $this->move_uploaded_attachment($upload_mode, $file);
+        }
+    }
 
-		// Insert Attachment ?
-		if (!empty($post_id) && ($mode == 'newtopic' || $mode == 'reply' || $mode == 'editpost') && $is_auth['auth_attachments'])
-		{
-			$this->do_insert_attachment('attach_list', 'post', $post_id);
-			$this->do_insert_attachment('last_attachment', 'post', $post_id);
+    // Insert Attachment ?
+    if (!empty($post_id) && ($mode == 'newtopic' || $mode == 'reply' || $mode == 'editpost') && $is_auth['auth_attachments'])
+    {
+        $this->do_insert_attachment('attach_list', 'post', $post_id);
+        $this->do_insert_attachment('last_attachment', 'post', $post_id);
 
         if (((isset($this->attachment_list) && is_array($this->attachment_list) && count($this->attachment_list) > 0) || $this->post_attach) && !isset($_POST['update_attachment']))
-			{
-				$sql = 'UPDATE ' . POSTS_TABLE . '
-					SET post_attachment = 1
-					WHERE post_id = ' . (int) $post_id;
+        {
+            $sql = 'UPDATE ' . POSTS_TABLE . '
+                SET post_attachment = 1
+                WHERE post_id = ' . (int) $post_id;
 
-				if (!($db->sql_query($sql)))
-				{
-					message_die(GENERAL_ERROR, 'Unable to update Posts Table.', '', __LINE__, __FILE__, $sql);
-				}
+            if (!($db->sql_query($sql)))
+            {
+                message_die(GENERAL_ERROR, 'Unable to update Posts Table.', '', __LINE__, __FILE__, $sql);
+            }
 
-				$sql = 'SELECT topic_id 
-					FROM ' . POSTS_TABLE . '
-					WHERE post_id = ' . (int) $post_id;
-				
-				if (!($result = $db->sql_query($sql)))
-				{
-					message_die(GENERAL_ERROR, 'Unable to select Posts Table.', '', __LINE__, __FILE__, $sql);
-				}
+            $sql = 'SELECT topic_id 
+                FROM ' . POSTS_TABLE . '
+                WHERE post_id = ' . (int) $post_id;
+            
+            if (!($result = $db->sql_query($sql)))
+            {
+                message_die(GENERAL_ERROR, 'Unable to select Posts Table.', '', __LINE__, __FILE__, $sql);
+            }
 
-				$row = $db->sql_fetchrow($result);
-				$db->sql_freeresult($result);
+            $row = $db->sql_fetchrow($result);
+            $db->sql_freeresult($result);
 
-				$sql = 'UPDATE ' . TOPICS_TABLE . '
-					SET topic_attachment = 1
-					WHERE topic_id = ' . (int) $row['topic_id'];
+            $sql = 'UPDATE ' . TOPICS_TABLE . '
+                SET topic_attachment = 1
+                WHERE topic_id = ' . (int) $row['topic_id'];
 
-				if (!($db->sql_query($sql)))
-				{
-					message_die(GENERAL_ERROR, 'Unable to update Topics Table.', '', __LINE__, __FILE__, $sql);
-				}
-			}
-		}
-	}
+            if (!($db->sql_query($sql)))
+            {
+                message_die(GENERAL_ERROR, 'Unable to update Topics Table.', '', __LINE__, __FILE__, $sql);
+            }
+        }
+    }
+}
 
 	/**
 	* Handle Attachments (Add/Delete/Edit/Show) - This is the first function called from every message handler

@@ -49,8 +49,8 @@
 		<td class="{attachrow.ROW_CLASS}" align="center"><span class="gen"><a href="{attachrow.U_VIEW_ATTACHMENT}" class="gen" target="_blank">{attachrow.FILENAME}</a></span></td>
 		<td class="{attachrow.ROW_CLASS}" align="center"><span class="gen">{attachrow.COMMENT}</span></td>
 		<td class="{attachrow.ROW_CLASS}" align="center"><span class="gen">{attachrow.EXTENSION}</span></td>
-		<td class="{attachrow.ROW_CLASS}" align="center" valign="middle"><span class="gen"><span class="thick">{attachrow.SIZE}</span></span></td>
-		<td class="{attachrow.ROW_CLASS}" align="center" valign="middle"><span class="gen"><span class="thick">{attachrow.DOWNLOAD_COUNT}</span></span></td>
+		<td class="{attachrow.ROW_CLASS}" align="center" valign="middle"><span class="gen thick">{attachrow.SIZE}</span></td>
+		<td class="{attachrow.ROW_CLASS}" align="center" valign="middle"><span class="gen thick">{attachrow.DOWNLOAD_COUNT}</span></td>
 		<td class="{attachrow.ROW_CLASS}" align="center" valign="middle"><span class="gensmall">{attachrow.POST_TIME}</span></td>
 		<td class="{attachrow.ROW_CLASS}" align="center" valign="middle"><span class="gen">{attachrow.POST_TITLE}</span></td>
 		<td class="{attachrow.ROW_CLASS}" align="center">{attachrow.S_DELETE_BOX}{attachrow.S_HIDDEN}</td>

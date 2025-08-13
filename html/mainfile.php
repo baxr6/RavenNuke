@@ -1,4 +1,6 @@
 <?php
+error_log("DEBUG POST: " . print_r($_POST, true));
+
 /**
  *
  * @package RavenNuke 2.5
@@ -336,32 +338,45 @@ if(!function_exists('themecenterbox')) {
 }
 
 if (!defined('ADMIN_FILE') && !file_exists('includes/nukesentinel.php')) {
-	$postString = '';
-	foreach ($_POST as $postkey => $postvalue) {
-		if ($postString > '') {
-			# PHP7 issue (2018-03-13, neralex)
-			# Notice: Array to string conversion in mainfile.php
-			# issue only exists, when $postvalue is an array
-			# return value: Array ( [1] => value )
-			if (is_array($postvalue)) {
-				$postvalue = array();
-				$postvalue = implode(',', $postvalue);
-			}
-			$postString .= '&' . $postkey . '=' . $postvalue;
-		} else {
-			$postString .= $postkey . '=' . $postvalue;
-		}
-	}
-	str_replace('%09', '%20', $postString);
-	$postString_64 = base64_decode($postString);
-	if ((!isset($admin) OR (isset($admin) AND !is_admin($admin))) AND (stristr($postString,'%20union%20') OR stristr($postString,'*/union/*') OR stristr($postString,' union ')
-	OR stristr($postString_64,'%20union%20') OR stristr($postString_64,'*/union/*') OR stristr($postString_64,' union ') OR stristr($postString_64,'+union+')
-	OR stristr($postString,'http-equiv') OR stristr($postString_64,'http-equiv') OR stristr($postString,'alert(') OR stristr($postString_64,'alert(')
-	OR stristr($postString,'javascript:') OR stristr($postString_64,'javascript:') OR stristr($postString,'document.cookie') OR stristr($postString_64,'document.cookie')
-	OR stristr($postString,'onmouseover=') OR stristr($postString_64,'onmouseover=') OR stristr($postString,'document.location') OR stristr($postString_64,'document.location'))) {
-		header('Location: index.php');
-		die();
-	}
+    $postString = '';
+
+    foreach ($_POST as $postkey => $postvalue) {
+        // If the value is an array, implode safely
+        if (is_array($postvalue)) {
+            $postvalue = implode(',', array_map('strval', $postvalue));
+        }
+
+        // Build the string with proper separation
+        if ($postString !== '') {
+            $postString .= '&' . $postkey . '=' . $postvalue;
+        } else {
+            $postString .= $postkey . '=' . $postvalue;
+        }
+    }
+
+    // Normalise whitespace/tab encoding
+    $postString = str_replace('%09', '%20', $postString);
+
+    // Decode base64 for further checks
+    $postString_64 = base64_decode($postString, true) ?: '';
+
+    // Pattern list for basic SQLi/XSS detection
+    $patterns = [
+        '%20union%20', '*/union/*', ' union ', '+union+',
+        'http-equiv', 'alert(', 'javascript:', 'document.cookie',
+        'onmouseover=', 'document.location'
+    ];
+
+    // Check plain and base64-decoded versions
+    foreach ($patterns as $pattern) {
+        if (
+            (!isset($admin) || (isset($admin) && !is_admin($admin))) &&
+            (stripos($postString, $pattern) !== false || stripos($postString_64, $pattern) !== false)
+        ) {
+            header('Location: index.php');
+            exit();
+        }
+    }
 }
 
 /**

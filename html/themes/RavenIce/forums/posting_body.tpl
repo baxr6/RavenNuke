@@ -5,7 +5,7 @@
 <tr>
 <td class="nav"><a href="{U_INDEX}">{L_INDEX}</a>
 <!-- BEGIN switch_parent_link -->
- -> <a class="nav" href="{PARENT_URL}">{PARENT_NAME}</a>
+-> <a class="nav" href="{PARENT_URL}">{PARENT_NAME}</a>
 <!-- END switch_parent_link -->
 <!-- BEGIN switch_not_privmsg -->
 &raquo; <a href="{U_VIEW_FORUM}" title="{FORUM_NAME}">{FORUM_NAME}</a>
@@ -340,7 +340,7 @@
 <tr>
 <td class="nav"><a href="{U_INDEX}">{L_INDEX}</a>
 <!-- BEGIN switch_parent_link -->
- -> <a class="nav" href="{PARENT_URL}">{PARENT_NAME}</a>
+-> <a class="nav" href="{PARENT_URL}">{PARENT_NAME}</a>
 <!-- END switch_parent_link -->
 <!-- BEGIN switch_not_privmsg -->
 &raquo; <a href="{U_VIEW_FORUM}">{FORUM_NAME}</a>

@@ -27,7 +27,7 @@ if (!defined('IN_PHPBB')) {
 
 function topic_review($topic_id, $is_inline_review)
 {
-        global $db, $board_config, $template, $lang, $images, $theme, $phpEx, $phpbb_root_path, $userdata, $user_ip, $orig_word, $replacement_word, $starttime;
+        global $db, $board_config, $is_auth, $template, $lang, $images, $theme, $phpEx, $phpbb_root_path, $userdata, $user_ip, $orig_word, $replacement_word, $starttime;
 
         if ( !$is_inline_review )
         {

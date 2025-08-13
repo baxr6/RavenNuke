@@ -241,128 +241,261 @@ function get_userdata($user, $force_str = false)
   return ( $row = $db->sql_fetchrow($result) ) ? $row : false;
 }
 
+/**
+ * Generate forum jumpbox with improved security and performance
+ *
+ * @param string $action The form action URL
+ * @param int $match_forum_id Currently selected forum ID
+ * @return void
+ */
 function make_jumpbox($action, $match_forum_id = 0)
 {
-  global $template, $userdata, $lang, $db, $nav_links, $phpEx, $SID;
-  global $parent_lookup;
+    global $template, $userdata, $lang, $db, $nav_links, $phpEx, $SID;
+    global $parent_lookup;
 
-//	$is_auth = auth(AUTH_VIEW, AUTH_LIST_ALL, $userdata);
-
-  $sql = "SELECT c.cat_id, c.cat_title, c.cat_order
-    FROM " . CATEGORIES_TABLE . " c, " . FORUMS_TABLE . " f
-    WHERE f.cat_id = c.cat_id
-    GROUP BY c.cat_id, c.cat_title, c.cat_order
-    ORDER BY c.cat_order";
-  if ( !($result = $db->sql_query($sql)) )
-  {
-    message_die(GENERAL_ERROR, "Couldn't obtain category list.", "", __LINE__, __FILE__, $sql);
-  }
-
-  $category_rows = array();
-  while ( $row = $db->sql_fetchrow($result) )
-  {
-    $category_rows[] = $row;
-  }
-
-  if ( $total_categories = count($category_rows) )
-  {
-    $sql = "SELECT *
-      FROM " . FORUMS_TABLE . "
-      ORDER BY cat_id, forum_order";
-    if ( !($result = $db->sql_query($sql)) )
-    {
-      message_die(GENERAL_ERROR, 'Could not obtain forums information', '', __LINE__, __FILE__, $sql);
+    // Initialize variables
+    $assigned = false;
+    $nav_links = isset($nav_links) ? $nav_links : array();
+    
+    // Single optimized query to get categories with their forums
+    $sql = "SELECT c.cat_id, c.cat_title, c.cat_order,
+                   f.forum_id, f.forum_name, f.forum_order, f.auth_view
+            FROM " . CATEGORIES_TABLE . " c
+            LEFT JOIN " . FORUMS_TABLE . " f ON (f.cat_id = c.cat_id AND f.auth_view <= " . AUTH_REG . ")
+            WHERE f.forum_id IS NOT NULL
+            ORDER BY c.cat_order, f.forum_order";
+    
+    $result = $db->sql_query($sql);
+    if (!$result) {
+        message_die(GENERAL_ERROR, "Couldn't obtain forum list.", "", __LINE__, __FILE__, $sql);
     }
 
-      $boxstring = "\n" . '<script type="text/javascript">' . "\n" .
-         '//<![CDATA[' . "\n" .
-         'function phpbbJumpChange(sel) { if (sel.options[sel.selectedIndex].value != -1) { document.forms[\'jumpbox\'].submit() } }' . "\n" .
-         '//]]>' . "\n" .
-         '</script>' . "\n";
-
-      $boxstring .= '<select name="' . POST_FORUM_URL . '" onchange="phpbbJumpChange(this);">' . "\n" .
-         '<option value="-1">' . $lang['Select_forum'] . '</option>' . "\n";
-
-    $forum_rows = array();
-    while ( $row = $db->sql_fetchrow($result) )
-    {
-      $forum_rows[] = $row;
-    }
-
-    if ( $total_forums = count($forum_rows) )
-    {
-      for($i = 0; $i < $total_categories; $i++)
-      {
-        $boxstring_forums = '';
-		for($j = 0; $j < $total_forums; $j++)
-		{
-			if ($parent_lookup==$forum_rows[$j]['forum_id'] && !$assigned)
-			{
-				$template->assign_block_vars('switch_parent_link', array() );
-				$template->assign_vars(array(
-					'PARENT_NAME' => $forum_rows[$j]['forum_name'],
-					'PARENT_URL'=>append_sid("viewforum.$phpEx?" . POST_FORUM_URL . "=" . $forum_rows[$j]['forum_id'])
-				));
-				$assigned=TRUE;
-			}
-			if ( $forum_rows[$j]['cat_id'] == $category_rows[$i]['cat_id'] && $forum_rows[$j]['auth_view'] <= AUTH_REG )
-			{
-//					if ( $forum_rows[$j]['cat_id'] == $category_rows[$i]['cat_id'] && $is_auth[$forum_rows[$j]['forum_id']]['auth_view'] )
-//					{
-            $selected = ( $forum_rows[$j]['forum_id'] == $match_forum_id ) ? ' selected="selected"' : '';
-            $boxstring_forums .=  '<option value="' . $forum_rows[$j]['forum_id'] . '"' . $selected . '>' . $forum_rows[$j]['forum_name'] . '</option>';
-
-            //
-            // Add an array to $nav_links for the Mozilla navigation bar.
-            // 'chapter' and 'forum' can create multiple items, therefore we are using a nested array.
-            //
-            $nav_links['chapter forum'][$forum_rows[$j]['forum_id']] = array (
-              'url' => append_sid("viewforum.$phpEx?" . POST_FORUM_URL . "=" . $forum_rows[$j]['forum_id']),
-              'title' => $forum_rows[$j]['forum_name']
+    // Process results into organized structure
+    $categories = array();
+    $forums_by_category = array();
+    
+    while ($row = $db->sql_fetchrow($result)) {
+        // Store category info
+        if (!isset($categories[$row['cat_id']])) {
+            $categories[$row['cat_id']] = array(
+                'cat_id' => $row['cat_id'],
+                'cat_title' => $row['cat_title'],
+                'cat_order' => $row['cat_order']
             );
-
-          }
         }
-
-        if ( $boxstring_forums != '' )
-        {
-          $boxstring .= '<option value="-1">&nbsp;</option>';
-          $boxstring .= '<option value="-1">' . $category_rows[$i]['cat_title'] . '</option>';
-          $boxstring .= '<option value="-1">----------------</option>';
-          $boxstring .= $boxstring_forums;
+        
+        // Store forum info
+        if ($row['forum_id']) {
+            $forums_by_category[$row['cat_id']][] = array(
+                'forum_id' => $row['forum_id'],
+                'forum_name' => $row['forum_name'],
+                'forum_order' => $row['forum_order'],
+                'auth_view' => $row['auth_view']
+            );
         }
-      }
+    }
+    
+    // Handle parent forum link if needed
+    if (isset($parent_lookup) && !$assigned) {
+        $parent_sql = "SELECT forum_id, forum_name 
+                       FROM " . FORUMS_TABLE . " 
+                       WHERE forum_id = " . intval($parent_lookup);
+        $parent_result = $db->sql_query($parent_sql);
+        
+        if ($parent_result && $parent_row = $db->sql_fetchrow($parent_result)) {
+            $template->assign_block_vars('switch_parent_link', array());
+            $template->assign_vars(array(
+                'PARENT_NAME' => htmlspecialchars($parent_row['forum_name']),
+                'PARENT_URL' => append_sid("viewforum.$phpEx?" . POST_FORUM_URL . "=" . $parent_row['forum_id'])
+            ));
+            $assigned = true;
+        }
     }
 
-    $boxstring .= '</select>';
-  }
-  else
-  {
-    $boxstring .= '<select name="' . POST_FORUM_URL . '" onchange="if(this.options[this.selectedIndex].value != -1){ forms[\'jumpbox\'].submit() }"><option value="-1">&nbsp;</option></select>';
-  }
-
-  // Let the jumpbox work again in sites having additional session id checks.
-//	if ( !empty($SID) )
-//	{
-    $boxstring .= '<input type="hidden" name="sid" value="' . $userdata['session_id'] . '" />';
-//	}
-
-  $template->set_filenames(array(
-    'jumpbox' => 'jumpbox.tpl')
-  );
-  $template->assign_vars(array(
-    'L_GO' => $lang['Go'],
-    'L_JUMP_TO' => $lang['Jump_to'],
-    'L_SELECT_FORUM' => $lang['Select_forum'],
-
-    'S_JUMPBOX_SELECT' => $boxstring,
-    'S_JUMPBOX_ACTION' => append_sid($action))
-  );
-  $template->assign_var_from_handle('JUMPBOX', 'jumpbox');
-
-  return;
+    // Generate jumpbox HTML
+    $jumpbox_options = generate_jumpbox_options($categories, $forums_by_category, $match_forum_id, $nav_links, $phpEx);
+    
+    // Create the complete jumpbox HTML
+    $boxstring = generate_jumpbox_html($jumpbox_options, $lang, $userdata);
+    
+    // Assign template variables
+    assign_jumpbox_template($template, $lang, $boxstring, $action);
 }
 
+/**
+ * Generate the options for the jumpbox select element
+ */
+function generate_jumpbox_options($categories, $forums_by_category, $match_forum_id, &$nav_links, $phpEx)
+{
+    global $lang;
+    
+    $options = array();
+    
+    if (empty($categories)) {
+        return $options;
+    }
+    
+    // Add default option
+    $options[] = array(
+        'value' => '-1',
+        'text' => htmlspecialchars($lang['Select_forum']),
+        'selected' => false
+    );
+    
+    foreach ($categories as $cat_id => $category) {
+        if (!isset($forums_by_category[$cat_id]) || empty($forums_by_category[$cat_id])) {
+            continue;
+        }
+        
+        // Add category separator
+        $options[] = array(
+            'value' => '-1',
+            'text' => '&nbsp;',
+            'selected' => false,
+            'disabled' => true
+        );
+        
+        // Add category title
+        $options[] = array(
+            'value' => '-1', 
+            'text' => htmlspecialchars($category['cat_title']),
+            'selected' => false,
+            'disabled' => true
+        );
+        
+        // Add separator line
+        $options[] = array(
+            'value' => '-1',
+            'text' => '----------------',
+            'selected' => false,
+            'disabled' => true
+        );
+        
+        // Add forums in this category
+        foreach ($forums_by_category[$cat_id] as $forum) {
+            $selected = ($forum['forum_id'] == $match_forum_id);
+            
+            $options[] = array(
+                'value' => $forum['forum_id'],
+                'text' => htmlspecialchars($forum['forum_name']),
+                'selected' => $selected
+            );
+            
+            // Add to navigation links
+            $nav_links['chapter forum'][$forum['forum_id']] = array(
+                'url' => append_sid("viewforum.$phpEx?" . POST_FORUM_URL . "=" . $forum['forum_id']),
+                'title' => htmlspecialchars($forum['forum_name'])
+            );
+        }
+    }
+    
+    return $options;
+}
+
+/**
+ * Generate the complete jumpbox HTML
+ */
+function generate_jumpbox_html($options, $lang, $userdata)
+{
+    // JavaScript for jumpbox functionality
+    $javascript = <<<'JS'
+<script type="text/javascript">
+//<![CDATA[
+function phpbbJumpChange(sel) { 
+    if (sel.options[sel.selectedIndex].value != -1) { 
+        document.forms['jumpbox'].submit();
+    }
+}
+//]]>
+</script>
+JS;
+
+    // Start building the select element
+    $select_html = '<select name="' . POST_FORUM_URL . '" onchange="phpbbJumpChange(this);">' . "\n";
+    
+    // Add all options
+    foreach ($options as $option) {
+        $selected_attr = $option['selected'] ? ' selected="selected"' : '';
+        $disabled_attr = isset($option['disabled']) && $option['disabled'] ? ' disabled="disabled"' : '';
+        
+        $select_html .= sprintf(
+            '<option value="%s"%s%s>%s</option>' . "\n",
+            htmlspecialchars($option['value']),
+            $selected_attr,
+            $disabled_attr,
+            $option['text']
+        );
+    }
+    
+    $select_html .= '</select>' . "\n";
+    
+    // Add hidden session ID field
+    $hidden_field = '<input type="hidden" name="sid" value="' . htmlspecialchars($userdata['session_id']) . '" />' . "\n";
+    
+    return $javascript . "\n" . $select_html . $hidden_field;
+}
+
+/**
+ * Assign jumpbox variables to template
+ */
+function assign_jumpbox_template($template, $lang, $boxstring, $action)
+{
+    $template->set_filenames(array(
+        'jumpbox' => 'jumpbox.tpl'
+    ));
+    
+    $template->assign_vars(array(
+        'L_GO' => htmlspecialchars($lang['Go']),
+        'L_JUMP_TO' => htmlspecialchars($lang['Jump_to']),
+        'L_SELECT_FORUM' => htmlspecialchars($lang['Select_forum']),
+        'S_JUMPBOX_SELECT' => $boxstring,
+        'S_JUMPBOX_ACTION' => append_sid($action)
+    ));
+    
+    $template->assign_var_from_handle('JUMPBOX', 'jumpbox');
+}
+
+/**
+ * Legacy wrapper function for backward compatibility
+ */
+function make_jumpbox_legacy($action, $match_forum_id = 0)
+{
+    return make_jumpbox($action, $match_forum_id);
+}
+
+/**
+ * Alternative implementation using modern HTML5 and minimal JavaScript
+ */
+function make_jumpbox_modern($action, $match_forum_id = 0)
+{
+    global $template, $userdata, $lang, $db, $nav_links, $phpEx;
+    
+    // Get forum data using the same optimized query
+    $sql = "SELECT c.cat_id, c.cat_title, c.cat_order,
+                   f.forum_id, f.forum_name, f.forum_order, f.auth_view
+            FROM " . CATEGORIES_TABLE . " c
+            LEFT JOIN " . FORUMS_TABLE . " f ON (f.cat_id = c.cat_id AND f.auth_view <= " . AUTH_REG . ")
+            WHERE f.forum_id IS NOT NULL
+            ORDER BY c.cat_order, f.forum_order";
+    
+    $result = $db->sql_query($sql);
+    if (!$result) {
+        message_die(GENERAL_ERROR, "Couldn't obtain forum list.", "", __LINE__, __FILE__, $sql);
+    }
+    
+    $forums_data = array();
+    while ($row = $db->sql_fetchrow($result)) {
+        $forums_data[] = $row;
+    }
+    
+    // Pass data to template for rendering
+    $template->assign_vars(array(
+        'JUMPBOX_DATA' => json_encode($forums_data),
+        'SELECTED_FORUM' => $match_forum_id,
+        'JUMPBOX_ACTION' => append_sid($action),
+        'SESSION_ID' => htmlspecialchars($userdata['session_id'])
+    ));
+}
 //
 // Initialise user settings on page load
 function init_userprefs($userdata)
@@ -588,27 +721,50 @@ function decode_ip($int_ip)
   return hexdec($hexipbang[0]). '.' . hexdec($hexipbang[1]) . '.' . hexdec($hexipbang[2]) . '.' . hexdec($hexipbang[3]);
 }
 
-//
-// Create date/time from format and timezone
-//
-function create_date($format, $gmepoch, $tz)
+/**
+ * Modern alternative using DateTime (PHP 5.2+)
+ * More robust timezone handling and better error checking
+ */
+function create_date($format, $gmepoch, $timezone_offset_hours = 0)
 {
-  global $board_config, $lang;
-  static $translate;
+    global $board_config, $lang;
+    static $translate = null;
 
-  if ( empty($translate) && $board_config['default_lang'] != 'english' )
-  {
-    @reset($lang['datetime']);
-    //while ( list($match, $replace) = @each($lang['datetime']) )
-    foreach($lang['datetime'] as $match => $replace)
-    {
-      $translate[$match] = $replace;
+    try {
+        // Initialize translation array
+        if ($translate === null && 
+            isset($board_config['default_lang']) && 
+            $board_config['default_lang'] !== 'english' &&
+            !empty($lang['datetime']) && 
+            is_array($lang['datetime'])) 
+        {
+            $translate = $lang['datetime'];
+        }
+
+        // Create DateTime object from timestamp
+        $date = new DateTime('@' . $gmepoch, new DateTimeZone('UTC'));
+        
+        // Apply timezone offset
+        if ($timezone_offset_hours != 0) {
+            $offset_seconds = $timezone_offset_hours * 3600;
+            $date->modify(($offset_seconds >= 0 ? '+' : '') . $offset_seconds . ' seconds');
+        }
+        
+        // Format the date
+        $date_string = $date->format($format);
+        
+        // Apply translations if available
+        if (!empty($translate)) {
+            $date_string = strtr($date_string, $translate);
+        }
+        
+        return $date_string;
+        
+    } catch (Exception $e) {
+        // Fallback to original method on error
+        return gmdate($format, $gmepoch + (3600 * $timezone_offset_hours));
     }
-  }
-
-  return ( !empty($translate) ) ? strtr(@gmdate($format, $gmepoch + (3600 * $tz)), $translate) : @gmdate($format, $gmepoch + (3600 * $tz));
 }
-
 //
 // Pagination routine, generates
 // page number sequence

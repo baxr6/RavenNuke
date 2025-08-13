@@ -1,14 +1,7 @@
 <?php
-// Add this early in posting.php to track the file data
-// Add this at the top of posting.php, right after the includes
-echo "Raw FILES at start: <pre>" . print_r($_FILES, true) . "</pre>";
-echo "Raw POST keys: " . implode(', ', array_keys($_POST)) . "<br>";
+error_log('RAW $_POST: ' . print_r($_POST, true));
+error_log('RAW $_FILES: ' . print_r($_FILES, true));
 
-if (!empty($_FILES)) {
-    echo "File upload detected!<br>";
-} else {
-    echo "NO file upload data found!<br>";
-}
 /***************************************************************************
  *                                posting.php
  *                            -------------------

@@ -159,7 +159,7 @@ switch ($op) {
 			if ($cidinfo['canupload'] > 0) {
 				echo '<form method="post" action="modules.php?name=' . $module_name . '" enctype="multipart/form-data">';
 			} else {
-				echo '<form method="post" action="modules.php?name=' . $module_name . '">';
+				echo '<form method="post" action="modules.php?name=' . $module_name . '" enctype="multipart/form-data">>';
 			}
 			echo '<input type="hidden" name="op" value="Add" />';
 			echo '<table align="center" cellpadding="2" cellspacing="2" border="0">';

@@ -1,9 +1,6 @@
+<!-- method changed from get to post by Raven 11/25/2004 -->
 <form method="post" name="jumpbox" action="{S_JUMPBOX_ACTION}" onsubmit="if(document.jumpbox.f.value == -1){return false;}"><table cellspacing="0" cellpadding="0" border="0">
-<tr>
-<td class="gensmall" nowrap="nowrap">&nbsp;{L_JUMP_TO}:&nbsp;</td>
-<td>{S_JUMPBOX_SELECT}&nbsp;</td>
-<td><input type="submit" value="{L_GO}" class="catbutton" />
-</td>
-</tr>
-</table>
-</form>
+	<tr>
+		<td nowrap="nowrap"><span class="gensmall">{L_JUMP_TO}:&nbsp;{S_JUMPBOX_SELECT}&nbsp;<input type="submit" value="{L_GO}" class="liteoption" /></span></td>
+	</tr>
+</table></form>

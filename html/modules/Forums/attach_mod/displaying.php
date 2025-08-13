@@ -380,8 +380,8 @@ function display_review_attachments($post_id, $switch_attachment, $is_auth)
 */
 function init_display_review_attachments($is_auth)
 {
-	global $attach_config;
-
+	global $attach_config, $is_auth;
+//var_dump($is_auth);
 	if (intval($attach_config['disable_mod']) || (!($is_auth['auth_download'] && $is_auth['auth_view'])) || intval($attach_config['attachment_topic_review']) == 0)
 	{
 		return;

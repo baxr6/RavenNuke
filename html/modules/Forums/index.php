@@ -546,30 +546,31 @@ if (!empty($forum_moderators[$forum_id]) && is_array($forum_moderators[$forum_id
 
 																'U_VIEWFORUM' => append_sid("viewforum.$phpEx?" . POST_FORUM_URL . "=$forum_id"))
 														);
-   // Added by Attached Forums MOD
-                     $attached_forum_count = count($attached_forums);
-                     if($attached_forum_count)
-                     {
-
-					   $template->assign_block_vars('catrow.forumrow.switch_attached_forums', array(
-                        'L_ATTACHED_FORUMS' => ($attached_forum_count ==1)? $lang['Attached_forum']: $lang['Attached_forums']
-						));
-						if (count($forum_moderators[$forum_id]) > 0 )
-						{
-						   $template->assign_block_vars('catrow.forumrow.switch_attached_forums.br', array());
-						}
-                        for($k = 0; $k < $attached_forum_count; $k++)
-                        {
-                           $template->assign_block_vars('catrow.forumrow.switch_attached_forums.attached_forums', array(
-                              'FORUM_IMAGE' => $attached_forums[$k]['sub_img'],
-                              'FORUM_NAME' => $attached_forums[$k]['sub_name'],
-                              'L_FORUM_IMAGE' => $attached_forums[$k]['sub_alt'],
-                              'U_VIEWFORUM' => $attached_forums[$k]['sub_url']
-                           ));
-                        }
-                     }
-   // END added by Attached Forums MOD
-                                                }
+// More modern approach with better variable naming and structure
+$attachedForumCount = count($attached_forums);
+if ($attachedForumCount > 0) {
+    // Determine language key
+    $langKey = ($attachedForumCount === 1) ? 'Attached_forum' : 'Attached_forums';
+    
+    $template->assign_block_vars('catrow.forumrow.switch_attached_forums', [
+        'L_ATTACHED_FORUMS' => $lang[$langKey]
+    ]);
+    
+    // Add break if moderators exist
+    if (!empty($forum_moderators[$forum_id])) {
+        $template->assign_block_vars('catrow.forumrow.switch_attached_forums.br', []);
+    }
+    
+    // Process attached forums
+    foreach ($attached_forums as $forum) {
+        $template->assign_block_vars('catrow.forumrow.switch_attached_forums.attached_forums', [
+            'FORUM_IMAGE' => $forum['sub_img'],
+            'FORUM_NAME' => $forum['sub_name'], 
+            'L_FORUM_IMAGE' => $forum['sub_alt'],
+            'U_VIEWFORUM' => $forum['sub_url']
+        ]);
+    }
+}                                                }
                                         }
                                 }
                         }

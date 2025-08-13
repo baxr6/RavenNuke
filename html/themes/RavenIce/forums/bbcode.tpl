@@ -9,7 +9,6 @@
 <!-- BEGIN quote_username_open --><table class="quotetable">
 <tr>
 <td><span class="uppercase">{USERNAME} {L_WROTE}:
-
 <script>
    var id = 'SXBB' + (1000 + Math.floor(Math.random() * 5000));
    SXBB[id] = new _SXBB(id);
@@ -28,7 +27,6 @@
 <!-- BEGIN quote_open --><table class="quotetable">
 <tr>
 <td><span class="uppercase">{L_QUOTE}:
-
 <script>
    var id = 'SXBB' + (1000 + Math.floor(Math.random() * 5000));
    SXBB[id] = new _SXBB(id);
@@ -100,6 +98,29 @@
 <!-- BEGIN duck --><a class="postlink duck ficon" href="http://duckduckgo.com/?q={QUERY}" target="_blank">{STRING}</a><!-- END duck -->
 <!-- BEGIN wiki --><a class="postlink wiki ficon IBmodal" href="http://{WIKI}.wikipedia.org/wiki/Special:Search/{QUERY}" rel="{WIKI}.wikipedia" title="{STRING}" target="_blank">{STRING}</a><!-- END wiki -->
 <!-- BEGIN wiki_default --><a class="postlink wiki-en ficon IBmodal" href="http://en.wikipedia.org/wiki/Special:Search/{QUERY}" rel="en.wikipedia" title="{STRING}" target="_blank">{STRING}</a><!-- END wiki_default -->
+<!-- BEGIN twitter_last -->
+<!--<a class="postlink ftweet ficon" href="http://twitter.com/{USERNAME}">{USERNAME}</a>
+<div class="tweets tw{USERID}"><img src="mods/bbcode_box/images/76.png" alt=""/></div>
+<script>
+$(document).ready(function(){
+    if ( typeof y{USERID} == "undefined" ) {
+		y{USERID} = 0;
+		n{USERID} = $("div.tweets.tw{USERID}").length;
+    }
+	if (n{USERID}<2) {
+		$.getJSON("http://twitter.com/statuses/user_timeline/{USERNAME}.json?callback=?", function(data) {
+		$(".tweets.tw{USERID}").html(ify.clean(data[0].text));
+		});
+	}
+	else if (y{USERID}==0){
+		$.getJSON("http://twitter.com/statuses/user_timeline/{USERNAME}.json?callback=?", function(data) {
+		$(".tweets.tw{USERID}").html(ify.clean(data[0].text));
+		});
+	++y{USERID};
+	}
+});
+</script>-->
+<!-- END twitter_last -->
 <!-- BEGIN s_open --><span class="line-through"><!-- END s_open -->
 <!-- BEGIN s_close --></span><!-- END s_close -->
 
